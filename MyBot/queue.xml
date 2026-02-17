@@ -1,0 +1,9 @@
+<RequestList>
+    <Request GUID="{A7CA8628-7F03-4812-B255-329BF9D71F7E}" Priority="3" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="drug3" Quantity="1"/>
+    <Request GUID="{3A2C7913-98CA-40D6-B269-AF9A4E9E06EC}" Priority="3" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="drug4" Quantity="1"/>
+    <Request GUID="{CA60A442-E749-4A41-98B5-CBAF6C0E3CF2}" Priority="2" Status="5" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="drugs" Quantity="5"/>
+    <Request GUID="{E8A044B8-3EB3-407E-A1FC-D7BD7952D89C}" Priority="2" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="drug3" Quantity="1"/>
+    <Request GUID="{692B9829-BDD7-476A-B972-BBF08F7AE506}" Priority="1" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="drug1" Quantity="1"/>
+    <Request GUID="{A22CB402-F1AB-488E-AB1D-A9211328177F}" Priority="1" Status="3" Type="20" Worker="aim" Requester="aimx83" GameHandle="aim" Description="new description" Quantity="1"/>
+    <Request GUID="{E819AC38-931C-49E4-BA66-DA7EB035CA03}" Priority="1" Status="4" Type="20" Worker="aim" Requester="aimx83" GameHandle="aim" Description="drug2" Quantity="1"/>
+</RequestList>

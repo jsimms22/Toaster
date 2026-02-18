@@ -187,16 +187,22 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BuildingJobRequest.cpp" />
+    <ClCompile Include="ComponentJobRequest.cpp" />
     <ClCompile Include="CraftingJobRequest.cpp" />
     <ClCompile Include="JobQueue.cpp" />
     <ClCompile Include="JobRequest.cpp" />
     <ClCompile Include="MyBot.cpp" />
+    <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
+    <ClCompile Include="ResourceJobRequest.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BuildingJobRequest.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\appcommand.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\application.h" />
@@ -293,8 +299,10 @@
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="MyBot.h" />
+    <ClInclude Include="RefineryJobRequest.h" />
     <ClInclude Include="RequestDlg.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceJobRequest.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="BotUtility.h" />
   </ItemGroup>

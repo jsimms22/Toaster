@@ -11,6 +11,7 @@ constexpr std::size_t JOB_TYPE_CRAFTING{ 20 };
 constexpr std::size_t JOB_TYPE_BUILDING{ 30 };
 constexpr std::size_t JOB_TYPE_RESOURCE{ 40 };
 constexpr std::size_t JOB_TYPE_REFINERY{ 50 };
+constexpr std::size_t JOB_TYPE_COMPONENT{ 60 };
 
 constexpr std::string_view LOW_PRIORITY_ID{ "low" };
 constexpr std::string_view MED_PRIORITY_ID{ "med" };

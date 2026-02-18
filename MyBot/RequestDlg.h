@@ -5,10 +5,10 @@
 #include <string>
 #include <memory>
 
-class CreateRequestDlg : public dpp::interaction_modal_response
+class CraftRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	CreateRequestDlg()
+	CraftRequestDlg()
 		: dpp::interaction_modal_response()
 	{
 		set_custom_id(modalID);
@@ -16,7 +16,7 @@ public:
 		InitializeControls(); 
 		AddChildrenComponents();
 	}
-	~CreateRequestDlg() = default;
+	~CraftRequestDlg() = default;
 
 	static const std::string modalID;
 	static const std::string modalDesc;
@@ -27,7 +27,87 @@ public:
 private:
 	dpp::component CitizenHandleEdit;
 	dpp::component ItemDescEdit;
+	dpp::component ItemQuantityEdit;
 	dpp::component ItemQualityEdit;
+	dpp::component PrioritySelect;
+};
+
+class BuildRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	BuildRequestDlg()
+		: dpp::interaction_modal_response()
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~BuildRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component CitizenHandleEdit;
+	dpp::component BuildDesignEdit;
+	dpp::component BuildRequiresEdit;
+	dpp::component BuildZoneEdit;
+	dpp::component PrioritySelect;
+};
+
+class ComponentRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	ComponentRequestDlg()
+		: dpp::interaction_modal_response()
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~ComponentRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component CitizenHandleEdit;
+	dpp::component ComponentListEdit;
+	dpp::component PrioritySelect;
+};
+
+class ResourceRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	ResourceRequestDlg()
+		: dpp::interaction_modal_response()
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~ResourceRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component CitizenHandleEdit;
+	dpp::component ResourceTypeSelect;
+	dpp::component ResourceListEdit;
+	dpp::component ResourceQualityEdit;
 	dpp::component PrioritySelect;
 };
 
@@ -133,8 +213,17 @@ public:
 private:
 	dpp::component JobRequestIDEdit;
 	dpp::component CitizenHandleEdit;
+	// For crafting
 	dpp::component ItemDescEdit;
-	dpp::component ItemQualityEdit;
+	dpp::component ItemQuantityEdit;
+	// For base building
+	dpp::component BuildDesignEdit;
+	dpp::component BuildRequiresEdit;
+	dpp::component BuildZoneEdit;
+	// For component requests
+	dpp::component ComponentListEdit;
+	// For resource requests
+	dpp::component ResourceListEdit;
 
 	std::shared_ptr<JobRequest> m_job;
 };

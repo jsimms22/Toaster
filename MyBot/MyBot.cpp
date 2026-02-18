@@ -4,6 +4,9 @@
 #include "RequestDlg.h"
 #include "JobQueue.h"
 #include "CraftingJobRequest.h"
+#include "BuildingJobRequest.h"
+#include "ComponentJobRequest.h"
+#include "ResourceJobRequest.h"
 
 #include <string>
 
@@ -67,40 +70,40 @@ auto main() -> int
         {
             if (event.command.get_command_name() == Command_JobRequest)
             {
-                const std::string& strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
+                const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
 
                 if (strCmdID == Option_ItemCrafting)
                 {
-                    CreateRequestDlg modal;
+                    CraftRequestDlg modal;
                     event.dialog(modal);
                 }
                 else if (strCmdID == Option_ComponentRequest)
                 {
-                    CreateRequestDlg modal;
+                    ComponentRequestDlg modal;
                     event.dialog(modal);
                 }
                 else if (strCmdID == Option_BaseBuidling)
                 {
-                    CreateRequestDlg modal;
+                    BuildRequestDlg modal;
                     event.dialog(modal);
                 }
                 else if (strCmdID == Option_ResourceCollect)
                 {
-                    CreateRequestDlg modal;
+                    ResourceRequestDlg modal;
                     event.dialog(modal);
                 }
                 else if (strCmdID == Option_RefineryJob)
                 {
-                    CreateRequestDlg modal;
+                    CraftRequestDlg modal;
                     event.dialog(modal);
                 }
             }
             else if (event.command.get_command_name() == Command_ModifyRequest)
             {
-                const std::string& strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
-                const std::string& strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
+                const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
+                const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
 
-                const std::shared_ptr<JobRequest>& job = queue->GetJobByGUID(strJobID);
+                const std::shared_ptr<JobRequest> job = queue->GetJobByGUID(strJobID);
                 if (!job)
                 {
                     return;
@@ -141,7 +144,7 @@ auto main() -> int
             {
                 const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
 
-                const std::shared_ptr<JobRequest>& job = queue->GetJobByGUID(strJobID);
+                const std::shared_ptr<JobRequest> job = queue->GetJobByGUID(strJobID);
                 if (job)
                 {
                     const std::string header = "Here is the request:\n\n";
@@ -152,30 +155,27 @@ auto main() -> int
                     event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
                 }
             }
-            else
-            {
-                /* Reply to the user with our message. */
-                event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
-            }
         });
 
     // This event handles form submission for the modal dialog we create above 
     bot.on_form_submit([queue](const dpp::form_submit_t& event) 
         {
-            if (event.custom_id == CreateRequestDlg::modalID)
+            if (event.custom_id == CraftRequestDlg::modalID)
             {
                 const dpp::user author = event.command.get_issuing_user();
 
                 const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
                 const std::string strDesc = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
                 const std::string strQuantity = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-                const std::string strPriority = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                const std::string strQuality = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
                 auto jobCraft = std::make_shared<CraftingJobRequest>();
                 jobCraft->SetAuthor(author.username);
                 jobCraft->SetSCHandle(strSCHandle);
                 jobCraft->SetItemDesc(strDesc);
                 jobCraft->SetQuantity(std::stoull(strQuantity));
+                jobCraft->SetQualityThres(strQuality);
                 jobCraft->SetPriority(JobRequest::StringToPriority(strPriority));
 
                 // Send a reply with the details of the request before we time out
@@ -184,26 +184,131 @@ auto main() -> int
 
                 queue->AddToQueue(std::move(jobCraft));
             }
+            else if (event.custom_id == BuildRequestDlg::modalID)
+            {
+                const dpp::user author = event.command.get_issuing_user();
+
+                const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+                const std::string strDesign = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+                const std::string strRequires = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+                const std::string strZone = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+
+                auto jobBuild = std::make_shared<BuildingJobRequest>();
+                jobBuild->SetAuthor(author.username);
+                jobBuild->SetSCHandle(strSCHandle);
+                jobBuild->SetBuildDesign(strDesign);
+                jobBuild->SetBuildRequirments(strRequires);
+                jobBuild->SetBuildZone(strZone);
+                jobBuild->SetPriority(JobRequest::StringToPriority(strPriority));
+
+                // Send a reply with the details of the request before we time out
+                const std::string header = author.username + " submitted job request: \n";
+                event.reply(dpp::message(header + jobBuild->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+
+                queue->AddToQueue(std::move(jobBuild));
+            }
+            else if (event.custom_id == ComponentRequestDlg::modalID)
+            {
+                const dpp::user author = event.command.get_issuing_user();
+
+                const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+                const std::string strCompList = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+                const std::string strPriority = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+
+                auto jobComp = std::make_shared<ComponentJobRequest>();
+                jobComp->SetAuthor(author.username);
+                jobComp->SetSCHandle(strSCHandle);
+                jobComp->SetComponentList(strCompList);
+                jobComp->SetPriority(JobRequest::StringToPriority(strPriority));
+
+                // Send a reply with the details of the request before we time out
+                const std::string header = author.username + " submitted job request: \n";
+                event.reply(dpp::message(header + jobComp->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+
+                queue->AddToQueue(std::move(jobComp));
+            }
+            else if (event.custom_id == ResourceRequestDlg::modalID)
+            {
+                const dpp::user author = event.command.get_issuing_user();
+
+                const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+                const std::string strResState = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+                const std::string strResList = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+                const std::string strQuality = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+
+                auto jobRes = std::make_shared<ResourceJobRequest>();
+                jobRes->SetAuthor(author.username);
+                jobRes->SetSCHandle(strSCHandle);
+                jobRes->SetResourceState(ResourceJobRequest::StringToState(strResState));
+                jobRes->SetResourcelist(strResList);
+                jobRes->SetQualityThres(strQuality);
+                jobRes->SetPriority(JobRequest::StringToPriority(strPriority));
+
+                // Send a reply with the details of the request before we time out
+                const std::string header = author.username + " submitted job request: \n";
+                event.reply(dpp::message(header + jobRes->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+
+                queue->AddToQueue(std::move(jobRes));
+            }
             else if (event.custom_id == EditRequestDlg::modalID)
             {
                 const dpp::user author = event.command.get_issuing_user();
 
                 const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
                 const std::string strSCHandle = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-                const std::string strDesc = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-                const std::string strQuantity = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                // These parameters are input that depend on the dialog form's order as defined by the type of the job
+                const std::string strParam1 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+                const std::string strParam2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+                const std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
                 std::shared_ptr<JobRequest> job = queue->GetJobByGUID(strID);
-                std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
-                if (craft)
+                if (job->SupportsType(JOB_TYPE_CRAFTING))
                 {
+                    std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
                     craft->SetSCHandle(strSCHandle);
-                    craft->SetItemDesc(strDesc);
-                    craft->SetQuantity(std::stoull(strQuantity));
+                    craft->SetItemDesc(strParam1);
+                    craft->SetQuantity(std::stoull(strParam2));
 
                     const std::string header = author.username + " edited job request: \n";
                     event.reply(dpp::message(header + craft->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+                }
+                else if (job->SupportsType(JOB_TYPE_BUILDING))
+                {
+                    std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(job);
+                    bldg->SetSCHandle(strSCHandle);
+                    bldg->SetBuildDesign(strParam1);
+                    bldg->SetBuildRequirments(strParam2);
+                    bldg->SetBuildZone(strParam3);
 
+                    const std::string header = author.username + " edited job request: \n";
+                    event.reply(dpp::message(header + bldg->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+                }
+                else if (job->SupportsType(JOB_TYPE_COMPONENT))
+                {
+                    std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(job);
+                    comp->SetSCHandle(strSCHandle);
+                    comp->SetComponentList(strParam1);
+
+                    const std::string header = author.username + " edited job request: \n";
+                    event.reply(dpp::message(header + comp->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+                }
+                else if (job->SupportsType(JOB_TYPE_RESOURCE))
+                {
+                    std::shared_ptr<ResourceJobRequest> resrc = std::dynamic_pointer_cast<ResourceJobRequest>(job);
+                    resrc->SetSCHandle(strSCHandle);
+                    resrc->SetResourcelist(strParam1);
+
+                    const std::string header = author.username + " edited job request: \n";
+                    event.reply(dpp::message(header + resrc->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+                }
+                else if (job->SupportsType(JOB_TYPE_RESOURCE))
+                {
+                }
+
+                if (job)
+                {
                     queue->SaveQueueToFile();
                 }
             }
@@ -267,7 +372,7 @@ auto main() -> int
 
     bot.on_ready([&bot](const dpp::ready_t& event)
         {
-            if (dpp::run_once<struct clear_bot_commands>()) 
+            //if (dpp::run_once<struct clear_bot_commands>()) 
             {
                 //bot.guild_bulk_command_delete(1472034166869852287);
                 //bot.global_bulk_command_delete();
@@ -276,7 +381,6 @@ auto main() -> int
             {
                 // Create a slash command and register it as a global command 
                 dpp::slashcommand request(Command_JobRequest, "Submit a job request to the queue.", bot.me.id);
-
                 request.add_option(dpp::command_option(dpp::co_string, Parameter_Cmd, "Select the action to take.", true)
                     .add_choice(dpp::command_option_choice("Item Crafting", Option_ItemCrafting))
                     .add_choice(dpp::command_option_choice("Base Building", Option_BaseBuidling))

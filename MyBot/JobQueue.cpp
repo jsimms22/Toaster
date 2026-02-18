@@ -1,6 +1,9 @@
 #include "JobQueue.h"
 #include "BotUtility.h"
 #include "CraftingJobRequest.h"
+#include "BuildingJobRequest.h"
+#include "ComponentJobRequest.h"
+#include "ResourceJobRequest.h"
 
 #include <algorithm>
 #include <iostream>
@@ -45,6 +48,26 @@ JobQueue::JobQueue()
                 case JOB_TYPE_CRAFTING:
                 {
                     job = std::make_shared<CraftingJobRequest>();
+                }
+                break;
+                case JOB_TYPE_BUILDING:
+                {
+                    job = std::make_shared<BuildingJobRequest>();
+                }
+                break;
+                case JOB_TYPE_COMPONENT:
+                {
+                    job = std::make_shared<ComponentJobRequest>();
+                }
+                break;
+                case JOB_TYPE_RESOURCE:
+                {
+                    job = std::make_shared<ResourceJobRequest>();
+                }
+                break;
+                case JOB_TYPE_REFINERY:
+                {
+                    job = std::make_shared<JobRequest>();
                 }
                 break;
                 default:
@@ -157,7 +180,7 @@ std::string JobQueue::PrintQueue() const
            << utils::GuidToStringNoBrackets(job->GetID()) << '\n'
            << "\t\t status: " << JobRequest::StatusToString(job->GetStatus()) 
            << "\t assigned: " << job->GetWorker()
-           << "\t type:" << job->JobTypeToString() << '\n';
+           << "\t type: " << job->JobTypeToString() << '\n';
     }
 
     return ss.str();

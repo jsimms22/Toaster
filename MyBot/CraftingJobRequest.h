@@ -9,9 +9,12 @@ public:
 
     const std::string& GetItemDesc() const { return m_strItemDesc; }
     void SetItemDesc(const std::string& itemDesc) { m_strItemDesc = itemDesc; }
-    std::size_t GetQuantity() const { return m_ulQuantity; }
-    void SetQuantity(std::size_t quantity) { m_ulQuantity = quantity; }
 
+    std::size_t GetQuantity() const { return m_ulQuantity; }
+    void SetQuantity(const std::size_t quantity) { m_ulQuantity = quantity; }
+
+    std::string GetQualityThres() const { return m_strQuality; }
+    void SetQualityThres(const std::string quality) { m_strQuality = quality; }
 
     virtual std::size_t JobType() const override { return JOB_TYPE_CRAFTING; }
     virtual std::string JobTypeToString() const override { return "Crafting"; }
@@ -21,7 +24,8 @@ public:
     virtual std::string PrintJobDetails() const override;
 
 private:
-    std::string m_strItemDesc;      // Description of the item being crafted
-    std::size_t m_ulQuantity = 0;   // Quantity of items to craft
+    std::string m_strItemDesc = "n/a";  // Description of the item being crafted
+    std::size_t m_ulQuantity = 0;       // Quantity of item to craft
+    std::string m_strQuality = "any";   // Quality the item to craft
 };
 

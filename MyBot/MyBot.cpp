@@ -8,6 +8,11 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+
 #include <string>
 
 auto main() -> int
@@ -15,7 +20,45 @@ auto main() -> int
     const std::string BOT_TOKEN = utils::LoadBotToken("../token.txt");
     dpp::cluster bot(BOT_TOKEN);
 
-    bot.on_log(dpp::utility::cout_logger());
+    //bot.on_log(dpp::utility::cout_logger());
+    const std::string log_name = "mybot.log";
+    // /* Set up spdlog logger */
+    std::shared_ptr<spdlog::logger> log;
+    spdlog::init_thread_pool(8192, 2);
+    std::vector<spdlog::sink_ptr> sinks;
+    auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt >();
+    auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_name, 1024 * 1024 * 5, 10);
+    sinks.push_back(stdout_sink);
+    sinks.push_back(rotating);
+    log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(log);
+    log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
+    log->set_level(spdlog::level::level_enum::debug);
+
+    /* Integrate spdlog logger to D++ log events */
+    bot.on_log([&bot, &log](const dpp::log_t& event) {
+        switch (event.severity) {
+        case dpp::ll_trace:
+            log->trace("{}", event.message);
+            break;
+        case dpp::ll_debug:
+            log->debug("{}", event.message);
+            break;
+        case dpp::ll_info:
+            log->info("{}", event.message);
+            break;
+        case dpp::ll_warning:
+            log->warn("{}", event.message);
+            break;
+        case dpp::ll_error:
+            log->error("{}", event.message);
+            break;
+        case dpp::ll_critical:
+        default:
+            log->critical("{}", event.message);
+            break;
+        }
+        });
 
     // Repopulate queue from file
     JobQueue* queue = new JobQueue();
@@ -29,7 +72,7 @@ auto main() -> int
                 if (queue->GetQueueSize() == 0)
                 {
                     // If no requests are found, send a message saying no requests exist
-                    event.reply("Queue is currently empty.");
+                    event.reply(dpp::message("You have no requests in queue.").set_flags(dpp::m_ephemeral));
                 }
                 else
                 {
@@ -41,14 +84,17 @@ auto main() -> int
                     msg.set_content(!result.empty() ? header + result : "You have no requests in queue.").set_flags(dpp::m_ephemeral);
                     event.reply(msg);
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
             else if (event.command.get_command_name() == Command_ShowQueue)
-            {            
+            {
+                const dpp::user author = event.command.get_issuing_user();
                 // Reply to the user, but only let them see the response. 
                 if (queue->GetQueueSize() == 0)
                 {
                     // If no requests are found, send a message saying no requests exist
-                    event.reply("Queue is currently empty.");
+                    event.reply(dpp::message("Request queue is currently empty.").set_flags(dpp::m_ephemeral));
                 }
                 else
                 {
@@ -58,18 +104,24 @@ auto main() -> int
                     msg.set_content(header + queue->PrintQueue()).set_flags(dpp::m_ephemeral);
                     event.reply(msg);
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
             else if (event.command.get_command_name() == "hello")
             {
+                const dpp::user author = event.command.get_issuing_user();
                 // Reply to the user, but only let them see the response. 
                 event.reply(dpp::message("Hello! How are you today?").set_flags(dpp::m_ephemeral));
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
         });
 
-    bot.on_interaction_create([&bot,queue](const dpp::interaction_create_t& event) 
+    bot.on_interaction_create([&bot, queue](const dpp::interaction_create_t& event) 
         {
             if (event.command.get_command_name() == Command_JobRequest)
             {
+                const dpp::user author = event.command.get_issuing_user();
                 const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
 
                 if (strCmdID == Option_ItemCrafting)
@@ -97,9 +149,12 @@ auto main() -> int
                     CraftRequestDlg modal;
                     event.dialog(modal);
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
             else if (event.command.get_command_name() == Command_ModifyRequest)
             {
+                const dpp::user author = event.command.get_issuing_user();
                 const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
                 const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
 
@@ -139,9 +194,12 @@ auto main() -> int
 
                     queue->SaveQueueToFile();
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
             else if (event.command.get_command_name() == Command_ShowRequest)
             {
+                const dpp::user author = event.command.get_issuing_user();
                 const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
 
                 const std::shared_ptr<JobRequest> job = queue->GetJobByGUID(strJobID);
@@ -154,11 +212,13 @@ auto main() -> int
                 {
                     event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
             }
         });
 
     // This event handles form submission for the modal dialog we create above 
-    bot.on_form_submit([queue](const dpp::form_submit_t& event) 
+    bot.on_form_submit([&bot, queue](const dpp::form_submit_t& event)
         {
             if (event.custom_id == CraftRequestDlg::modalID)
             {
@@ -183,6 +243,8 @@ auto main() -> int
                 event.reply(dpp::message(header + jobCraft->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
                 queue->AddToQueue(std::move(jobCraft));
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == BuildRequestDlg::modalID)
             {
@@ -207,6 +269,8 @@ auto main() -> int
                 event.reply(dpp::message(header + jobBuild->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
                 queue->AddToQueue(std::move(jobBuild));
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == ComponentRequestDlg::modalID)
             {
@@ -227,6 +291,8 @@ auto main() -> int
                 event.reply(dpp::message(header + jobComp->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
                 queue->AddToQueue(std::move(jobComp));
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == ResourceRequestDlg::modalID)
             {
@@ -251,6 +317,8 @@ auto main() -> int
                 event.reply(dpp::message(header + jobRes->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
                 queue->AddToQueue(std::move(jobRes));
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == EditRequestDlg::modalID)
             {
@@ -311,6 +379,8 @@ auto main() -> int
                 {
                     queue->SaveQueueToFile();
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == AssignRequestDlg::modalID)
             {
@@ -331,6 +401,8 @@ auto main() -> int
 
                     queue->SaveQueueToFile();
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == StatusChangeRequestDlg::modalID)
             {
@@ -349,6 +421,8 @@ auto main() -> int
 
                     queue->SaveQueueToFile();
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
             else if (event.custom_id == PriorityChangeRequestDlg::modalID)
             {
@@ -367,6 +441,8 @@ auto main() -> int
 
                     queue->SaveQueueToFile();
                 }
+
+                bot.log(dpp::ll_info, author.username + " called " + event.custom_id);
             }
         });
 
@@ -408,12 +484,15 @@ auto main() -> int
 
                 bot.guild_bulk_command_create({ request, myrequests, seequeue, showrequest, modifyrequest, emphemcommand }, 1472034166869852287);
                 //bot.global_bulk_command_create({ pingcommand, pongcommand, dingcommand, dongcommand, modalcommand, emphemcommand });
+
+                bot.log(dpp::ll_debug, "Registered commands with guild");
             }
         });
 
     // Start bot 
     bot.start(dpp::st_wait);
 
+    queue->SaveQueueToFile();
     delete(queue);
 
     return 0;

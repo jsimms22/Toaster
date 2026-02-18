@@ -1,5 +1,6 @@
 /.vs
 MyBot/queue.xml
+MyBot/*.log
 MyBot/crafting_requests.xml
 MyBot/Debug
 MyBot/Release

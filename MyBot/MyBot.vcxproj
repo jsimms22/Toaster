@@ -147,11 +147,13 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/wd4251 /utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)MyBot\dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>dpp.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(ProjectDir)dependencies\64\debug\bin\*.dll" "$(OutDir)"</Command>
@@ -171,6 +173,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/wd4251 /utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)MyBot\dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -178,6 +181,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;dpp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(ProjectDir)dependencies\64\release\bin\*.dll" "$(OutDir)"</Command>
@@ -188,6 +192,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BuildingJobRequest.cpp" />
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="ComponentJobRequest.cpp" />
     <ClCompile Include="CraftingJobRequest.cpp" />
     <ClCompile Include="JobQueue.cpp" />
@@ -201,101 +206,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BuildingJobRequest.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\appcommand.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\application.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\auditlog.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\automod.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\ban.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\bignum.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cache.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\channel.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster_coro_calls.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster_sync_calls.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\collector.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\colors.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\command.hpp" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\commandhandler.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\async.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\awaitable.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\coro.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\coroutine.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\job.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\task.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\when_any.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordclient.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordevents.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordvoiceclient.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dispatcher.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dns.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dpp.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dtemplate.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\emoji.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\entitlement.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\etf.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\event.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\event_router.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\exception.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\export.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\fmt-minimal.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\guild.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\httpsclient.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\integration.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\intents.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\invite.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx2.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx512.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\fallback.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\neon.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa_detection.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_fwd.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_fwd.hpp" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_interface.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\managed.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\message.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\misc-enum.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\nlohmann\json.hpp" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\nlohmann\json_fwd.hpp" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\once.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\permissions.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\presence.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\prune.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\queues.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\restrequest.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\restresults.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\role.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\scheduled_event.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sku.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\snowflake.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\socket.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\socketengine.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sslclient.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\stage_instance.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\streams.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\stringops.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sync.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sysdep.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\thread.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\thread_pool.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\timed_listener.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\timer.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\unicode_emoji.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\unordered_set.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\user.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\utility.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\version.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\voiceregion.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\voicestate.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\webhook.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\win32_safe_warnings.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\wsclient.h" />
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\zlibcontext.h" />
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="MyBot.h" />

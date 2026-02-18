@@ -5,34 +5,34 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="DPP">
-      <UniqueIdentifier>{0c7369e9-66c5-45ca-8a7d-8891f46001be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DPP\isa">
-      <UniqueIdentifier>{d381212d-56e7-4675-8e2e-2a05dde294d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DPP\coro">
-      <UniqueIdentifier>{8d15e415-f801-4628-a6bd-4e3d81a6075d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DPP\nlohmann">
-      <UniqueIdentifier>{4e785253-c8f4-4617-bf4a-f3e8a739dc05}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dialogs">
-      <UniqueIdentifier>{fb2baf0a-204f-4991-8e0d-79d8b38edd32}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty">
+    <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{86e9b735-5d37-4138-a1dd-698a3917a731}</UniqueIdentifier>
+    <Filter Include="Header Files\Requests">
+      <UniqueIdentifier>{894ba58f-81f1-4141-b304-fc9e30438be3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Requests">
-      <UniqueIdentifier>{a63ea3c6-7e08-4f50-b93a-0789fbfdecb5}</UniqueIdentifier>
+    <Filter Include="Header Files\Dialogs">
+      <UniqueIdentifier>{b25b41cb-a90b-458a-b2c0-ebd8dd71b61b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Commands">
+      <UniqueIdentifier>{599f70c5-1b6f-4461-8639-37508b8d49ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dialogs">
+      <UniqueIdentifier>{ad9ec8f4-beae-435c-80c5-46ef76a00aaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Commands">
+      <UniqueIdentifier>{e0f5ab1c-47e9-4bf9-bfe5-0e76ec36b450}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Requests">
+      <UniqueIdentifier>{391dd2c9-009f-4463-ac63-cfab535cf6d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{e359606a-b51f-4d9f-8dd2-6f10663f8adc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,321 +45,42 @@
     <ClCompile Include="JobQueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RequestDlg.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="tinyxml2.cpp">
       <Filter>ThirdParty</Filter>
     </ClCompile>
-    <ClCompile Include="CraftingJobRequest.cpp">
-      <Filter>Requests</Filter>
-    </ClCompile>
-    <ClCompile Include="JobRequest.cpp">
-      <Filter>Requests</Filter>
-    </ClCompile>
     <ClCompile Include="BuildingJobRequest.cpp">
-      <Filter>Requests</Filter>
+      <Filter>Source Files\Requests</Filter>
     </ClCompile>
     <ClCompile Include="ComponentJobRequest.cpp">
-      <Filter>Requests</Filter>
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="CraftingJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="JobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
     </ClCompile>
     <ClCompile Include="RefineryJobRequest.cpp">
-      <Filter>Requests</Filter>
+      <Filter>Source Files\Requests</Filter>
     </ClCompile>
     <ClCompile Include="ResourceJobRequest.cpp">
-      <Filter>Requests</Filter>
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="RequestDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Command.cpp">
+      <Filter>Source Files\Commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\appcommand.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\application.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\auditlog.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\automod.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\ban.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\bignum.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cache.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\channel.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster_coro_calls.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\cluster_sync_calls.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\collector.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\colors.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\command.hpp">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\commandhandler.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\async.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\awaitable.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\coro.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\coroutine.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\job.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\task.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\coro\when_any.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordclient.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordevents.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\discordvoiceclient.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dispatcher.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dns.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dpp.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\dtemplate.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\emoji.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\entitlement.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\etf.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\event.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\event_router.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\exception.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\export.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\fmt-minimal.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\guild.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\httpsclient.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\integration.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\intents.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\invite.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx2.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\avx512.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\fallback.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa\neon.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\isa_detection.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_fwd.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_fwd.hpp">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\json_interface.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\managed.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\message.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\misc-enum.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\nlohmann\json.hpp">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\nlohmann\json_fwd.hpp">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\once.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\permissions.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\presence.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\prune.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\queues.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\restrequest.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\restresults.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\role.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\scheduled_event.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sku.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\snowflake.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\socket.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\socketengine.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sslclient.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\stage_instance.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\streams.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\stringops.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sync.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\sysdep.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\thread.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\thread_pool.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\timed_listener.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\timer.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\unicode_emoji.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\unordered_set.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\user.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\utility.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\version.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\voiceregion.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\voicestate.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\webhook.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\win32_safe_warnings.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\wsclient.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\include\dpp-10.1\dpp\zlibcontext.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="RequestDlg.h">
-      <Filter>Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
-      <Filter>Resource Files</Filter>
+      <Filter>Header Files\Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="tinyxml2.h">
       <Filter>ThirdParty</Filter>
     </ClInclude>
     <ClInclude Include="BotUtility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="JobQueue.h">
@@ -368,23 +89,32 @@
     <ClInclude Include="MyBot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CraftingJobRequest.h">
-      <Filter>Requests</Filter>
-    </ClInclude>
-    <ClInclude Include="JobRequest.h">
-      <Filter>Requests</Filter>
-    </ClInclude>
     <ClInclude Include="BuildingJobRequest.h">
-      <Filter>Requests</Filter>
+      <Filter>Header Files\Requests</Filter>
     </ClInclude>
     <ClInclude Include="ComponentJobRequest.h">
-      <Filter>Requests</Filter>
+      <Filter>Header Files\Requests</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceJobRequest.h">
-      <Filter>Requests</Filter>
+    <ClInclude Include="CraftingJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="JobRequest.h">
+      <Filter>Header Files\Requests</Filter>
     </ClInclude>
     <ClInclude Include="RefineryJobRequest.h">
-      <Filter>Requests</Filter>
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="RequestDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Command.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

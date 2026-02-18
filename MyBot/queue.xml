@@ -1,5 +1,7 @@
 <RequestList>
     <Request GUID="{D1043333-1782-4AE5-A58C-00A102FFC43D}" Priority="4" Status="5" Type="30" Worker="leaf" Requester="aimx83" GameHandle="Aim_Optional" Designation="Barracks" Requirements="Lots of bunks" Zone="anywhere"/>
+    <Request GUID="{4DB5509A-34D8-475C-B748-A8B654C55A00}" Priority="3" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="log test" Quantity="1" Quality="600-700"/>
+    <Request GUID="{6D365656-055F-4E31-9FDF-931C81CBBB97}" Priority="3" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="AIM" ComponentList="list test"/>
     <Request GUID="{CFD7EDCF-0421-4606-B112-D95A9C6F0656}" Priority="2" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="Aim_Optional" Description="Rifle" Quantity="10" Quality="600-700"/>
     <Request GUID="{4F47352F-379E-4942-B555-4DD97C63190B}" Priority="1" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="test_comp" ComponentList="test_comp"/>
     <Request GUID="{7413B732-0B10-4D5C-919C-7DABFDBC9101}" Priority="1" Status="1" Type="40" Worker="" Requester="aimx83" GameHandle="aim" ResourceState="mineable" ResourceList="hadanite x 500

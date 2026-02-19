@@ -57,7 +57,7 @@ std::string BuildingJobRequest::PrintJobDetails() const
     std::string str = JobRequest::PrintJobDetails();
     std::stringstream ss;
     ss << "**Building Designation**: " << m_strBldgDesignation << std::endl;
-    ss << "**Building Requirements**: " << m_strBldgRequires << std::endl;
+    ss << "**Building Requirements**: \n" << m_strBldgRequires << std::endl;
     ss << "**Building Zone**: " << m_strBldgZone << std::endl;
     return str + ss.str();
 }

@@ -87,63 +87,11 @@ JobQueue::JobQueue()
     }
 }
 
-// Method to find a job request by GUID
-std::shared_ptr<JobRequest> JobQueue::FindRequestByGUID(const GUID& searchGUID)
-{
-    auto job = std::find_if(m_vQueue.cbegin(), m_vQueue.cend(), [&searchGUID](const auto& itr) -> bool { return searchGUID == itr->GetID(); });
-    if (job == m_vQueue.cend())
-    {
-        return nullptr;  // return uninitialized
-    }
-
-    tinyxml2::XMLDocument doc;
-    doc.LoadFile("crafting_requests.xml");
-    // Parse the XML content
-    if (doc.ErrorID() != tinyxml2::XML_SUCCESS)
-    {
-        return nullptr;  // return uninitialized
-    }
-
-    // Get the root element (<RequestList>)
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
-    {
-        return nullptr;  // return uninitialized
-    }
-
-    // Create a new JobRequest object
-    std::shared_ptr<JobRequest> jobRequest;
-    // Iterate over all <User> elements
-    for (tinyxml2::XMLElement* userElement = root->FirstChildElement("User"); userElement != nullptr; userElement = userElement->NextSiblingElement("User"))
-    {
-        // Iterate over all <Request> elements within each <User>
-        for (tinyxml2::XMLElement* requestElement = userElement->FirstChildElement("Request"); requestElement != nullptr; requestElement = requestElement->NextSiblingElement("Request"))
-        {
-            if (requestElement->Attribute(xmlQueue::pszXMLJobGUID) == utils::GuidToString((*job)->GetID()))
-            {
-                //jobRequest = std::make_shared<JobRequest>();
-                // Read the attributes from the XML and populate the JobRequest
-                //jobRequest.value().ReadAttributes(requestElement, userElement);
-            }
-        }
-    }
-
-    return jobRequest;
-}
-
 std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& searchGUID)
 {
     for (const std::shared_ptr<JobRequest>& job : m_vQueue)
     {
         if (utils::GuidToStringNoBrackets(job->GetID()) == searchGUID)
-        {
-            return job;
-        }
-    }
-
-    for (const std::shared_ptr<JobRequest>& job : m_vQueue)
-    {
-        if (utils::GuidToString(job->GetID()) == searchGUID)
         {
             return job;
         }
@@ -164,16 +112,6 @@ bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
         }
     }
 
-    for (auto itr = m_vQueue.begin(); itr < m_vQueue.cend(); ++itr)
-    {
-        if (utils::GuidToString((*itr)->GetID()) == searchGUID)
-        {
-            (*itr).reset();
-            m_vQueue.erase(itr);
-            return true;
-        }
-    }
-
     return false;
 }
 
@@ -183,11 +121,11 @@ std::string JobQueue::PrintQueue() const
     std::stringstream ss;
     for (const auto& job : m_vQueue)
     {
-        ss << "Request (" << JobRequest::PriorityToString(job->GetPriority()) << "): " 
-           << utils::GuidToStringNoBrackets(job->GetID()) << '\n'
-           << "\t\t status: " << JobRequest::StatusToString(job->GetStatus()) 
-           << "\t assigned: " << job->GetWorker()
-           << "\t type: " << job->JobTypeToString() << '\n';
+        ss << "Request (**" << JobRequest::PriorityToString(job->GetPriority()) << "**): "
+           << utils::GuidToStringNoBrackets(job->GetID())
+           << "\n**Status**: " << JobRequest::StatusToString(job->GetStatus()) 
+           << "\n**Assigned**: " << job->GetWorker()
+           << "\n**Type**: " << job->JobTypeToString() << "\n\n";
     }
 
     return ss.str();

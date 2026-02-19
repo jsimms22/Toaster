@@ -1,5 +1,6 @@
 #include "Toaster.h"
 
+#include "BotUtility.h"
 #include "Command.h"
 #include "JobQueue.h"
 #include "Resource.h"
@@ -42,49 +43,70 @@ void ToasterBot::onReady(const dpp::ready_t& event)
     }
 }
 
+void ToasterBot::onMessage(const dpp::message_create_t& event)
+{
+    if (!event.msg.author.id) {
+        m_cluster->log(dpp::ll_info, "Message dropped, no author: {}" + event.msg.content);
+        return;
+    } 
+    else if (event.msg.author.id == m_cluster->me.id) 
+    {
+        m_cluster->log(dpp::ll_info, "Bot sending outgoing message.");
+    }
+}
+
 void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 {
     if (event.command.get_command_name() == Command_MyRequests)
     {
         const dpp::user author = event.command.get_issuing_user();
-        // Reply to the user, but only let them see the response. 
+        const std::string header = "Your current requests (ordered by priority)";
         if (m_spQueue->GetQueueSize() == 0)
         {
-            // If no requests are found, send a message saying no requests exist
-            event.reply(dpp::message("You have no requests in queue.").set_flags(dpp::m_ephemeral));
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description("You have no requests in queue.")
+                .set_color(0x3498db);
+
+            event.reply( dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
         else
         {
-            // Send the formatted list of requests back to the user
-            dpp::message msg;
-            std::string header = "Here are your current requests (ordered by priority):\n\n";
-            std::string result = m_spQueue->PrintQueueByUser(author.username);
-            result = !result.empty() ? result : "";
-            msg.set_content(!result.empty() ? header + result : "You have no requests in queue.").set_flags(dpp::m_ephemeral);
-            event.reply(msg);
+            const std::string result = m_spQueue->PrintQueueByUser(author.username);
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description(!result.empty() ? result : "You have no requests in queue.")
+                .set_color(0x3498db);
+
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
     else if (event.command.get_command_name() == Command_ShowQueue)
     {
         const dpp::user author = event.command.get_issuing_user();
-        // Reply to the user, but only let them see the response. 
+        const std::string header = "Here is the request queue (ordered by priority)";
         if (m_spQueue->GetQueueSize() == 0)
         {
-            // If no requests are found, send a message saying no requests exist
-            event.reply(dpp::message("Request queue is currently empty.").set_flags(dpp::m_ephemeral));
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description("Request queue is currently empty.")
+                .set_color(0x3498db);
+
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
         else
         {
-            // Send the formatted list of requests back to the user
-            dpp::message msg;
-            const std::string header = "Here is the request queue (ordered by priority):\n\n";
-            msg.set_content(header + m_spQueue->PrintQueue()).set_flags(dpp::m_ephemeral);
-            event.reply(msg);
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description(m_spQueue->PrintQueue())
+                .set_color(0x3498db);
+
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
     else if (event.command.get_command_name() == "hello")
     {
@@ -92,7 +114,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         // Reply to the user, but only let them see the response. 
         event.reply(dpp::message("Hello! How are you today?").set_flags(dpp::m_ephemeral));
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
 }
 
@@ -129,7 +151,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             event.dialog(modal);
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
     else if (event.command.get_command_name() == Command_ModifyRequest)
     {
@@ -142,6 +164,8 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         {
             return;
         }
+
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
 
         if (strCmdID == Option_Edit)
         {
@@ -172,9 +196,9 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             event.reply(dpp::message(header + strJobID).set_flags(dpp::m_ephemeral));
 
             m_spQueue->SaveQueueToFile();
-        }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+            m_cluster->log(dpp::ll_warning, author.username + " deleted " + strJobID);
+        }
     }
     else if (event.command.get_command_name() == Command_ShowRequest)
     {
@@ -184,15 +208,20 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
         if (job)
         {
-            const std::string header = "Here is the request:\n\n";
-            event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+            const std::string header = "Here is the request";
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description(job->PrintJobDetails())
+                .set_color(0x3498db);
+
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
         else
         {
             event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
 }
 
@@ -216,13 +245,17 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         jobCraft->SetQualityThres(strQuality);
         jobCraft->SetPriority(JobRequest::StringToPriority(strPriority));
 
-        // Send a reply with the details of the request before we time out
         const std::string header = author.username + " submitted job request: \n";
-        event.reply(dpp::message(header + jobCraft->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(jobCraft->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobCraft->GetID()));
 
         m_spQueue->AddToQueue(std::move(jobCraft));
-
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
     }
     else if (event.custom_id == BuildRequestDlg::modalID)
     {
@@ -242,13 +275,17 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         jobBuild->SetBuildZone(strZone);
         jobBuild->SetPriority(JobRequest::StringToPriority(strPriority));
 
-        // Send a reply with the details of the request before we time out
         const std::string header = author.username + " submitted job request: \n";
-        event.reply(dpp::message(header + jobBuild->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(jobBuild->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobBuild->GetID()));
 
         m_spQueue->AddToQueue(std::move(jobBuild));
-
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
     }
     else if (event.custom_id == ComponentRequestDlg::modalID)
     {
@@ -264,13 +301,17 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         jobComp->SetComponentList(strCompList);
         jobComp->SetPriority(JobRequest::StringToPriority(strPriority));
 
-        // Send a reply with the details of the request before we time out
         const std::string header = author.username + " submitted job request: \n";
-        event.reply(dpp::message(header + jobComp->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(jobComp->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobComp->GetID()));
 
         m_spQueue->AddToQueue(std::move(jobComp));
-
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
     }
     else if (event.custom_id == ResourceRequestDlg::modalID)
     {
@@ -290,13 +331,17 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         jobRes->SetQualityThres(strQuality);
         jobRes->SetPriority(JobRequest::StringToPriority(strPriority));
 
-        // Send a reply with the details of the request before we time out
         const std::string header = author.username + " submitted job request: \n";
-        event.reply(dpp::message(header + jobRes->PrintJobDetails()).set_flags(dpp::m_ephemeral));
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(jobRes->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRes->GetID()));
 
         m_spQueue->AddToQueue(std::move(jobRes));
-
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
     }
     else if (event.custom_id == EditRequestDlg::modalID)
     {
@@ -316,9 +361,6 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             craft->SetSCHandle(strSCHandle);
             craft->SetItemDesc(strParam1);
             craft->SetQuantity(std::stoull(strParam2));
-
-            const std::string header = author.username + " edited job request: \n";
-            event.reply(dpp::message(header + craft->PrintJobDetails()).set_flags(dpp::m_ephemeral));
         }
         else if (job->SupportsType(JOB_TYPE_BUILDING))
         {
@@ -327,38 +369,40 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             bldg->SetBuildDesign(strParam1);
             bldg->SetBuildRequirments(strParam2);
             bldg->SetBuildZone(strParam3);
-
-            const std::string header = author.username + " edited job request: \n";
-            event.reply(dpp::message(header + bldg->PrintJobDetails()).set_flags(dpp::m_ephemeral));
         }
         else if (job->SupportsType(JOB_TYPE_COMPONENT))
         {
             std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(job);
             comp->SetSCHandle(strSCHandle);
             comp->SetComponentList(strParam1);
-
-            const std::string header = author.username + " edited job request: \n";
-            event.reply(dpp::message(header + comp->PrintJobDetails()).set_flags(dpp::m_ephemeral));
         }
         else if (job->SupportsType(JOB_TYPE_RESOURCE))
         {
             std::shared_ptr<ResourceJobRequest> resrc = std::dynamic_pointer_cast<ResourceJobRequest>(job);
             resrc->SetSCHandle(strSCHandle);
             resrc->SetResourcelist(strParam1);
-
-            const std::string header = author.username + " edited job request: \n";
-            event.reply(dpp::message(header + resrc->PrintJobDetails()).set_flags(dpp::m_ephemeral));
         }
-        else if (job->SupportsType(JOB_TYPE_RESOURCE))
+        else if (job->SupportsType(JOB_TYPE_REFINERY))
         {
         }
 
         if (job)
         {
-            m_spQueue->SaveQueueToFile();
-        }
+            const std::string header = "Edited job request : \n";
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description(job->PrintJobDetails())
+                .set_color(0x3498db);
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+            m_spQueue->SaveQueueToFile();
+
+            m_cluster->log(dpp::ll_info, author.username + " edited " + strID);
+        }
+        else
+        {
+            m_cluster->log(dpp::ll_error, author.username + " attempted to edit " + strID);
+        }
     }
     else if (event.custom_id == AssignRequestDlg::modalID)
     {
@@ -378,9 +422,13 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
             m_spQueue->SaveQueueToFile();
-        }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
+            m_cluster->log(dpp::ll_info, author.username + " assigned " + strID + " to " + strWorker);
+        }
+        else
+        {
+            m_cluster->log(dpp::ll_error, author.username + " attempted to assign " + strID + " to a worker");
+        }
     }
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
     {
@@ -398,9 +446,13 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
             m_spQueue->SaveQueueToFile();
-        }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
+            m_cluster->log(dpp::ll_info, author.username + " updated " + strID + " status to " + strStatus);
+        }
+        else
+        {
+            m_cluster->log(dpp::ll_error, author.username + " attempted to update " + strID + " to " + strStatus);
+        }
     }
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
     {
@@ -418,8 +470,12 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
 
             m_spQueue->SaveQueueToFile();
-        }
 
-        m_cluster->log(dpp::ll_info, author.username + " called " + event.custom_id);
+            m_cluster->log(dpp::ll_info, author.username + " changed priority for " + strID + " to " + strPriority);
+        }
+        else
+        {
+            m_cluster->log(dpp::ll_error, author.username + " attempted to change priority for " + strID + " to " + strPriority);
+        }
     }
 }

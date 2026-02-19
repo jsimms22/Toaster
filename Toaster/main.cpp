@@ -43,6 +43,8 @@ auto main() -> int
     {
         dpp::cluster bot{ BOT_TOKEN };
 
+        bot.intents = dpp::intents::i_message_content | dpp::intents::i_default_intents;
+
         /* Integrate spdlog logger to D++ log events */
         bot.on_log([&bot, &log](const dpp::log_t& event) {
             switch (event.severity) {
@@ -70,6 +72,7 @@ auto main() -> int
 
         ToasterBot toaster(&bot, 0, spQueue, true);
 
+        bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
         bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });
         bot.on_interaction_create([&toaster](const dpp::interaction_create_t& event) { toaster.onInteractionCreate(event); });
         bot.on_form_submit([&toaster](const dpp::form_submit_t& event) { toaster.onFormSubmit(event); });

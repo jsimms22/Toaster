@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="BotUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildingJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="Command.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="CraftingJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="JobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="JobQueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RequestDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Toaster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RefineryJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceJobRequest.cpp">
+      <Filter>Source Files\Requests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tinyxml2.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="BotUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildingJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="Command.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="JobQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="RequestDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Toaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="RefineryJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="CraftingJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentJobRequest.h">
+      <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{509dbf7c-2505-47cd-9df5-481b0d795c52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6bc4a80f-e4db-4285-a73b-7360d4ade2c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Dialogs">
+      <UniqueIdentifier>{b27c842e-dd08-4216-bb35-676e6d7425f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Requests">
+      <UniqueIdentifier>{e684d621-9351-4e98-8c37-f50ce035f3d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Resources">
+      <UniqueIdentifier>{be5f160c-30e7-403b-b99d-7e9dd25d1bbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Commands">
+      <UniqueIdentifier>{168b0113-adcd-4d08-a16a-7f8cfc2a3b8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{bac726c0-2cda-4218-9a32-cfcd25f281fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dialogs">
+      <UniqueIdentifier>{f6f3a9f5-6a09-47d9-8ef1-5bfdf1ca3da9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Commands">
+      <UniqueIdentifier>{630d900a-fe79-4a82-a6ad-b92160cbae04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Requests">
+      <UniqueIdentifier>{9b0eed5e-7383-457b-9dee-1175b02c45ab}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

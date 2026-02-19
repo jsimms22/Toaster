@@ -7,8 +7,8 @@ BotModule::CommandList BotModule::commands
     {
         Command_JobRequest,
         dpp::slashcommand(Command_JobRequest, "Submit a job request to the queue.", {})
-            .add_option(dpp::command_option(dpp::co_string, Parameter_Cmd, "Select the action to take.", true)
-                .add_choice(dpp::command_option_choice("Item Crafting", Option_ItemCrafting))
+            .add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Select the type of job to submit.", true)
+                .add_choice(dpp::command_option_choice("Crafting", Option_ItemCrafting))
                 .add_choice(dpp::command_option_choice("Base Building", Option_BaseBuidling))
                 .add_choice(dpp::command_option_choice("Component Request", Option_ComponentRequest))
                 .add_choice(dpp::command_option_choice("Resource Collection", Option_ResourceCollect))
@@ -17,10 +17,24 @@ BotModule::CommandList BotModule::commands
     {
         Command_MyRequests,
         dpp::slashcommand(Command_MyRequests, "Retrieve a list of your requests and status.", {})
+            .add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify whether to filter by a type.", true)
+                .add_choice(dpp::command_option_choice("All", Option_All))
+                .add_choice(dpp::command_option_choice("Crafting", Option_ItemCrafting))
+                .add_choice(dpp::command_option_choice("Base Building", Option_BaseBuidling))
+                .add_choice(dpp::command_option_choice("Component Request", Option_ComponentRequest))
+                .add_choice(dpp::command_option_choice("Resource Collection", Option_ResourceCollect))
+                .add_choice(dpp::command_option_choice("Refinery Job", Option_RefineryJob)))
     },
     {
         Command_ShowQueue,
         dpp::slashcommand(Command_ShowQueue, "Retrieve the current list of requests in the queue by a priority.", {})
+            .add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify whether to filter by a type.", true)
+                .add_choice(dpp::command_option_choice("All", Option_All))
+                .add_choice(dpp::command_option_choice("Crafting", Option_ItemCrafting))
+                .add_choice(dpp::command_option_choice("Base Building", Option_BaseBuidling))
+                .add_choice(dpp::command_option_choice("Component Request", Option_ComponentRequest))
+                .add_choice(dpp::command_option_choice("Resource Collection", Option_ResourceCollect))
+                .add_choice(dpp::command_option_choice("Refinery Job", Option_RefineryJob)))
     },
     {
         Command_ShowRequest,
@@ -37,6 +51,10 @@ BotModule::CommandList BotModule::commands
                 .add_choice(dpp::command_option_choice("Change Priority", Option_Priority))
                 .add_choice(dpp::command_option_choice("Delete Job", Option_Delete)))
             .add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Provide the request id you want to modify.", true))
+    },
+    {
+        Command_MyAssignments,
+        dpp::slashcommand(Command_MyAssignments, "Show a list of my current assignments.", {})
     },
     {
         Command_Hello,

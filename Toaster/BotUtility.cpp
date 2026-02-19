@@ -2,6 +2,8 @@
 
 #include <objbase.h>
 
+#include <chrono>
+#include <cstdlib>
 #include <fstream>
 
 namespace utils
@@ -60,7 +62,7 @@ namespace utils
         return std::string(guidString);
     }
 
-    GUID StringToGuid(const std::string& guidStr)
+    const GUID StringToGuid(const std::string& guidStr)
     {
         GUID guid;
         // Convert the GUID string to a GUID structure using IIDFromString
@@ -75,7 +77,7 @@ namespace utils
         return guid;
     }
 
-    GUID CreateGUID() 
+    const GUID CreateGUID() 
     {
         GUID guid;
         HRESULT hr = CoCreateGuid(&guid);
@@ -87,5 +89,10 @@ namespace utils
         }
 
         return guid;
+    }
+
+    const std::size_t GetEpochTimestamp()
+    {
+        return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
 }

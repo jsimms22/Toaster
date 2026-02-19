@@ -85,10 +85,10 @@ void CraftRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 
@@ -147,10 +147,10 @@ void BuildRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 
@@ -189,10 +189,10 @@ void ComponentRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 
@@ -253,10 +253,10 @@ void ResourceRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 
@@ -314,10 +314,10 @@ void RefineryRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 
@@ -357,10 +357,10 @@ void AssignRequestDlg::InitializeControls()
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Status")
-        .add_select_option(dpp::select_option("Open", "open", "").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Active", "active", "").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("Hold", "hold", "").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Complete", "complete", "").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Open", JobRequest::StatusToString(JobRequest::status::open), "").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Active", JobRequest::StatusToString(JobRequest::status::active), "").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("Hold", JobRequest::StatusToString(JobRequest::status::hold), "").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Complete", JobRequest::StatusToString(JobRequest::status::complete), "").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Status);
 
 }
@@ -388,10 +388,10 @@ void StatusChangeRequestDlg::InitializeControls()
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Status")
-        .add_select_option(dpp::select_option("Open", "open", "").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Active", "active", "").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("Hold", "hold", "").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Complete", "complete", "").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Open", JobRequest::StatusToString(JobRequest::status::open), "").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Active", JobRequest::StatusToString(JobRequest::status::active), "").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("Hold", JobRequest::StatusToString(JobRequest::status::hold), "").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Complete", JobRequest::StatusToString(JobRequest::status::complete), "").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Status);
 }
 
@@ -417,10 +417,10 @@ void PriorityChangeRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
-        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
-        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
-        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
         .set_id(Component_Priority);
 }
 

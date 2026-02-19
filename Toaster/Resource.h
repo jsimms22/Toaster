@@ -10,11 +10,6 @@ constexpr std::size_t JOB_TYPE_RESOURCE{ 40 };
 constexpr std::size_t JOB_TYPE_REFINERY{ 50 };
 constexpr std::size_t JOB_TYPE_COMPONENT{ 60 };
 
-constexpr std::string_view LOW_PRIORITY_ID{ "low" };
-constexpr std::string_view MED_PRIORITY_ID{ "med" };
-constexpr std::string_view HIGH_PRIORITY_ID{ "high" };
-constexpr std::string_view CRITICAL_PRIORITY_ID{ "critical" };
-
 /*------------------------------COMPONENT IDS-----------------------------------*/
 constexpr const char* Component_RequestID	{ "request_id" };
 constexpr const char* Component_CitizenID	{ "citizen_id" };
@@ -41,10 +36,12 @@ constexpr const char* Command_ModifyRequest	{ "modify_request" };
 constexpr const char* Command_ShowRequest	{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue		{ "show_queue" };
+constexpr const char* Command_MyAssignments { "my_assignments"};
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
 // Command Options for Command_JobRequest
+constexpr const char* Option_All			{ "all" };
 constexpr const char* Option_ItemCrafting	{ "item" };
 constexpr const char* Option_BaseBuidling	{ "building" };
 constexpr const char* Option_ComponentRequest{ "component" };
@@ -61,5 +58,6 @@ constexpr const char* Option_Delete			{ "delete" };
 
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/
 constexpr const char* Parameter_Cmd{ "cmd" };
+constexpr const char* Parameter_Type{ "type" };
 constexpr const char* Parameter_Id{ "id" };
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/

@@ -3,6 +3,7 @@
 // Microsoft
 #include <guiddef.h>
 
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
@@ -16,8 +17,10 @@ public:
     std::shared_ptr<JobRequest> GetJobByGUID(const std::string& searchGUID);
     bool DeleteJobByGUID(const std::string& searchGUID);
 
-    std::string PrintQueue() const;
-    std::string PrintQueueByUser(const std::string username) const;
+    const std::string PrintQueue() const; 
+    const std::string PrintQueueByType(const std::size_t filter) const;
+    const std::string PrintQueueByUser(const std::string username, const std::size_t filter) const;
+    const std::string PrintQueueByWorker(const std::string worker) const;
 
     void AddToQueue(std::shared_ptr<JobRequest> job)
     {

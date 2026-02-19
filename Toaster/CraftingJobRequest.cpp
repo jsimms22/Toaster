@@ -19,7 +19,7 @@ void CraftingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     JobRequest::WriteAttributes(xmlNode, xmlParent);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLItemDesc, m_strItemDesc.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLItemQuantity, std::to_string(m_ulQuantity).c_str());
+    xmlNode->SetAttribute(xmlRequest::pszXMLItemQuantity, m_strQuantity.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLItemQuality, m_strQuality.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
@@ -42,7 +42,7 @@ void CraftingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     const char* pszItemQuantity = xmlNode->Attribute(xmlRequest::pszXMLItemQuantity);
     if (pszItemQuantity)
     {
-        m_ulQuantity = std::stoull(pszItemQuantity);
+        m_strQuantity = pszItemQuantity;
     }
 
     const char* pszItemQuality = xmlNode->Attribute(xmlRequest::pszXMLItemQuality);
@@ -57,7 +57,7 @@ std::string CraftingJobRequest::PrintJobDetails() const
     std::string str = JobRequest::PrintJobDetails();
     std::stringstream ss;
     ss << "**Item Description**: " << m_strItemDesc << std::endl;
-    ss << "**Item Quantity**: " << m_ulQuantity << std::endl;
+    ss << "**Item Quantity**: " << m_strQuantity << std::endl;
     ss << "**Expected Quality**: " << m_strQuality << std::endl;
     return str + ss.str();
 }

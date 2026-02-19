@@ -113,6 +113,33 @@ private:
 	dpp::component PrioritySelect;
 };
 
+class RefineryRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	RefineryRequestDlg()
+		: dpp::interaction_modal_response()
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~RefineryRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component CitizenHandleEdit;
+	dpp::component RefineryTypeSelect;
+	dpp::component ResourceListEdit;
+	dpp::component RefinerySiteEdit;
+	dpp::component PrioritySelect;
+};
+
 class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
@@ -226,6 +253,8 @@ private:
 	dpp::component ComponentListEdit;
 	// For resource requests
 	dpp::component ResourceListEdit;
+	// For refining jobs
+	dpp::component RefinerySiteEdit;
 
 	std::shared_ptr<JobRequest> m_job;
 };

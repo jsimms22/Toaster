@@ -6,6 +6,7 @@
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
+#include "RefineryJobRequest.h"
 
 #include <dpp/unicode_emoji.h>
 
@@ -20,6 +21,9 @@ const std::string ComponentRequestDlg::modalDesc = "Submit Ship Component Reques
 
 const std::string ResourceRequestDlg::modalID = "ResourceRequestModal";
 const std::string ResourceRequestDlg::modalDesc = "Submit Resource Collection Request";
+
+const std::string RefineryRequestDlg::modalID = "RefineryRequestModal";
+const std::string RefineryRequestDlg::modalDesc = "Submit Refining Job";
 
 const std::string AssignRequestDlg::modalID = "AssignRequestModal";
 const std::string AssignRequestDlg::modalDesc = "Assign Job Request To Worker";
@@ -81,7 +85,7 @@ void CraftRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent for the fulfiller.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
         .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
         .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
         .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
@@ -143,7 +147,7 @@ void BuildRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent for the fulfiller.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
         .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
         .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
         .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
@@ -185,7 +189,7 @@ void ComponentRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent for the fulfiller.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
         .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
         .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
         .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
@@ -249,7 +253,7 @@ void ResourceRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent for the fulfiller.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
         .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
         .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
         .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
@@ -262,6 +266,67 @@ void ResourceRequestDlg::AddChildrenComponents()
     add_component(ResourceTypeSelect);
     add_component(ResourceListEdit);
     add_component(ResourceQualityEdit);
+    add_component(PrioritySelect);
+}
+
+void RefineryRequestDlg::InitializeControls()
+{
+    // Create a text box component
+    CitizenHandleEdit.set_label("Star Citizen Handle")
+        .set_type(dpp::cot_text)
+        .set_placeholder("")
+        .set_min_length(1)
+        .set_max_length(128)
+        .set_required(true)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_CitizenID);
+
+    // Create a combo box component
+    RefineryTypeSelect.set_label("Select The Resource Category")
+        .set_type(dpp::cot_selectmenu)
+        .set_placeholder("Select State")
+        .add_select_option(dpp::select_option("Refined Mineable", RefineryJobRequest::StateToString(RefineryJobRequest::state::RefinedMineable), ""))
+        .add_select_option(dpp::select_option("Refined Salvage", RefineryJobRequest::StateToString(RefineryJobRequest::state::RefinedSalvage), ""))
+        .add_select_option(dpp::select_option("Refined Harvestable", RefineryJobRequest::StateToString(RefineryJobRequest::state::RefinedHarvest), ""))
+        .set_id(Component_ResourceType);
+
+    // Create a text box component
+    ResourceListEdit.set_label("Resource For Refining")
+        .set_type(dpp::cot_text)
+        .set_placeholder("")
+        .set_min_length(1)
+        .set_max_length(256)
+        .set_required(true)
+        .set_text_style(dpp::text_paragraph)
+        .set_id(Component_ResourceList);
+    
+    // Create a text box component
+    RefinerySiteEdit.set_label("Refinery Site or Location")
+        .set_type(dpp::cot_text)
+        .set_placeholder("")
+        .set_min_length(1)
+        .set_max_length(128)
+        .set_required(true)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_RefinerySite);
+
+    // Create a combo box component
+    PrioritySelect.set_label("Select Priority")
+        .set_type(dpp::cot_selectmenu)
+        .set_placeholder("Select Priority")
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
+        .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
+        .set_id(Component_Priority);
+}
+
+void RefineryRequestDlg::AddChildrenComponents()
+{
+    add_component(CitizenHandleEdit);
+    add_component(RefineryTypeSelect);
+    add_component(ResourceListEdit);
+    add_component(RefinerySiteEdit);
     add_component(PrioritySelect);
 }
 
@@ -352,7 +417,7 @@ void PriorityChangeRequestDlg::InitializeControls()
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent for the fulfiller.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Low", LOW_PRIORITY_ID, "When convienent.").set_emoji(dpp::unicode_emoji::green_circle))
         .add_select_option(dpp::select_option("Medium", MED_PRIORITY_ID, "Need the item soon.").set_emoji(dpp::unicode_emoji::yellow_circle))
         .add_select_option(dpp::select_option("High", HIGH_PRIORITY_ID, "Need the item today.").set_emoji(dpp::unicode_emoji::orange_circle))
         .add_select_option(dpp::select_option("Critical", CRITICAL_PRIORITY_ID, "Need the item as soon as possible.").set_emoji(dpp::unicode_emoji::red_circle))
@@ -400,7 +465,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         ItemQuantityEdit.set_label("Item Quantity")
             .set_type(dpp::cot_text)
-            .set_default_value(std::to_string(craft->GetQuantity()))
+            .set_default_value(craft->GetQuantity())
             .set_min_length(1)
             .set_max_length(4)
             .set_text_style(dpp::text_short)
@@ -412,7 +477,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         BuildDesignEdit.set_label("Type of Building(s)")
             .set_type(dpp::cot_text)
-            .set_placeholder(bldg->GetBuildDesign())
+            .set_default_value(bldg->GetBuildDesign())
             .set_min_length(1)
             .set_max_length(128)
             .set_required(true)
@@ -422,7 +487,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         BuildRequiresEdit.set_label("Build Requirements")
             .set_type(dpp::cot_text)
-            .set_placeholder(bldg->GetBuildRequirments())
+            .set_default_value(bldg->GetBuildRequirments())
             .set_min_length(1)
             .set_max_length(256)
             .set_required(true)
@@ -432,7 +497,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         BuildZoneEdit.set_label("Building Location or Zone")
             .set_type(dpp::cot_text)
-            .set_placeholder(bldg->GetBuildZone())
+            .set_default_value(bldg->GetBuildZone())
             .set_min_length(1)
             .set_max_length(128)
             .set_required(true)
@@ -445,7 +510,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         ComponentListEdit.set_label("Component List")
             .set_type(dpp::cot_text)
-            .set_placeholder(comp->GetComponentList())
+            .set_default_value(comp->GetComponentList())
             .set_min_length(1)
             .set_max_length(256)
             .set_required(true)
@@ -454,11 +519,11 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_job->SupportsType(JOB_TYPE_RESOURCE))
     {
-        std::shared_ptr<ResourceJobRequest> craft = std::dynamic_pointer_cast<ResourceJobRequest>(m_job);
+        std::shared_ptr<ResourceJobRequest> resource = std::dynamic_pointer_cast<ResourceJobRequest>(m_job);
         // Create a text box component
         ResourceListEdit.set_label("Resource List")
             .set_type(dpp::cot_text)
-            .set_placeholder("")
+            .set_default_value(resource->GetResourcelist())
             .set_min_length(1)
             .set_max_length(256)
             .set_required(true)
@@ -467,7 +532,26 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_job->SupportsType(JOB_TYPE_REFINERY))
     {
-        //std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(m_job);
+        std::shared_ptr<RefineryJobRequest> refine = std::dynamic_pointer_cast<RefineryJobRequest>(m_job);
+        // Create a text box component
+        ResourceListEdit.set_label("Resource List")
+            .set_type(dpp::cot_text)
+            .set_default_value(refine->GetResourcelist())
+            .set_min_length(1)
+            .set_max_length(256)
+            .set_required(true)
+            .set_text_style(dpp::text_paragraph)
+            .set_id(Component_ResourceList);
+
+        // Create a text box component
+        RefinerySiteEdit.set_label("Refinery Site or Location")
+            .set_type(dpp::cot_text)
+            .set_default_value(refine->GetRefinery())
+            .set_min_length(1)
+            .set_max_length(128)
+            .set_required(true)
+            .set_text_style(dpp::text_short)
+            .set_id(Component_RefinerySite);
     }
 }
 
@@ -496,5 +580,7 @@ void EditRequestDlg::AddChildrenComponents()
     }
     if (m_job->SupportsType(JOB_TYPE_REFINERY))
     {
+        add_component(ResourceListEdit);
+        add_component(RefinerySiteEdit);
     }
 }

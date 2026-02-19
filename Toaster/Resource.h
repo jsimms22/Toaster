@@ -28,6 +28,7 @@ constexpr const char* Component_CompList	{ "complist_id" };
 constexpr const char* Component_ResourceType{ "resourcetype_id" };
 constexpr const char* Component_ResourceList{ "resourcelist_id" };
 constexpr const char* Component_ResourceQuality{ "resourcequality_id" };
+constexpr const char* Component_RefinerySite{ "refinerysite_id" };
 constexpr const char* Component_Priority		{ "priority_id" };
 constexpr const char* Component_Assignment	{ "assign_id" };
 constexpr const char* Component_Status		{ "status_id" };

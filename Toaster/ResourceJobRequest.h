@@ -38,7 +38,7 @@ public:
     virtual std::string PrintJobDetails() const override;
 
 private:
-    ResourceJobRequest::state m_eResourceState = UnrefinedMineable;
+    ResourceJobRequest::state m_eResourceState = ResourceJobRequest::state::UnrefinedMineable;
     std::string m_strResourceList = "n/a";  // Description of the item being crafted
     std::string m_strQuality = "any";       // Quality the item to craft
 };

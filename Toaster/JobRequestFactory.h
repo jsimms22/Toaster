@@ -1,0 +1,18 @@
+#pragma once
+
+#include "JobRequest.h"
+#include "CraftingJobRequest.h"
+#include "BuildingJobRequest.h"
+#include "ComponentJobRequest.h"
+#include "ResourceJobRequest.h"
+#include "RefineryJobRequest.h"
+
+#include <cstdlib>
+#include <memory>
+
+class JobRequestFactory
+{
+public:
+    static std::shared_ptr<JobRequest> Create(const std::size_t type);
+};
+

@@ -17,6 +17,8 @@ public:
 	void onSlashCommand(const dpp::slashcommand_t& event);
 	void onInteractionCreate(const dpp::interaction_create_t& event);
 	void onFormSubmit(const dpp::form_submit_t& event);
+
+	void NotifyIssuerMsg(const dpp::user& user, const dpp::event_dispatch_t& event, const std::string& msg);
 	
 private:
 	bool m_debug = false;

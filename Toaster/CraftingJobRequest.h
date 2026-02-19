@@ -10,8 +10,8 @@ public:
     const std::string& GetItemDesc() const { return m_strItemDesc; }
     void SetItemDesc(const std::string& itemDesc) { m_strItemDesc = itemDesc; }
 
-    std::size_t GetQuantity() const { return m_ulQuantity; }
-    void SetQuantity(const std::size_t quantity) { m_ulQuantity = quantity; }
+    std::string GetQuantity() const { return m_strQuantity; }
+    void SetQuantity(const std::string quantity) { m_strQuantity = quantity; }
 
     std::string GetQualityThres() const { return m_strQuality; }
     void SetQualityThres(const std::string quality) { m_strQuality = quality; }
@@ -25,7 +25,7 @@ public:
 
 private:
     std::string m_strItemDesc = "n/a";  // Description of the item being crafted
-    std::size_t m_ulQuantity = 0;       // Quantity of item to craft
+    std::string m_strQuantity = "0";    // Quantity of item to craft
     std::string m_strQuality = "any";   // Quality the item to craft
 };
 

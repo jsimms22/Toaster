@@ -2,6 +2,7 @@
 
 #include "BotUtility.h"
 
+#include "JobRequestFactory.h"
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
@@ -47,38 +48,10 @@ JobQueue::JobQueue()
         const char* type = xmlNode->Attribute(xmlQueue::pszXMLJobType);
         if (type)
         {
-            std::shared_ptr<JobRequest> job;
-            switch (std::stoul(type))
+            std::shared_ptr<JobRequest> job = JobRequestFactory::Create(std::stoul(type));
+            if (!job)
             {
-                case JOB_TYPE_CRAFTING:
-                {
-                    job = std::make_shared<CraftingJobRequest>();
-                }
-                break;
-                case JOB_TYPE_BUILDING:
-                {
-                    job = std::make_shared<BuildingJobRequest>();
-                }
-                break;
-                case JOB_TYPE_COMPONENT:
-                {
-                    job = std::make_shared<ComponentJobRequest>();
-                }
-                break;
-                case JOB_TYPE_RESOURCE:
-                {
-                    job = std::make_shared<ResourceJobRequest>();
-                }
-                break;
-                case JOB_TYPE_REFINERY:
-                {
-                    job = std::make_shared<JobRequest>();
-                }
-                break;
-                default:
-                {
-                    job = std::make_shared<JobRequest>();
-                }
+                continue;
             }
 
             job->ReadAttributes(xmlNode, root);

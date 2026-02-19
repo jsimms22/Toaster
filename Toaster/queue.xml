@@ -1,11 +1,6 @@
 <RequestList>
+    <Request GUID="{D1043333-1782-4AE5-A58C-00A102FFC43D}" Priority="4" Status="5" Type="30" Worker="leaf" Requester="leaf" GameHandle="Aim_Optional" Designation="Barracks" Requirements="Lots of bunks" Zone="anywhere"/>
+    <Request GUID="{1709A27D-FEC1-4C9F-BAE6-138706EAE343}" Priority="4" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="aim" ComponentList="asdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TEST"/>
     <Request GUID="{D1043333-1782-4AE5-A58C-00A102FFC43D}" Priority="4" Status="5" Type="30" Worker="leaf" Requester="aimx83" GameHandle="Aim_Optional" Designation="Barracks" Requirements="Lots of bunks" Zone="anywhere"/>
-    <Request GUID="{4DB5509A-34D8-475C-B748-A8B654C55A00}" Priority="3" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="log test" Quantity="1" Quality="600-700"/>
-    <Request GUID="{6D365656-055F-4E31-9FDF-931C81CBBB97}" Priority="3" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="AIM" ComponentList="list test"/>
-    <Request GUID="{86D04D3C-17C3-43B0-89F7-1F1A29B60A41}" Priority="3" Status="1" Type="40" Worker="" Requester="aimx83" GameHandle="aim" ResourceState="refined_mineable" ResourceList="copper" Quality="800-900"/>
-    <Request GUID="{CFD7EDCF-0421-4606-B112-D95A9C6F0656}" Priority="2" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="Aim_Optional" Description="Rifle" Quantity="10" Quality="600-700"/>
-    <Request GUID="{663D3C20-226E-4376-ABAF-79D82B185062}" Priority="2" Status="1" Type="20" Worker="" Requester="aimx83" GameHandle="aim" Description="crash test" Quantity="1" Quality="500-600"/>
-    <Request GUID="{4F47352F-379E-4942-B555-4DD97C63190B}" Priority="1" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="test_comp" ComponentList="test_comp"/>
-    <Request GUID="{7413B732-0B10-4D5C-919C-7DABFDBC9101}" Priority="1" Status="1" Type="40" Worker="" Requester="aimx83" GameHandle="aim" ResourceState="mineable" ResourceList="hadanite x 500
-aphorite x 250" Quality="600-700"/>
+    <Request GUID="{1709A27D-FEC1-4C9F-BAE6-138706EAE343}" Priority="4" Status="1" Type="60" Worker="" Requester="aimx83" GameHandle="aim" ComponentList="asdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TESTasdasdaSDD PERFORMANCE TEST"/>
 </RequestList>

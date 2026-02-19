@@ -5,6 +5,7 @@
 #include "JobQueue.h"
 #include "Resource.h"
 
+#include "JobRequestFactory.h"
 #include "RequestDlg.h"
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
@@ -16,10 +17,7 @@
 #include <guiddef.h>
 
 ToasterBot::ToasterBot(dpp::cluster* cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug)
-    : m_cluster{ cluster }, m_clusterId{ clusterId }, m_spQueue{ spQueue }, m_debug{ bDebug }, m_iShardCount{ 0 }
-{
-
-}
+    : m_cluster{ cluster }, m_clusterId{ clusterId }, m_spQueue{ spQueue }, m_debug{ bDebug }, m_iShardCount{ 0 } { }
 
 void ToasterBot::onReady(const dpp::ready_t& event)
 {
@@ -60,7 +58,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
     if (event.command.get_command_name() == Command_MyRequests)
     {
         const dpp::user author = event.command.get_issuing_user();
-        const std::string header = "Your current requests (ordered by priority)";
+        const std::string header = "Your current requests (ordered by priority):";
         if (m_spQueue->GetQueueSize() == 0)
         {
             dpp::embed embed;
@@ -147,14 +145,15 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         }
         else if (strCmdID == Option_RefineryJob)
         {
-            CraftRequestDlg modal;
+            RefineryRequestDlg modal;
             event.dialog(modal);
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name() + " with cmd option " + strCmdID);
     }
     else if (event.command.get_command_name() == Command_ModifyRequest)
     {
+        const dpp::snowflake guild = event.command.guild_id;
         const dpp::user author = event.command.get_issuing_user();
         const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
         const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
@@ -162,6 +161,15 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
         if (!job)
         {
+            event.reply(dpp::message("Could not find id: " + strJobID).set_flags(dpp::m_ephemeral));
+            m_cluster->log(dpp::ll_warning, author.username + " could not find " + strJobID + " to handle cmd " + strCmdID);
+            return;
+        }
+        // Check for permissions to edit a job request
+        else if (author.username != job->GetAuthor() /*|| todo get permissions list */)
+        {
+            event.reply(dpp::message("You do not have permissions to modify: " + strJobID).set_flags(dpp::m_ephemeral));
+            m_cluster->log(dpp::ll_warning, author.username + " attempted to " + strCmdID  + " job " + strJobID);
             return;
         }
 
@@ -189,15 +197,23 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         }
         else if (strCmdID == Option_Delete)
         {
-            const dpp::user author = event.command.get_issuing_user();
+            const std::string jobDetails = job->PrintJobDetails();
             const bool result = m_spQueue->DeleteJobByGUID(strJobID);
+            if (!result)
+            {
+                event.reply(dpp::message("Failed to delete id: " + strJobID).set_flags(dpp::m_ephemeral));
+                m_cluster->log(dpp::ll_warning, author.username + " failed to delete " + strJobID);
+            }
 
-            const std::string header = author.username + " deleted job request: \n";
-            event.reply(dpp::message(header + strJobID).set_flags(dpp::m_ephemeral));
-
+            event.reply(dpp::message("Deleted job request:\n\n" + jobDetails).set_flags(dpp::m_ephemeral));
             m_spQueue->SaveQueueToFile();
-
             m_cluster->log(dpp::ll_warning, author.username + " deleted " + strJobID);
+
+            if (author.username != job->GetAuthor() || m_debug)
+            {
+                const std::string strNotifyUser = "Request **" + strJobID + "** has been deleted by " + author.username + ":\n\n";
+                NotifyIssuerMsg(author, event, strNotifyUser + jobDetails);
+            }
         }
     }
     else if (event.command.get_command_name() == Command_ShowRequest)
@@ -206,142 +222,111 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
 
         const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
-        if (job)
-        {
-            const std::string header = "Here is the request";
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(job->PrintJobDetails())
-                .set_color(0x3498db);
+        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
 
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-        else
+        if (!job)
         {
             event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
+            return;
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        dpp::embed embed;
+        embed.set_title("Here is the request:")
+            .set_description(job->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
     }
 }
 
 void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 {
-    if (event.custom_id == CraftRequestDlg::modalID)
+    if (event.custom_id == CraftRequestDlg::modalID || 
+        event.custom_id == BuildRequestDlg::modalID ||
+        event.custom_id == ComponentRequestDlg::modalID ||
+        event.custom_id == ResourceRequestDlg::modalID ||
+        event.custom_id == RefineryRequestDlg::modalID)
     {
         const dpp::user author = event.command.get_issuing_user();
 
         const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strDesc = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-        const std::string strQuantity = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-        const std::string strQuality = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-        const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+        // These parameters are input that depend on the dialog form's order as defined by the type of the job
+        const std::string strParam1 = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+        const std::string strParam2 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+        const std::string strParam3 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+        const std::string strParam4 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
-        auto jobCraft = std::make_shared<CraftingJobRequest>();
-        jobCraft->SetAuthor(author.username);
-        jobCraft->SetSCHandle(strSCHandle);
-        jobCraft->SetItemDesc(strDesc);
-        jobCraft->SetQuantity(std::stoull(strQuantity));
-        jobCraft->SetQualityThres(strQuality);
-        jobCraft->SetPriority(JobRequest::StringToPriority(strPriority));
+        std::string jobDetails;
+        if (event.custom_id == CraftRequestDlg::modalID)
+        {
+            std::shared_ptr<CraftingJobRequest> jobCraft = std::make_shared<CraftingJobRequest>();
+            jobCraft->SetAuthor(author.username);
+            jobCraft->SetSCHandle(strSCHandle);
+            jobCraft->SetItemDesc(strParam1);
+            jobCraft->SetQuantity(strParam2);
+            jobCraft->SetQualityThres(strParam3);
+            jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
+            jobDetails = jobCraft->PrintJobDetails();
+            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobCraft->GetID()));
+            m_spQueue->AddToQueue(std::move(jobCraft));
+        }
+        else if (event.custom_id == BuildRequestDlg::modalID)
+        {
+            std::shared_ptr<BuildingJobRequest> jobBuild = std::make_shared<BuildingJobRequest>();
+            jobBuild->SetAuthor(author.username);
+            jobBuild->SetSCHandle(strSCHandle);
+            jobBuild->SetBuildDesign(strParam1);
+            jobBuild->SetBuildRequirments(strParam2);
+            jobBuild->SetBuildZone(strParam3);
+            jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
+            jobDetails = jobBuild->PrintJobDetails();
+            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobBuild->GetID()));
+            m_spQueue->AddToQueue(std::move(jobBuild));
+        }
+        else if (event.custom_id == ComponentRequestDlg::modalID)
+        {
+            std::shared_ptr<ComponentJobRequest> jobComp = std::make_shared<ComponentJobRequest>();
+            jobComp->SetAuthor(author.username);
+            jobComp->SetSCHandle(strSCHandle);
+            jobComp->SetComponentList(strParam1);
+            jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
+            jobDetails = jobComp->PrintJobDetails();
+            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobComp->GetID()));
+            m_spQueue->AddToQueue(std::move(jobComp));
+        }
+        else if (event.custom_id == ResourceRequestDlg::modalID)
+        {
+            std::shared_ptr<ResourceJobRequest> jobRes = std::make_shared<ResourceJobRequest>();
+            jobRes->SetAuthor(author.username);
+            jobRes->SetSCHandle(strSCHandle);
+            jobRes->SetResourceState(ResourceJobRequest::StringToState(strParam1));
+            jobRes->SetResourcelist(strParam2);
+            jobRes->SetQualityThres(strParam3);
+            jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
+            jobDetails = jobRes->PrintJobDetails();
+            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRes->GetID()));
+            m_spQueue->AddToQueue(std::move(jobRes));
+        }
+        else if (event.custom_id == RefineryRequestDlg::modalID)
+        {
+            std::shared_ptr<RefineryJobRequest> jobRefine = std::make_shared<RefineryJobRequest>();
+            jobRefine->SetAuthor(author.username);
+            jobRefine->SetSCHandle(strSCHandle);
+            jobRefine->SetResourceState(RefineryJobRequest::StringToState(strParam1));
+            jobRefine->SetResourcelist(strParam2);
+            jobRefine->SetRefinery(strParam3);
+            jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
+            jobDetails = jobRefine->PrintJobDetails();
+            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRefine->GetID()));
+            m_spQueue->AddToQueue(std::move(jobRefine));
+        }
 
-        const std::string header = author.username + " submitted job request: \n";
         dpp::embed embed;
-        embed.set_title(header)
-            .set_description(jobCraft->PrintJobDetails())
+        embed.set_title("Submitted job request:")
+            .set_description(jobDetails)
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-
-        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobCraft->GetID()));
-
-        m_spQueue->AddToQueue(std::move(jobCraft));
-    }
-    else if (event.custom_id == BuildRequestDlg::modalID)
-    {
-        const dpp::user author = event.command.get_issuing_user();
-
-        const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strDesign = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-        const std::string strRequires = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-        const std::string strZone = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-        const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
-
-        auto jobBuild = std::make_shared<BuildingJobRequest>();
-        jobBuild->SetAuthor(author.username);
-        jobBuild->SetSCHandle(strSCHandle);
-        jobBuild->SetBuildDesign(strDesign);
-        jobBuild->SetBuildRequirments(strRequires);
-        jobBuild->SetBuildZone(strZone);
-        jobBuild->SetPriority(JobRequest::StringToPriority(strPriority));
-
-        const std::string header = author.username + " submitted job request: \n";
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(jobBuild->PrintJobDetails())
-            .set_color(0x3498db);
-
-        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-
-        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobBuild->GetID()));
-
-        m_spQueue->AddToQueue(std::move(jobBuild));
-    }
-    else if (event.custom_id == ComponentRequestDlg::modalID)
-    {
-        const dpp::user author = event.command.get_issuing_user();
-
-        const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strCompList = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-        const std::string strPriority = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-
-        auto jobComp = std::make_shared<ComponentJobRequest>();
-        jobComp->SetAuthor(author.username);
-        jobComp->SetSCHandle(strSCHandle);
-        jobComp->SetComponentList(strCompList);
-        jobComp->SetPriority(JobRequest::StringToPriority(strPriority));
-
-        const std::string header = author.username + " submitted job request: \n";
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(jobComp->PrintJobDetails())
-            .set_color(0x3498db);
-
-        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-
-        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobComp->GetID()));
-
-        m_spQueue->AddToQueue(std::move(jobComp));
-    }
-    else if (event.custom_id == ResourceRequestDlg::modalID)
-    {
-        const dpp::user author = event.command.get_issuing_user();
-
-        const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strResState = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-        const std::string strResList = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-        const std::string strQuality = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-        const std::string strPriority = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
-
-        auto jobRes = std::make_shared<ResourceJobRequest>();
-        jobRes->SetAuthor(author.username);
-        jobRes->SetSCHandle(strSCHandle);
-        jobRes->SetResourceState(ResourceJobRequest::StringToState(strResState));
-        jobRes->SetResourcelist(strResList);
-        jobRes->SetQualityThres(strQuality);
-        jobRes->SetPriority(JobRequest::StringToPriority(strPriority));
-
-        const std::string header = author.username + " submitted job request: \n";
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(jobRes->PrintJobDetails())
-            .set_color(0x3498db);
-
-        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-
-        m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRes->GetID()));
-
-        m_spQueue->AddToQueue(std::move(jobRes));
     }
     else if (event.custom_id == EditRequestDlg::modalID)
     {
@@ -355,12 +340,19 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         const std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
+        if (!job)
+        {
+            m_cluster->log(dpp::ll_error, author.username + " attempted to edit " + strID);
+            return;
+        }
+
+        const std::string strOldJobDetails = job->PrintJobDetails();
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
             std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
             craft->SetSCHandle(strSCHandle);
             craft->SetItemDesc(strParam1);
-            craft->SetQuantity(std::stoull(strParam2));
+            craft->SetQuantity(strParam2);
         }
         else if (job->SupportsType(JOB_TYPE_BUILDING))
         {
@@ -384,24 +376,27 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         }
         else if (job->SupportsType(JOB_TYPE_REFINERY))
         {
+            std::shared_ptr<RefineryJobRequest> jobRefine = std::dynamic_pointer_cast<RefineryJobRequest>(job);
+            jobRefine->SetSCHandle(strSCHandle);
+            jobRefine->SetResourcelist(strParam1);
+            jobRefine->SetRefinery(strParam2);
         }
 
-        if (job)
-        {
-            const std::string header = "Edited job request : \n";
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(job->PrintJobDetails())
-                .set_color(0x3498db);
+        const std::string strNewJobDetails = job->PrintJobDetails();
+        dpp::embed embed;
+        embed.set_title("Edited job:")
+            .set_description(strNewJobDetails)
+            .set_color(0x3498db);
 
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-            m_spQueue->SaveQueueToFile();
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        m_spQueue->SaveQueueToFile();
 
-            m_cluster->log(dpp::ll_info, author.username + " edited " + strID);
-        }
-        else
+        m_cluster->log(dpp::ll_info, author.username + " edited " + strID);
+
+        if ((author.username != job->GetAuthor() && strOldJobDetails != strNewJobDetails) || m_debug)
         {
-            m_cluster->log(dpp::ll_error, author.username + " attempted to edit " + strID);
+            const std::string strNotifyUser = "Request **" + utils::GuidToStringNoBrackets(job->GetID()) + "** has been edited by " + author.username + ":\n\n";
+            NotifyIssuerMsg(author, event, strNotifyUser + "New Job Details:\n" + strNewJobDetails);
         }
     }
     else if (event.custom_id == AssignRequestDlg::modalID)
@@ -413,21 +408,29 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         const std::string strStatus = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
-        if (job)
-        {
-            job->SetWorker(strWorker);
-            job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
-
-            const std::string header = author.username + " assigned job request: \n";
-            event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
-
-            m_spQueue->SaveQueueToFile();
-
-            m_cluster->log(dpp::ll_info, author.username + " assigned " + strID + " to " + strWorker);
-        }
-        else
+        if (!job)
         {
             m_cluster->log(dpp::ll_error, author.username + " attempted to assign " + strID + " to a worker");
+            return;
+        }
+
+        job->SetWorker(strWorker);
+        job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+
+        dpp::embed embed;
+        embed.set_title("Assigned job:")
+            .set_description(job->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        m_spQueue->SaveQueueToFile();
+
+        m_cluster->log(dpp::ll_info, author.username + " assigned " + strID + " to " + strWorker);
+
+        if (author.username != job->GetAuthor() || m_debug)
+        {
+            const std::string strNotifyUser = "Your request has been assigned to **" + strWorker + "** to by " + author.username + ":\n\n";
+            NotifyIssuerMsg(author, event, strNotifyUser + job->PrintJobDetails());
         }
     }
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
@@ -438,20 +441,28 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         const std::string strStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
-        if (job)
-        {
-            job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
-
-            const std::string header = author.username + " updated job status: \n";
-            event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
-
-            m_spQueue->SaveQueueToFile();
-
-            m_cluster->log(dpp::ll_info, author.username + " updated " + strID + " status to " + strStatus);
-        }
-        else
+        if (!job)
         {
             m_cluster->log(dpp::ll_error, author.username + " attempted to update " + strID + " to " + strStatus);
+        }
+
+        const std::string strOldStatus = JobRequest::StatusToString(job->GetStatus());
+        job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+
+        dpp::embed embed;
+        embed.set_title("Status changed for job:")
+            .set_description(job->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        m_spQueue->SaveQueueToFile();
+
+        m_cluster->log(dpp::ll_info, author.username + " updated " + strID + " status to " + strStatus);
+
+        if ((author.username != job->GetAuthor() && strOldStatus != strStatus) || m_debug)
+        {
+            const std::string strNotifyUser = "Your request's status has moved from **" + strOldStatus + "** to **" + strStatus + "** by " + author.username + ":\n\n";
+            NotifyIssuerMsg(author, event, strNotifyUser + job->PrintJobDetails());
         }
     }
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
@@ -462,20 +473,39 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         const std::string strPriority = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
-        if (job)
-        {
-            job->SetPriority(JobRequest::StringToPriority(strPriority));
-
-            const std::string header = author.username + " updated job priority: \n";
-            event.reply(dpp::message(header + job->PrintJobDetails()).set_flags(dpp::m_ephemeral));
-
-            m_spQueue->SaveQueueToFile();
-
-            m_cluster->log(dpp::ll_info, author.username + " changed priority for " + strID + " to " + strPriority);
-        }
-        else
+        if (!job)
         {
             m_cluster->log(dpp::ll_error, author.username + " attempted to change priority for " + strID + " to " + strPriority);
+            return;
+        }
+
+        const std::string strOldPriority = JobRequest::PriorityToString(job->GetPriority());
+        job->SetPriority(JobRequest::StringToPriority(strPriority));
+
+        dpp::embed embed;
+        embed.set_title("Priority changed for job:")
+            .set_description(job->PrintJobDetails())
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        m_spQueue->SaveQueueToFile();
+
+        m_cluster->log(dpp::ll_info, author.username + " changed priority for " + strID + " to " + strPriority);
+
+        if ((author.username != job->GetAuthor() && strOldPriority != strPriority) || m_debug)
+        {
+            const std::string strNotifyUser = "Your request's priority has moved from **" + strOldPriority + "** to **" + strPriority + "** by " + author.username + ":\n\n";
+            NotifyIssuerMsg(author, event, strNotifyUser + job->PrintJobDetails());
         }
     }
+}
+
+void ToasterBot::NotifyIssuerMsg(const dpp::user& user, const dpp::event_dispatch_t& event, const std::string& msg)
+{
+    m_cluster->direct_message_create(user.id, dpp::message(msg), [user, cluster = m_cluster](const dpp::confirmation_callback_t& callback) {
+        if (callback.is_error())
+            cluster->log(dpp::ll_error, "Error sending private message to user: " + user.username);
+        else
+            cluster->log(dpp::ll_info, "Sent private message to user: " + user.username);
+        });
 }

@@ -1,10 +1,11 @@
 #pragma once
-#include "Common.h"
 #include "JobRequest.h"
+// Microsoft
+#include <guiddef.h>
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 class JobQueue
 {

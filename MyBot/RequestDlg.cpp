@@ -1,10 +1,13 @@
 #include "RequestDlg.h"
-#include "Resource.h"
+
 #include "BotUtility.h"
+
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
+
+#include <dpp/unicode_emoji.h>
 
 const std::string CraftRequestDlg::modalID = "CreateRequestModal";
 const std::string CraftRequestDlg::modalDesc = "Submit Item Crafting Request";

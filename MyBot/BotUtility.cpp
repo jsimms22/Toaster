@@ -1,5 +1,9 @@
 #include "BotUtility.h"
 
+#include <objbase.h>
+
+#include <fstream>
+
 namespace utils
 {
     std::string LoadBotToken(const std::string& filename)

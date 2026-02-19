@@ -1,5 +1,7 @@
 #include "ComponentJobRequest.h"
 
+#include <sstream>
+
 namespace xmlRequest
 {
     const char* pszXMLCompList{ "ComponentList" };

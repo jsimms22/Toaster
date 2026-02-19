@@ -1,5 +1,7 @@
 #include "CraftingJobRequest.h"
 
+#include <sstream>
+
 namespace xmlRequest
 {
     const char* pszXMLItemDesc{ "Description" };

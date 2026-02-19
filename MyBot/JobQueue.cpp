@@ -1,15 +1,20 @@
 #include "JobQueue.h"
+
 #include "BotUtility.h"
+
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 
+#include "tinyxml2.h"
+
 #include <algorithm>
 #include <iostream>
-#include <optional>
-#include <stdexcept>
 #include <iterator>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
 
 namespace xmlQueue
 {
@@ -143,6 +148,8 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& searchGUID
             return job;
         }
     }
+
+    return {};
 }
 
 bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)

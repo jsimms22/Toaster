@@ -1,5 +1,7 @@
 #include "BuildingJobRequest.h"
 
+#include <sstream>
+
 namespace xmlRequest
 {
     const char* pszXMLBuildDesignation{ "Designation" };

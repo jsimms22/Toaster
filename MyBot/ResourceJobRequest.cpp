@@ -1,5 +1,7 @@
 #include "ResourceJobRequest.h"
 
+#include <sstream>
+
 namespace xmlRequest
 {
     const char* pszXMLResourceState{ "ResourceState" };

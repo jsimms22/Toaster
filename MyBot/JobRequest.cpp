@@ -1,11 +1,11 @@
 #include "JobRequest.h"
+
 #include "BotUtility.h"
 
-#include <dpp/dpp.h>
-
-#include <string>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 
 namespace xmlRequest
 {

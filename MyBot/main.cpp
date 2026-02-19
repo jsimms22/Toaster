@@ -1,0 +1,95 @@
+#include "Resource.h"
+
+#include "BotUtility.h"
+#include "JobQueue.h"
+#include "Toaster.h"
+// DISCORD++
+#include <dpp/dpp.h>
+// SPDLOG
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+// STD Library
+#include <memory>
+#include <exception>
+#include <string>
+
+auto main() -> int
+{
+    const std::string log_name{ "mybot.log" };
+
+    // Initialize and setup spdlog
+    std::shared_ptr<spdlog::logger> log;
+    spdlog::init_thread_pool(8192, 2);
+
+    std::vector<spdlog::sink_ptr> sinks;
+    auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_name, 1024 * 1024 * 5, 10);
+    sinks.push_back(stdout_sink);
+    sinks.push_back(rotating);
+    
+    log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(log);
+    log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
+    log->set_level(spdlog::level::level_enum::debug);
+
+    // Rebuild our queue from persistence (for now just xml, eventually an actual DB)
+    std::shared_ptr<JobQueue> spQueue = std::make_shared<JobQueue>();
+
+    const std::string BOT_TOKEN{ utils::LoadBotToken("../token.txt") };
+
+    while (true)
+    {
+        dpp::cluster bot{ BOT_TOKEN };
+
+        /* Integrate spdlog logger to D++ log events */
+        bot.on_log([&bot, &log](const dpp::log_t& event) {
+            switch (event.severity) {
+            case dpp::ll_trace:
+                log->trace("{}", event.message);
+                break;
+            case dpp::ll_debug:
+                log->debug("{}", event.message);
+                break;
+            case dpp::ll_info:
+                log->info("{}", event.message);
+                break;
+            case dpp::ll_warning:
+                log->warn("{}", event.message);
+                break;
+            case dpp::ll_error:
+                log->error("{}", event.message);
+                break;
+            case dpp::ll_critical:
+            default:
+                log->critical("{}", event.message);
+                break;
+            }
+            });
+
+        ToasterBot toaster(&bot, 0, spQueue, true);
+
+        bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });
+        bot.on_interaction_create([&toaster](const dpp::interaction_create_t& event) { toaster.onInteractionCreate(event); });
+        bot.on_form_submit([&toaster](const dpp::form_submit_t& event) { toaster.onFormSubmit(event); });
+        bot.on_ready([&toaster](const dpp::ready_t& event) { toaster.onReady(event); });
+
+        // Start bot
+        try
+        {
+            bot.start(dpp::st_wait);
+        }
+        catch (const std::exception& e)
+        {
+            bot.log(dpp::ll_error, "Exiting unexpectedly: " + std::string(e.what()));
+        }
+
+        // Reconnection delay to prevent hammering discord
+        Sleep(50);
+    }
+
+    spQueue->SaveQueueToFile();
+
+    return 0;
+}

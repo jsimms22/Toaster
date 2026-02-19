@@ -1,9 +1,11 @@
 #pragma once
-#include "Common.h"
 #include "JobRequest.h"
+#include "Resource.h"
 
-#include <string>
+#include <dpp/appcommand.h>
+
 #include <memory>
+#include <string>
 
 class CraftRequestDlg : public dpp::interaction_modal_response
 {

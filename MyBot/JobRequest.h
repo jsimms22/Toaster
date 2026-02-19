@@ -1,8 +1,11 @@
 #pragma once
-#include "Common.h"
+#include "Resource.h"
+#include "tinyxml2.h"
 
 #include <string>
 #include <cstdlib>
+// Microsoft
+#include <guiddef.h>
 
 class JobRequest
 {

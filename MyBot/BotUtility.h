@@ -1,7 +1,9 @@
 #pragma once
-#include "Common.h"
+#include "Resource.h"
 
 #include <string>
+// Microsoft
+#include <guiddef.h>
 
 namespace utils
 {

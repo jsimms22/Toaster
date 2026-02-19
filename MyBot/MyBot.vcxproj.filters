@@ -27,16 +27,16 @@
     <Filter Include="Source Files\Requests">
       <UniqueIdentifier>{391dd2c9-009f-4463-ac63-cfab535cf6d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{e359606a-b51f-4d9f-8dd2-6f10663f8adc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MyBot.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BotUtility.cpp">
@@ -72,10 +72,13 @@
     <ClCompile Include="Command.cpp">
       <Filter>Source Files\Commands</Filter>
     </ClCompile>
+    <ClCompile Include="Toaster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
-      <Filter>Header Files\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="tinyxml2.h">
       <Filter>ThirdParty</Filter>
@@ -84,9 +87,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="JobQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MyBot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BuildingJobRequest.h">
@@ -113,7 +113,7 @@
     <ClInclude Include="Command.h">
       <Filter>Header Files\Commands</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
+    <ClInclude Include="Toaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

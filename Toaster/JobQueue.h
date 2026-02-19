@@ -20,7 +20,8 @@ public:
     const std::string PrintQueue() const; 
     const std::string PrintQueueByType(const std::size_t filter) const;
     const std::string PrintQueueByUser(const std::string username, const std::size_t filter) const;
-    const std::string PrintQueueByWorker(const std::string worker) const;
+    const std::string PrintQueueByWorker(const std::string worker) const; 
+    const std::string PrintFirstAssignment(const std::string worker) const;
 
     void AddToQueue(std::shared_ptr<JobRequest> job)
     {

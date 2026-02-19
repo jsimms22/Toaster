@@ -75,6 +75,7 @@ auto main() -> int
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
         bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });
         bot.on_interaction_create([&toaster](const dpp::interaction_create_t& event) { toaster.onInteractionCreate(event); });
+        bot.on_button_click([&toaster](const dpp::button_click_t& event) { toaster.onButtonClick(event); });
         bot.on_form_submit([&toaster](const dpp::form_submit_t& event) { toaster.onFormSubmit(event); });
         bot.on_ready([&toaster](const dpp::ready_t& event) { toaster.onReady(event); });
 

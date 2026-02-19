@@ -78,10 +78,11 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 
         m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
     }
-    else if (event.command.get_command_name() == Command_MyAssignments)
+    else if (event.command.get_command_name() == Command_MyAssignments ||
+             event.command.get_command_name() == Command_MyTopAssignment)
     {
         const dpp::user author = event.command.get_issuing_user();
-        const std::string header = "Your Assignments:";
+        const std::string header = event.command.get_command_name() == Command_MyTopAssignment ? "Top Assigment (by priority):" : "Your Assignments:";
         if (m_spQueue->GetQueueSize() == 0)
         {
             dpp::embed embed;
@@ -91,7 +92,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 
             event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
-        else
+        else if (event.command.get_command_name() == Command_MyAssignments)
         {
             const std::string result = m_spQueue->PrintQueueByWorker(author.username);
             dpp::embed embed;
@@ -100,6 +101,47 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
                 .set_color(0x3498db);
 
             event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        }
+        else if (event.command.get_command_name() == Command_MyTopAssignment)
+        {
+            const std::string result = m_spQueue->PrintFirstAssignment(author.username);
+            dpp::embed embed;
+            embed.set_title(header)
+                .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
+                .set_color(0x3498db);
+
+            dpp::component button1 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Complete")
+                .set_style(dpp::cos_success)
+                .set_id(Button_Complete);
+
+            dpp::component button2 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Add Note")
+                .set_style(dpp::cos_primary)
+                .set_id(Button_Note);
+
+            dpp::component button3 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Unassign")
+                .set_style(dpp::cos_primary)
+                .set_id(Button_Unassign);
+
+            dpp::component button4 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Delete")
+                .set_style(dpp::cos_danger)
+                .set_id(Button_Delete);
+
+            dpp::component row = dpp::component()
+                .set_type(dpp::cot_action_row)
+                .add_component(button1)
+                .add_component(button2)
+                .add_component(button3)
+                .add_component(button4);
+
+            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral).add_component(row));
         }
 
         m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
@@ -532,6 +574,26 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             const std::string strNotifyUser = "Your request's priority has moved from **" + strOldPriority + "** to **" + strPriority + "** by " + author.username + ":\n\n";
             NotifyIssuerMsg(author, event, strNotifyUser + job->PrintJobDetails());
         }
+    }
+}
+
+void ToasterBot::onButtonClick(const dpp::button_click_t& event)
+{
+    if (event.custom_id == Button_Complete)
+    {
+        m_cluster->log(dpp::ll_info, Button_Complete);
+    }
+    else if (event.custom_id == Button_Note)
+    {
+        m_cluster->log(dpp::ll_info, Button_Note);
+    }
+    else if (event.custom_id == Button_Unassign)
+    {
+        m_cluster->log(dpp::ll_info, Button_Unassign);
+    }
+    else if (event.custom_id == Button_Delete)
+    {
+        m_cluster->log(dpp::ll_info, Button_Delete);
     }
 }
 

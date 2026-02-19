@@ -37,6 +37,7 @@ constexpr const char* Command_ShowRequest	{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue		{ "show_queue" };
 constexpr const char* Command_MyAssignments { "my_assignments"};
+constexpr const char* Command_MyTopAssignment{ "top_assignment" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
@@ -61,3 +62,10 @@ constexpr const char* Parameter_Cmd{ "cmd" };
 constexpr const char* Parameter_Type{ "type" };
 constexpr const char* Parameter_Id{ "id" };
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/
+
+/*--------------------------------BUTTON IDS------------------------------------*/
+constexpr const char* Button_Complete{ "btn_complete" };
+constexpr const char* Button_Note{ "btn_note" };
+constexpr const char* Button_Unassign{ "btn_unassign" };
+constexpr const char* Button_Delete{ "btn_delete" };
+/*--------------------------------BUTTON IDS-------------------------------------*/

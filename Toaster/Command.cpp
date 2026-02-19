@@ -57,6 +57,10 @@ BotModule::CommandList BotModule::commands
         dpp::slashcommand(Command_MyAssignments, "Show a list of my current assignments.", {})
     },
     {
+        Command_MyTopAssignment,
+        dpp::slashcommand(Command_MyTopAssignment, "Show my highest priority assignment.", {})
+    },
+    {
         Command_Hello,
         dpp::slashcommand(Command_Hello, "Hello there!", {})
     }

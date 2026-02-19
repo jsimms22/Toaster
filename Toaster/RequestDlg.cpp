@@ -23,7 +23,7 @@ const std::string ResourceRequestDlg::modalID = "ResourceRequestModal";
 const std::string ResourceRequestDlg::modalDesc = "Submit Resource Collection Request";
 
 const std::string RefineryRequestDlg::modalID = "RefineryRequestModal";
-const std::string RefineryRequestDlg::modalDesc = "Submit Refining Job";
+const std::string RefineryRequestDlg::modalDesc = "Submit Refinery Job";
 
 const std::string AssignRequestDlg::modalID = "AssignRequestModal";
 const std::string AssignRequestDlg::modalDesc = "Assign Job Request To Worker";

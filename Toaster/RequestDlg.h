@@ -165,7 +165,7 @@ private:
 	dpp::component StatusUpdateSelect;
 
 	std::shared_ptr<JobRequest> m_job;
-	const std::vector<std::string> m_vWorkers{ "aim","leaf","stealth","riase","elisa" };
+	const std::vector<std::string> m_vWorkers{ "aimx83", "mike.d.spectre", "linealign", "leaf1318" };
 };
 
 class StatusChangeRequestDlg : public dpp::interaction_modal_response

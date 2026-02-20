@@ -104,7 +104,8 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         }
         else if (event.command.get_command_name() == Command_MyTopAssignment)
         {
-            const std::string result = m_spQueue->PrintFirstAssignment(author.username);
+            const auto& job = m_spQueue->FirstAssignment(author.username);
+            const std::string result = job->PrintJobDetails();
             dpp::embed embed;
             embed.set_title(header)
                 .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
@@ -114,25 +115,30 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
                 .set_type(dpp::cot_button)
                 .set_label("Complete")
                 .set_style(dpp::cos_success)
-                .set_id(Button_Complete);
+                .set_id(Button_Complete)
+                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
+            button1.value = utils::GuidToStringNoBrackets(job->GetID());
 
             dpp::component button2 = dpp::component()
                 .set_type(dpp::cot_button)
                 .set_label("Add Note")
                 .set_style(dpp::cos_primary)
-                .set_id(Button_Note);
+                .set_id(Button_Note)
+                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
 
             dpp::component button3 = dpp::component()
                 .set_type(dpp::cot_button)
                 .set_label("Unassign")
                 .set_style(dpp::cos_primary)
-                .set_id(Button_Unassign);
+                .set_id(Button_Unassign)
+                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
 
             dpp::component button4 = dpp::component()
                 .set_type(dpp::cot_button)
                 .set_label("Delete")
                 .set_style(dpp::cos_danger)
-                .set_id(Button_Delete);
+                .set_id(Button_Delete)
+                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
 
             dpp::component row = dpp::component()
                 .set_type(dpp::cot_action_row)
@@ -238,7 +244,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             return;
         }
         // Check for permissions to edit a job request
-        else if (author.username != job->GetAuthor() /*|| todo get permissions list */)
+        else if (author.username != job->GetAuthor() && !m_debug/*|| todo get permissions list */)
         {
             event.reply(dpp::message("You do not have permissions to modify: " + strJobID).set_flags(dpp::m_ephemeral));
             m_cluster->log(dpp::ll_warning, author.username + " attempted to " + strCmdID  + " job " + strJobID);
@@ -571,8 +577,19 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 
         if ((author.username != job->GetAuthor() && strOldPriority != strPriority) || m_debug)
         {
+            dpp::user* notifyUser = nullptr;
+            for (std::pair<dpp::snowflake, dpp::guild_member> member : event.command.get_guild().members)
+            {
+                if (member.second.get_user()->username == job->GetAuthor())
+                {
+                    notifyUser = member.second.get_user();
+                }
+            }
+
+            if (!notifyUser) return;
+
             const std::string strNotifyUser = "Your request's priority has moved from **" + strOldPriority + "** to **" + strPriority + "** by " + author.username + ":\n\n";
-            NotifyIssuerMsg(author, event, strNotifyUser + job->PrintJobDetails());
+            NotifyIssuerMsg(*notifyUser, event, strNotifyUser + job->PrintJobDetails());
         }
     }
 }
@@ -595,6 +612,8 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
     {
         m_cluster->log(dpp::ll_info, Button_Delete);
     }
+
+    event.reply(dpp::message("Currently prototyping buttons and interactions - this button does not do anything right not.").set_flags(dpp::m_ephemeral));
 }
 
 void ToasterBot::NotifyIssuerMsg(const dpp::user& user, const dpp::event_dispatch_t& event, const std::string& msg)

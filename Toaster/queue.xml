@@ -1,16 +1,4 @@
 <RequestList>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="30" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="20" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="30" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="40" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="30" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="20" Worker="aimx83" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="50" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="60" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="20" Worker="aimx83" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="60" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="20" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="20" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-    <Request Created="1771533248" LastEdit="1771534269" GUID="{094EFCB9-FB1D-4AF7-9349-6D64C9023971}" Priority="4" Status="3" Type="40" Worker="leaf" Requester="aimx83" GameHandle="aim" Description="rifle" Quantity="2" Quality="700-800"/>
-
+    <Request Created="1771554840" LastEdit="1771565467" GUID="{92BEBCB7-C178-4105-ADEB-3AA323F0471A}" Priority="2" Status="3" Type="60" Worker="aimx83" Requester="leaf1318" GameHandle="Leaf13" ComponentList="Vk-00"/>
+    <Request Created="1771544466" LastEdit="1771544500" GUID="{55FD19A7-EAFE-43BD-9A1F-E2BDA7EE6CEA}" Priority="1" Status="1" Type="20" Worker="aimx83" Requester="aimx83" GameHandle="aim" Description="test" Quantity="1" Quality="any"/>
 </RequestList>

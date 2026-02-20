@@ -172,6 +172,19 @@ const std::string JobQueue::PrintFirstAssignment(const std::string worker) const
     return {};
 }
 
+std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const std::string worker)
+{
+    for (std::shared_ptr<JobRequest>& job : m_vQueue)
+    {
+        if (job->GetWorker() == worker)
+        {
+            return job;
+        }
+    }
+
+    return {};
+}
+
 void JobQueue::SaveQueueToFile()
 {
     tinyxml2::XMLDocument doc;

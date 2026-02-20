@@ -178,7 +178,7 @@ void ComponentRequestDlg::InitializeControls()
     // Create a text box component
     ComponentListEdit.set_label("Component List")
         .set_type(dpp::cot_text)
-        .set_placeholder("")
+        .set_placeholder("Class / Size / System / Grade or Name / Qty")
         .set_min_length(1)
         .set_max_length(256)
         .set_required(true)

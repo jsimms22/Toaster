@@ -19,7 +19,7 @@ public:
 	void onInteractionCreate(const dpp::interaction_create_t& event);
 	void onFormSubmit(const dpp::form_submit_t& event);
 
-	void NotifyIssuerMsg(const dpp::user& user, const dpp::event_dispatch_t& event, const std::string& msg);
+	void NotifyIssuerMsg(const dpp::snowflake& userID, const dpp::event_dispatch_t& event, const std::string& msg);
 	
 private:
 	bool m_debug = false;
@@ -30,5 +30,9 @@ private:
 	dpp::cluster* m_cluster = nullptr;
 	std::uint32_t m_clusterId = 0;
 	std::uint32_t m_iShardCount = 0;
+	const std::unordered_map<dpp::snowflake, std::string_view> m_vWorkers = { std::pair(464542267395538944, "aimx83"),
+																			  std::pair(332728115430162444, "mike.d.spectre"),
+																			  std::pair(710847331871883294, "linealign"),
+																			  std::pair(195997205864120320, "leaf1318") };
 };
 

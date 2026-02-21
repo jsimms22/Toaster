@@ -72,9 +72,12 @@ void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
-std::string RefineryJobRequest::PrintJobDetails() const
+std::string RefineryJobRequest::PrintJobDetails(dpp::cluster* cluster) const
 {
-    std::string str = JobRequest::PrintJobDetails();
+    if (!cluster)
+        return {};
+
+    std::string str = JobRequest::PrintJobDetails(cluster);
     std::stringstream ss;
     ss << "**Resource Type**: " << RefineryJobRequest::StateToString(m_eResourceState) << std::endl;
     ss << "**Resource List**:\n" << m_strResourceList << std::endl;

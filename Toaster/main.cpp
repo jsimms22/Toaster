@@ -70,6 +70,9 @@ auto main() -> int
             }
             });
 
+        if (!(&bot))
+            return 1;
+
         ToasterBot toaster(&bot, 0, spQueue, true);
 
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });

@@ -2,6 +2,9 @@
 
 #include "BotUtility.h"
 
+#include <dpp/cache.h>
+#include <dpp/user.h>
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -88,8 +91,8 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlNode->SetAttribute(xmlRequest::pszXMLJobPriority, m_eJobPriority);
     xmlNode->SetAttribute(xmlRequest::pszXMLJobStatus, m_eJobStatus);
     xmlNode->SetAttribute(xmlRequest::pszXMLJobType, JobType());
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobWorker, m_userWorker.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_userAuthor.c_str());
+    xmlNode->SetAttribute(xmlRequest::pszXMLJobWorker, m_idWorker);
+    xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_idCustomer);
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestSCHandle, m_strSCHandle.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
@@ -119,10 +122,16 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
         m_id = utils::StringToGuid(jobGUID);
     }
 
-    const char* requestUser = xmlNode->Attribute(xmlRequest::pszXMLRequestUser);
-    if (requestUser)
+    const char* customerID = xmlNode->Attribute(xmlRequest::pszXMLRequestUser);
+    if (customerID)
     {
-        m_userAuthor = requestUser;
+        m_idCustomer = customerID;
+    }
+
+    const char* workerID = xmlNode->Attribute(xmlRequest::pszXMLJobWorker);
+    if (workerID)
+    {
+        m_idWorker = workerID;
     }
 
     const char* requestSCHandle = xmlNode->Attribute(xmlRequest::pszXMLRequestSCHandle);
@@ -142,22 +151,73 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
     {
         m_eJobStatus = static_cast<JobRequest::status>(std::stoi(jobStatus));
     }
-
-    const char* jobWorker = xmlNode->Attribute(xmlRequest::pszXMLJobWorker);
-    if (jobWorker)
-    {
-        m_userWorker = jobWorker;
-    }
 }
 
-std::string JobRequest::PrintJobDetails() const
+std::string JobRequest::PrintJobDetails(dpp::cluster* cluster) const
 {
+    if (!cluster)
+        return {};
+
     std::stringstream ss;
     ss << "**ID**: " << utils::GuidToStringNoBrackets(m_id) << std::endl;
+    ss << "**Customer**: " << GetCustomerName(cluster) << std::endl;
     ss << "**Type**: " << JobTypeToString() << std::endl;
     ss << "**Status**: " << StatusToString(m_eJobStatus) << std::endl;
     ss << "**Priority**: " << PriorityToString(m_eJobPriority) << std::endl;
     ss << "**Created**: <t:" << std::to_string(m_timeCreated) << ":F>\n";
     ss << "**Last Edit**: <t:" << std::to_string(m_timeLastEdit) << ":F>\n";
     return ss.str();
+}
+
+const std::string& JobRequest::GetCustomerName(dpp::cluster* cluster) const
+{
+    if (!cluster)
+        return {};
+
+    cluster->log(dpp::ll_info, "Retrieving discord name for id: " + m_idCustomer.str());
+
+    dpp::user* user = dpp::find_user(m_idCustomer);
+    if (user)
+    {
+        cluster->log(dpp::ll_info, "Found username: " + user->username);
+        return user->username;
+    }
+
+    std::string username;
+    cluster->user_get(m_idCustomer, [cluster, &username](const dpp::confirmation_callback_t& callback) {
+        if (!callback.is_error()) {
+            dpp::user user = std::get<dpp::user>(callback.value);
+            cluster->log(dpp::ll_info, "Found username: " + user.username);
+            username = user.username;
+        }
+        });
+
+    return username;
+}
+
+const std::string& JobRequest::GetWorkerName(dpp::cluster* cluster) const
+{
+    if (!cluster)
+        return {};
+
+    cluster->log(dpp::ll_info, "Retrieving discord name for id: " + m_idWorker.str());
+
+    dpp::user* user = dpp::find_user(m_idWorker);
+    if (user)
+    {
+        cluster->log(dpp::ll_info, "Found username: " + user->username);
+        return user->username;
+    }
+
+    std::string username;
+    cluster->user_get(m_idWorker, [cluster, &username](const dpp::confirmation_callback_t& callback) 
+        {
+            if (!callback.is_error()) {
+                dpp::user user = std::get<dpp::user>(callback.value);
+                cluster->log(dpp::ll_info, "Found username: " + user.username);
+                username = user.username;
+            }
+        });
+
+    return username;
 }

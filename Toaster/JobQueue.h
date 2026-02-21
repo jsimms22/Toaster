@@ -3,10 +3,14 @@
 // Microsoft
 #include <guiddef.h>
 
+#include <dpp/snowflake.h>
+
 #include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
+
+class dpp::cluster;
 
 class JobQueue
 {
@@ -17,12 +21,12 @@ public:
     std::shared_ptr<JobRequest> GetJobByGUID(const std::string& searchGUID);
     bool DeleteJobByGUID(const std::string& searchGUID);
 
-    const std::string PrintQueue() const; 
-    const std::string PrintQueueByType(const std::size_t filter) const;
-    const std::string PrintQueueByUser(const std::string username, const std::size_t filter) const;
-    const std::string PrintQueueByWorker(const std::string worker) const; 
-    const std::string PrintFirstAssignment(const std::string worker) const;
-    std::shared_ptr<JobRequest> FirstAssignment(const std::string worker);
+    const std::string PrintQueue(dpp::cluster* cluster) const;
+    const std::string PrintQueueByType(dpp::cluster* cluster, const std::size_t filter) const;
+    const std::string PrintQueueByUser(dpp::cluster* cluster, const dpp::snowflake& userID, const std::size_t filter) const;
+    const std::string PrintQueueByWorker(dpp::cluster* cluster, const dpp::snowflake& userID) const;
+    const std::string PrintFirstAssignment(dpp::cluster* cluster, const dpp::snowflake& userID) const;
+    std::shared_ptr<JobRequest> FirstAssignment(const dpp::snowflake& userID);
 
     void AddToQueue(std::shared_ptr<JobRequest> job)
     {

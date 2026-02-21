@@ -3,8 +3,10 @@
 #include "Resource.h"
 
 #include <dpp/appcommand.h>
+#include <dpp/snowflake.h>
 
 #include <memory>
+#include <string_view>
 #include <string>
 
 class CraftRequestDlg : public dpp::interaction_modal_response
@@ -143,8 +145,10 @@ private:
 class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	AssignRequestDlg(const std::shared_ptr<JobRequest>& job)
-		: dpp::interaction_modal_response(), m_job(job)
+	AssignRequestDlg(const std::shared_ptr<JobRequest>& job,
+					 const std::unordered_map<dpp::snowflake, std::string_view>& mapWorkerList,
+					 const std::string_view& worker = "")
+		: dpp::interaction_modal_response(), m_spJob(job), m_mapWorkersList(mapWorkerList), m_svWorker(worker)
 	{
 		set_custom_id(modalID);
 		set_title(modalDesc);
@@ -164,15 +168,16 @@ private:
 	dpp::component WorkerAssignSelect;
 	dpp::component StatusUpdateSelect;
 
-	std::shared_ptr<JobRequest> m_job;
-	const std::vector<std::string> m_vWorkers{ "aimx83", "mike.d.spectre", "linealign", "leaf1318" };
+	std::shared_ptr<JobRequest> m_spJob;
+	std::unordered_map<dpp::snowflake, std::string_view> m_mapWorkersList;
+	std::string_view m_svWorker;
 };
 
 class StatusChangeRequestDlg : public dpp::interaction_modal_response
 {
 public:
 	StatusChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
-		: dpp::interaction_modal_response(), m_job(job)
+		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
 		set_title(modalDesc);
@@ -191,14 +196,14 @@ private:
 	dpp::component JobRequestIDEdit;
 	dpp::component StatusUpdateSelect;
 
-	std::shared_ptr<JobRequest> m_job;
+	std::shared_ptr<JobRequest> m_spJob;
 };
 
 class PriorityChangeRequestDlg : public dpp::interaction_modal_response
 {
 public:
 	PriorityChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
-		: dpp::interaction_modal_response(), m_job(job)
+		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
 		set_title(modalDesc);
@@ -217,14 +222,14 @@ private:
 	dpp::component JobRequestIDEdit;
 	dpp::component PrioritySelect;
 
-	std::shared_ptr<JobRequest> m_job;
+	std::shared_ptr<JobRequest> m_spJob;
 };
 
 class EditRequestDlg : public dpp::interaction_modal_response
 {
 public:
 	EditRequestDlg(const std::shared_ptr<JobRequest>& job)
-		: dpp::interaction_modal_response(), m_job(job)
+		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
 		set_title(modalDesc);
@@ -256,5 +261,5 @@ private:
 	// For refining jobs
 	dpp::component RefinerySiteEdit;
 
-	std::shared_ptr<JobRequest> m_job;
+	std::shared_ptr<JobRequest> m_spJob;
 };

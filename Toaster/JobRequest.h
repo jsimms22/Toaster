@@ -2,6 +2,9 @@
 #include "Resource.h"
 #include "tinyxml2.h"
 
+#include <dpp/cluster.h>
+#include <dpp/snowflake.h>
+
 #include <chrono>
 #include <string>
 #include <cstdlib>
@@ -39,19 +42,19 @@ public:
     const std::size_t GetLastEditTime() const { return m_timeLastEdit; }
     void SetLastEditTime(const std::size_t time) { m_timeLastEdit = time; }
 
-    const std::string& GetAuthor() const { return m_userAuthor; }
-    void SetAuthor(const std::string& author) { m_userAuthor = author; }
+    const dpp::snowflake& GetCustomerID() const { return m_idCustomer; }
+    void SetCustomerID(const dpp::snowflake& id) { m_idCustomer = id; }
 
-    const std::string& GetWorker() const { return m_userWorker; }
-    void SetWorker(const std::string& worker) { m_userWorker = worker; }
+    const dpp::snowflake& GetWorkerID() const { return m_idWorker; }
+    void SetWorkerID(const dpp::snowflake& id) { m_idWorker = id; }
 
     const std::string& GetSCHandle() const { return m_strSCHandle; }
     void SetSCHandle(const std::string& handle) { m_strSCHandle = handle; }
 
-    priority GetPriority() const { return m_eJobPriority; }
+    const priority GetPriority() const { return m_eJobPriority; }
     void SetPriority(const priority p) { m_eJobPriority = p; }
 
-    status GetStatus() const { return m_eJobStatus; }
+    const status GetStatus() const { return m_eJobStatus; }
     void SetStatus(const status s) { m_eJobStatus = s; }
 
     // Getter for the GUID
@@ -67,15 +70,19 @@ public:
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
-    virtual std::string PrintJobDetails() const;
+    virtual std::string PrintJobDetails(dpp::cluster* cluster) const;
+
+    const std::string& GetCustomerName(dpp::cluster* cluster) const;
+    const std::string& GetWorkerName(dpp::cluster* cluster) const;
 
 private:
     std::size_t m_timeCreated;
     std::size_t m_timeLastEdit;
-    std::string m_userAuthor;               // Author of the job (creator)
-    std::string m_userWorker;               // Worker assigned to the job
+    dpp::snowflake m_idCustomer;            // Customer id of who submitted the job
+    dpp::snowflake m_idWorker;              // Id of the worker assigned to the job
     std::string m_strSCHandle;              // SC Handle for identification (could be username or custom ID)
     priority m_eJobPriority = priority::low;// Priority of the job
     status m_eJobStatus = status::open;     // Current status of the job
     GUID m_id;                              // Unique identifier for the job
+    // todo std::vector<std::string> m_vNotes
 };

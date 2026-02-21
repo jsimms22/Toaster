@@ -36,9 +36,12 @@ void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     }
 }
 
-std::string ComponentJobRequest::PrintJobDetails() const
+std::string ComponentJobRequest::PrintJobDetails(dpp::cluster* cluster) const
 {
-    std::string str = JobRequest::PrintJobDetails();
+    if (!cluster)
+        return {};
+
+    std::string str = JobRequest::PrintJobDetails(cluster);
     std::stringstream ss;
     ss << "**Component List**: \n" << m_strComponentList << std::endl;
     return str + ss.str();

@@ -52,9 +52,12 @@ void CraftingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
-std::string CraftingJobRequest::PrintJobDetails() const
+std::string CraftingJobRequest::PrintJobDetails(dpp::cluster* cluster) const
 {
-    std::string str = JobRequest::PrintJobDetails();
+    if (!cluster)
+        return {};
+
+    std::string str = JobRequest::PrintJobDetails(cluster);
     std::stringstream ss;
     ss << "**Item Description**: " << m_strItemDesc << std::endl;
     ss << "**Item Quantity**: " << m_strQuantity << std::endl;

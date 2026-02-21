@@ -52,9 +52,12 @@ void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
-std::string BuildingJobRequest::PrintJobDetails() const
+std::string BuildingJobRequest::PrintJobDetails(dpp::cluster* cluster) const
 {
-    std::string str = JobRequest::PrintJobDetails();
+    if (!cluster)
+        return {};
+
+    std::string str = JobRequest::PrintJobDetails(cluster);
     std::stringstream ss;
     ss << "**Building Designation**: " << m_strBldgDesignation << std::endl;
     ss << "**Building Requirements**: \n" << m_strBldgRequires << std::endl;

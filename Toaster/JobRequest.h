@@ -19,6 +19,7 @@ public:
     {
         open = 1,
         stalled,
+        assigned,
         active,
         hold,
         complete
@@ -53,17 +54,17 @@ public:
 
     const priority GetPriority() const { return m_eJobPriority; }
     void SetPriority(const priority p) { m_eJobPriority = p; }
+    static std::string PriorityToString(priority p);
+    static priority StringToPriority(const std::string& str);
+    static const char* PriorityToEmoji(priority p);
 
     const status GetStatus() const { return m_eJobStatus; }
     void SetStatus(const status s) { m_eJobStatus = s; }
-
-    // Getter for the GUID
-    const GUID& GetID() const { return m_id; }
-
     static std::string StatusToString(status s);
-    static std::string PriorityToString(priority p);
     static status StringToStatus(const std::string& str);
-    static priority StringToPriority(const std::string& str);
+    static const char* StatusToEmoji(status s);
+
+    const GUID& GetID() const { return m_id; }
 
     virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
@@ -72,8 +73,8 @@ public:
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
     virtual std::string PrintJobDetails(dpp::cluster* cluster) const;
 
-    const std::string& GetCustomerName(dpp::cluster* cluster) const;
-    const std::string& GetWorkerName(dpp::cluster* cluster) const;
+    const std::string GetCustomerName(dpp::cluster* cluster) const;
+    const std::string GetWorkerName(dpp::cluster* cluster) const;
 
 private:
     std::size_t m_timeCreated;

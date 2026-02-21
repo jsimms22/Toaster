@@ -10,6 +10,8 @@
 
 #include <dpp/unicode_emoji.h>
 
+#include <string_view>
+
 const std::string CraftRequestDlg::modalID = "CreateRequestModal";
 const std::string CraftRequestDlg::modalDesc = "Submit Item Crafting Request";
 
@@ -336,7 +338,7 @@ void AssignRequestDlg::InitializeControls()
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
-        .set_default_value(utils::GuidToStringNoBrackets(m_job->GetID()))
+        .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
         .set_min_length(1)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
@@ -345,12 +347,12 @@ void AssignRequestDlg::InitializeControls()
     // Create a combo box component
     WorkerAssignSelect.set_label("Assign Task")
         .set_type(dpp::cot_selectmenu)
-        .set_default_value(m_job->GetWorker())
+        .set_default_value(m_svWorker)
         .set_id(Component_Assignment);
 
-    for (const auto& worker : m_vWorkers)
+    for (const auto& worker : m_mapWorkersList)
     {
-        WorkerAssignSelect.add_select_option(dpp::select_option(worker, worker, ""));
+        WorkerAssignSelect.add_select_option(dpp::select_option(worker.second, std::to_string(worker.first), ""));
     }
 
     // Create a combo box component
@@ -378,7 +380,7 @@ void StatusChangeRequestDlg::InitializeControls()
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
-        .set_default_value(utils::GuidToStringNoBrackets(m_job->GetID()))
+        .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
         .set_min_length(1)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
@@ -407,7 +409,7 @@ void PriorityChangeRequestDlg::InitializeControls()
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
-        .set_default_value(utils::GuidToStringNoBrackets(m_job->GetID()))
+        .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
         .set_min_length(1)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
@@ -435,7 +437,7 @@ void EditRequestDlg::InitializeControls()
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
-        .set_default_value(utils::GuidToStringNoBrackets(m_job->GetID()))
+        .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
         .set_min_length(1)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
@@ -444,15 +446,15 @@ void EditRequestDlg::InitializeControls()
     // Create a text box component
     CitizenHandleEdit.set_label("Requestee SC Handle (In Game)")
         .set_type(dpp::cot_text)
-        .set_default_value(m_job->GetSCHandle())
+        .set_default_value(m_spJob->GetSCHandle())
         .set_min_length(1)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
         .set_id(Component_CitizenID);
 
-    if (m_job->SupportsType(JOB_TYPE_CRAFTING))
+    if (m_spJob->SupportsType(JOB_TYPE_CRAFTING))
     {
-        std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(m_job);
+        std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(m_spJob);
         // Create a text box component
         ItemDescEdit.set_label("Item Description or Name")
             .set_type(dpp::cot_text)
@@ -471,9 +473,9 @@ void EditRequestDlg::InitializeControls()
             .set_text_style(dpp::text_short)
             .set_id(Component_ItemQuantity);
     }
-    else if (m_job->SupportsType(JOB_TYPE_BUILDING))
+    else if (m_spJob->SupportsType(JOB_TYPE_BUILDING))
     {
-        std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(m_job);
+        std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(m_spJob);
         // Create a text box component
         BuildDesignEdit.set_label("Type of Building(s)")
             .set_type(dpp::cot_text)
@@ -504,9 +506,9 @@ void EditRequestDlg::InitializeControls()
             .set_text_style(dpp::text_short)
             .set_id(Component_BuildZone);
     }
-    else if (m_job->SupportsType(JOB_TYPE_COMPONENT))
+    else if (m_spJob->SupportsType(JOB_TYPE_COMPONENT))
     {
-        std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(m_job);
+        std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(m_spJob);
         // Create a text box component
         ComponentListEdit.set_label("Component List")
             .set_type(dpp::cot_text)
@@ -517,9 +519,9 @@ void EditRequestDlg::InitializeControls()
             .set_text_style(dpp::text_paragraph)
             .set_id(Component_CompList);
     }
-    else if (m_job->SupportsType(JOB_TYPE_RESOURCE))
+    else if (m_spJob->SupportsType(JOB_TYPE_RESOURCE))
     {
-        std::shared_ptr<ResourceJobRequest> resource = std::dynamic_pointer_cast<ResourceJobRequest>(m_job);
+        std::shared_ptr<ResourceJobRequest> resource = std::dynamic_pointer_cast<ResourceJobRequest>(m_spJob);
         // Create a text box component
         ResourceListEdit.set_label("Resource List")
             .set_type(dpp::cot_text)
@@ -530,9 +532,9 @@ void EditRequestDlg::InitializeControls()
             .set_text_style(dpp::text_paragraph)
             .set_id(Component_ResourceList);
     }
-    else if (m_job->SupportsType(JOB_TYPE_REFINERY))
+    else if (m_spJob->SupportsType(JOB_TYPE_REFINERY))
     {
-        std::shared_ptr<RefineryJobRequest> refine = std::dynamic_pointer_cast<RefineryJobRequest>(m_job);
+        std::shared_ptr<RefineryJobRequest> refine = std::dynamic_pointer_cast<RefineryJobRequest>(m_spJob);
         // Create a text box component
         ResourceListEdit.set_label("Resource List")
             .set_type(dpp::cot_text)
@@ -559,26 +561,26 @@ void EditRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
     add_component(CitizenHandleEdit);
-    if (m_job->SupportsType(JOB_TYPE_CRAFTING))
+    if (m_spJob->SupportsType(JOB_TYPE_CRAFTING))
     {
         add_component(ItemDescEdit);
         add_component(ItemQuantityEdit);
     }
-    if (m_job->SupportsType(JOB_TYPE_BUILDING))
+    if (m_spJob->SupportsType(JOB_TYPE_BUILDING))
     {
         add_component(BuildDesignEdit);
         add_component(BuildRequiresEdit);
         add_component(BuildZoneEdit);
     }
-    if (m_job->SupportsType(JOB_TYPE_COMPONENT))
+    if (m_spJob->SupportsType(JOB_TYPE_COMPONENT))
     {
         add_component(ComponentListEdit);
     }
-    if (m_job->SupportsType(JOB_TYPE_RESOURCE))
+    if (m_spJob->SupportsType(JOB_TYPE_RESOURCE))
     {
         add_component(ResourceListEdit);
     }
-    if (m_job->SupportsType(JOB_TYPE_REFINERY))
+    if (m_spJob->SupportsType(JOB_TYPE_REFINERY))
     {
         add_component(ResourceListEdit);
         add_component(RefinerySiteEdit);

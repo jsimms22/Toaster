@@ -8,6 +8,8 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 
+#include <dpp/cluster.h>
+
 #include "tinyxml2.h"
 
 #include <algorithm>
@@ -89,8 +91,11 @@ bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueue() const
+const std::string JobQueue::PrintQueue(dpp::cluster* cluster) const
 {
+    if (!cluster)
+        return {};
+
     std::stringstream ss;
     std::size_t position = 0;
     for (const auto& job : m_vQueue)
@@ -100,7 +105,7 @@ const std::string JobQueue::PrintQueue() const
            << "ID (**" << JobRequest::PriorityToString(job->GetPriority()) << "**): "
            << utils::GuidToStringNoBrackets(job->GetID())
            << "\n**Status**: " << JobRequest::StatusToString(job->GetStatus()) 
-           << "\n**Assigned**: " << job->GetWorker()
+           << "\n**Assigned**: " << job->GetWorkerName(cluster)
            << "\n**Type**: " << job->JobTypeToString() << "\n\n";
     }
 
@@ -108,8 +113,11 @@ const std::string JobQueue::PrintQueue() const
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueueByType(const std::size_t filter) const
+const std::string JobQueue::PrintQueueByType(dpp::cluster* cluster, const std::size_t filter) const
 {
+    if (!cluster)
+        return {};
+
     std::stringstream ss;
     std::size_t position = 0;
     for (const auto& job : m_vQueue)
@@ -120,63 +128,72 @@ const std::string JobQueue::PrintQueueByType(const std::size_t filter) const
             << "ID (**" << JobRequest::PriorityToString(job->GetPriority()) << "**): "
             << utils::GuidToStringNoBrackets(job->GetID())
             << "\n**Status**: " << JobRequest::StatusToString(job->GetStatus())
-            << "\n**Assigned**: " << job->GetWorker()
+            << "\n**Assigned**: " << job->GetWorkerName(cluster)
             << "\n**Type**: " << job->JobTypeToString() << "\n\n";
     }
 
     return ss.str();
 }
 
-const std::string JobQueue::PrintQueueByUser(const std::string username, const std::size_t filter) const
+const std::string JobQueue::PrintQueueByUser(dpp::cluster* cluster, const dpp::snowflake& userID, const std::size_t filter) const
 {
+    if (!cluster)
+        return {};
+
     std::stringstream ss;
     std::size_t position = 0;
     for (const auto& job : m_vQueue)
     {
         ++position;
         if (!job->SupportsType(filter)) continue;
-        if (job->GetAuthor() == username)
+        if (job->GetCustomerID() == userID)
         {
             ss << "***Position: " << std::to_string(position) << "***\n";
-            ss << job->PrintJobDetails() << '\n';
+            ss << job->PrintJobDetails(cluster) << '\n';
         }
     }
 
     return ss.str();
 }
 
-const std::string JobQueue::PrintQueueByWorker(const std::string worker) const
+const std::string JobQueue::PrintQueueByWorker(dpp::cluster* cluster, const dpp::snowflake& userID) const
 {
+    if (!cluster)
+        return {};
+
     std::stringstream ss;
     for (const auto& job : m_vQueue)
     {
-        if (job->GetWorker() == worker)
+        if (job->GetWorkerID() == userID)
         {
-            ss << job->PrintJobDetails() << '\n';
+            ss << job->PrintJobDetails(cluster) << '\n';
         }
     }
 
     return ss.str();
 }
 
-const std::string JobQueue::PrintFirstAssignment(const std::string worker) const
+const std::string JobQueue::PrintFirstAssignment(dpp::cluster* cluster, const dpp::snowflake& userID) const
 {
+    if (!cluster)
+        return {};
+
     for (const auto& job : m_vQueue)
     {
-        if (job->GetWorker() == worker)
+        if (job->GetWorkerID() == userID)
         {
-            return job->PrintJobDetails();
+            return job->PrintJobDetails(cluster);
         }
     }
 
     return {};
 }
 
-std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const std::string worker)
+std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
 {
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
-        if (job->GetWorker() == worker)
+        if (job->GetWorkerID() == userID)
         {
             return job;
         }

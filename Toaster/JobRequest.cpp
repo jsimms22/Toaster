@@ -1,27 +1,28 @@
 #include "JobRequest.h"
 
 #include "BotUtility.h"
-
+// d++
 #include <dpp/cache.h>
 #include <dpp/user.h>
 #include <dpp/unicode_emoji.h>
-
+// fmt
+#include <fmt/format.h>
+// std library
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
 namespace xmlRequest
 {
-    const char* pszXMLCreation{ "Created" };
-    const char* pszXMLLastEdit{ "LastEdit" };
-    const char* pszXMLRequestUser{ "Requester" };
-    const char* pszXMLJobWorker{ "Worker" };
-    const char* pszXMLRequestSCHandle{ "GameHandle" };
-    const char* pszXMLJobPriority{ "Priority" };
-    const char* pszXMLJobStatus{ "Status" };
-    const char* pszXMLJobGUID{ "GUID" };
-    const char* pszXMLJobType{ "Type" };
+    constexpr const char* pszXMLCreation{ "Created" };
+    constexpr const char* pszXMLLastEdit{ "LastEdit" };
+    constexpr const char* pszXMLRequestUser{ "Requester" };
+    constexpr const char* pszXMLJobWorker{ "Worker" };
+    constexpr const char* pszXMLRequestSCHandle{ "GameHandle" };
+    constexpr const char* pszXMLJobPriority{ "Priority" };
+    constexpr const char* pszXMLJobStatus{ "Status" };
+    constexpr const char* pszXMLJobGUID{ "GUID" };
+    constexpr const char* pszXMLJobType{ "Type" };
 }
 
 // Function to convert priority enum to string
@@ -185,15 +186,23 @@ std::string JobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::stringstream ss;
-    ss << "**ID**: " << utils::GuidToStringNoBrackets(m_id) << std::endl;
-    ss << "**Customer**: " << GetCustomerName(cluster) << std::endl;
-    ss << "**Type**: " << JobTypeToString() << std::endl;
-    ss << "**Status**: " << StatusToString(m_eJobStatus) << std::endl;
-    ss << "**Priority**: " << PriorityToString(m_eJobPriority) << std::endl;
-    ss << "**Created**: <t:" << std::to_string(m_timeCreated) << ":F>\n";
-    ss << "**Last Edit**: <t:" << std::to_string(m_timeLastEdit) << ":F>\n";
-    return ss.str();
+    fmt::memory_buffer buffer;
+
+    return fmt::format(
+        "**ID**: {}\n"
+        "**Customer**: {}\n"
+        "**Type**: {}\n"
+        "**Status**: {}\n"
+        "**Priority**: {}\n"
+        "**Created**: <t:{}:F>\n"
+        "**Last Edit**: <t:{}:F>\n",
+        utils::GuidToStringNoBrackets(m_id),
+        GetCustomerName(cluster),
+        JobTypeToString(),
+        StatusToString(m_eJobStatus),
+        PriorityToString(m_eJobPriority),
+        m_timeCreated,
+        m_timeLastEdit);
 }
 
 const std::string JobRequest::GetCustomerName(dpp::cluster* cluster) const
@@ -201,12 +210,12 @@ const std::string JobRequest::GetCustomerName(dpp::cluster* cluster) const
     if (!cluster)
         return std::string();
 
-    cluster->log(dpp::ll_info, "Retrieving discord name for id: " + m_idCustomer.str());
+    cluster->log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idCustomer));
 
     dpp::user* user = dpp::find_user(m_idCustomer);
     if (user)
     {
-        cluster->log(dpp::ll_info, "Found username: " + user->username);
+        cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
         return user->username;
     }
 
@@ -214,7 +223,7 @@ const std::string JobRequest::GetCustomerName(dpp::cluster* cluster) const
     cluster->user_get(m_idCustomer, [cluster, &username](const dpp::confirmation_callback_t& callback) {
         if (!callback.is_error()) {
             dpp::user user = std::get<dpp::user>(callback.value);
-            cluster->log(dpp::ll_info, "Found username: " + user.username);
+            cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
             username = user.username;
         }
         });
@@ -226,13 +235,13 @@ const std::string JobRequest::GetWorkerName(dpp::cluster* cluster) const
 {
     if (!cluster)
         return std::string();
-
-    cluster->log(dpp::ll_info, "Retrieving discord name for id: " + m_idWorker.str());
+    
+    cluster->log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idWorker));
 
     dpp::user* user = dpp::find_user(m_idWorker);
     if (user)
     {
-        cluster->log(dpp::ll_info, "Found username: " + user->username);
+        cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
         return user->username;
     }
 
@@ -241,7 +250,7 @@ const std::string JobRequest::GetWorkerName(dpp::cluster* cluster) const
         {
             if (!callback.is_error()) {
                 dpp::user user = std::get<dpp::user>(callback.value);
-                cluster->log(dpp::ll_info, "Found username: " + user.username);
+                cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
                 username = user.username;
             }
         });

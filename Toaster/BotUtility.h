@@ -1,9 +1,9 @@
 #pragma once
 #include "Resource.h"
-
-#include <string>
-// Microsoft
+// microsoft
 #include <guiddef.h>
+// std library
+#include <string>
 
 namespace utils
 {

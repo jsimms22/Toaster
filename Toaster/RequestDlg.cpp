@@ -7,10 +7,8 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 #include "RefineryJobRequest.h"
-
+// d++
 #include <dpp/unicode_emoji.h>
-
-#include <string_view>
 
 const std::string CraftRequestDlg::modalID = "CreateRequestModal";
 const std::string CraftRequestDlg::modalDesc = "Submit Item Crafting Request";
@@ -32,9 +30,23 @@ const std::string AssignRequestDlg::modalDesc = "Assign Job Request To Worker";
 
 const std::string StatusChangeRequestDlg::modalID = "StatusChangeModal";
 const std::string StatusChangeRequestDlg::modalDesc = "Update Status of Job Request";
+const std::vector<StatusChangeRequestDlg::StatusOption> StatusChangeRequestDlg::StatusList{
+    { "Open", JobRequest::StatusToString(JobRequest::status::open), JobRequest::StatusToEmoji(JobRequest::status::open) },
+    { "Stalled", JobRequest::StatusToString(JobRequest::status::stalled), JobRequest::StatusToEmoji(JobRequest::status::stalled) },
+    { "Assigned", JobRequest::StatusToString(JobRequest::status::assigned), JobRequest::StatusToEmoji(JobRequest::status::assigned) },
+    { "Active", JobRequest::StatusToString(JobRequest::status::active), JobRequest::StatusToEmoji(JobRequest::status::active) },
+    { "Hold", JobRequest::StatusToString(JobRequest::status::hold), JobRequest::StatusToEmoji(JobRequest::status::hold) },
+    { "Complete", JobRequest::StatusToString(JobRequest::status::complete), JobRequest::StatusToEmoji(JobRequest::status::complete) }
+};
 
 const std::string PriorityChangeRequestDlg::modalID = "PriorityChangeModal";
 const std::string PriorityChangeRequestDlg::modalDesc = "Update Priority of Job Request";
+const std::vector<PriorityChangeRequestDlg::PriorityOption> PriorityChangeRequestDlg::PriorityList{
+    { "Low", JobRequest::PriorityToString(JobRequest::priority::low), JobRequest::PriorityToEmoji(JobRequest::priority::low), "When convenient." },
+    { "Medium", JobRequest::PriorityToString(JobRequest::priority::medium), JobRequest::PriorityToEmoji(JobRequest::priority::medium), "Need the item soon." },
+    { "High", JobRequest::PriorityToString(JobRequest::priority::high), JobRequest::PriorityToEmoji(JobRequest::priority::high), "Need the item today." },
+    { "Critical", JobRequest::PriorityToString(JobRequest::priority::critical), JobRequest::PriorityToEmoji(JobRequest::priority::critical), "Need the item as soon as possible." }
+};
 
 const std::string EditRequestDlg::modalID = "EditRequestModal";
 const std::string EditRequestDlg::modalDesc = "Edit Active Job Request";
@@ -83,19 +95,18 @@ void CraftRequestDlg::InitializeControls()
         .add_select_option(dpp::select_option("900+", "900+", "Qaulity Rating of the Item."))
         .set_id(Component_ItemQuality);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void CraftRequestDlg::AddChildrenComponents()
@@ -149,19 +160,18 @@ void BuildRequestDlg::InitializeControls()
         .set_text_style(dpp::text_short)
         .set_id(Component_BuildZone);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void BuildRequestDlg::AddChildrenComponents()
@@ -195,19 +205,18 @@ void ComponentRequestDlg::InitializeControls()
         .set_text_style(dpp::text_paragraph)
         .set_id(Component_CompList);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void ComponentRequestDlg::AddChildrenComponents()
@@ -263,19 +272,18 @@ void ResourceRequestDlg::InitializeControls()
         .add_select_option(dpp::select_option("900+", "900+", "Qaulity Rating of the Item."))
         .set_id(Component_ResourceQuality);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void ResourceRequestDlg::AddChildrenComponents()
@@ -328,19 +336,18 @@ void RefineryRequestDlg::InitializeControls()
         .set_text_style(dpp::text_short)
         .set_id(Component_RefinerySite);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void RefineryRequestDlg::AddChildrenComponents()
@@ -354,7 +361,6 @@ void RefineryRequestDlg::AddChildrenComponents()
 
 void AssignRequestDlg::InitializeControls()
 {
-
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
@@ -375,23 +381,17 @@ void AssignRequestDlg::InitializeControls()
         WorkerAssignSelect.add_select_option(dpp::select_option(worker.second, std::to_string(worker.first), ""));
     }
 
-    // Create a combo box component
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Status")
-        .add_select_option(dpp::select_option("Open", JobRequest::StatusToString(JobRequest::status::open), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::open)))
-        .add_select_option(dpp::select_option("Stalled", JobRequest::StatusToString(JobRequest::status::stalled), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::stalled)))
-        .add_select_option(dpp::select_option("Assigned", JobRequest::StatusToString(JobRequest::status::assigned), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::assigned)))
-        .add_select_option(dpp::select_option("Active", JobRequest::StatusToString(JobRequest::status::active), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::active)))
-        .add_select_option(dpp::select_option("Hold", JobRequest::StatusToString(JobRequest::status::hold), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::hold)))
-        .add_select_option(dpp::select_option("Complete", JobRequest::StatusToString(JobRequest::status::complete), "")
-            .set_emoji(JobRequest::StatusToString(JobRequest::status::complete)))
         .set_id(Component_Status);
+
+    // Add all status options dynamically
+    for (const auto& s : StatusChangeRequestDlg::StatusList) {
+        StatusUpdateSelect.add_select_option(
+            dpp::select_option(s.label, s.value, "").set_emoji(s.emoji)
+        );
+    }
 }
 
 void AssignRequestDlg::AddChildrenComponents()
@@ -413,23 +413,17 @@ void StatusChangeRequestDlg::InitializeControls()
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
-    // Create a combo box component
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Status")
-        .add_select_option(dpp::select_option("Open", JobRequest::StatusToString(JobRequest::status::open), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::open)))
-        .add_select_option(dpp::select_option("Stalled", JobRequest::StatusToString(JobRequest::status::stalled), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::stalled)))
-        .add_select_option(dpp::select_option("Assigned", JobRequest::StatusToString(JobRequest::status::assigned), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::assigned)))
-        .add_select_option(dpp::select_option("Active", JobRequest::StatusToString(JobRequest::status::active), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::active)))
-        .add_select_option(dpp::select_option("Hold", JobRequest::StatusToString(JobRequest::status::hold), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::hold)))
-        .add_select_option(dpp::select_option("Complete", JobRequest::StatusToString(JobRequest::status::complete), "")
-            .set_emoji(JobRequest::StatusToEmoji(JobRequest::status::complete)))
         .set_id(Component_Status);
+
+    // Add all status options dynamically
+    for (const auto& s : StatusChangeRequestDlg::StatusList) {
+        StatusUpdateSelect.add_select_option(
+            dpp::select_option(s.label, s.value, "").set_emoji(s.emoji)
+        );
+    }
 }
 
 void StatusChangeRequestDlg::AddChildrenComponents()
@@ -440,7 +434,6 @@ void StatusChangeRequestDlg::AddChildrenComponents()
 
 void PriorityChangeRequestDlg::InitializeControls()
 {
-
     // Create a text box component
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
@@ -450,19 +443,18 @@ void PriorityChangeRequestDlg::InitializeControls()
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
-    // Create a combo box component
+    // Create the combo box component
     PrioritySelect.set_label("Select Priority")
         .set_type(dpp::cot_selectmenu)
         .set_placeholder("Select Priority")
-        .add_select_option(dpp::select_option("Low", JobRequest::PriorityToString(JobRequest::priority::low), "When convienent.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::low)))
-        .add_select_option(dpp::select_option("Medium", JobRequest::PriorityToString(JobRequest::priority::medium), "Need the item soon.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::medium)))
-        .add_select_option(dpp::select_option("High", JobRequest::PriorityToString(JobRequest::priority::high), "Need the item today.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::high)))
-        .add_select_option(dpp::select_option("Critical", JobRequest::PriorityToString(JobRequest::priority::critical), "Need the item as soon as possible.")
-            .set_emoji(JobRequest::PriorityToEmoji(JobRequest::priority::critical)))
         .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
 }
 
 void PriorityChangeRequestDlg::AddChildrenComponents()

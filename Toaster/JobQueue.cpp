@@ -7,16 +7,15 @@
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
-
+// d++
 #include <dpp/cluster.h>
-
+// fmt
+#include <fmt/format.h>
+// tinyxml
 #include "tinyxml2.h"
-
+// std library
 #include <algorithm>
-#include <iostream>
 #include <iterator>
-#include <optional>
-#include <sstream>
 #include <stdexcept>
 
 namespace xmlQueue
@@ -96,20 +95,31 @@ const std::string JobQueue::PrintQueue(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::stringstream ss;
+    fmt::memory_buffer buffer;
     std::size_t position = 0;
+
     for (const auto& job : m_vQueue)
     {
         ++position;
-        ss << "***Position: " << std::to_string(position) << "***\n"
-           << "ID (**" << JobRequest::PriorityToString(job->GetPriority()) << "**): "
-           << utils::GuidToStringNoBrackets(job->GetID())
-           << "\n**Status**: " << JobRequest::StatusToString(job->GetStatus()) 
-           << "\n**Assigned**: " << job->GetWorkerName(cluster)
-           << "\n**Type**: " << job->JobTypeToString() << "\n\n";
+
+        fmt::format_to(
+            std::back_inserter(buffer),
+            "***Position: {}***\n"
+            "ID (**{}**): {}\n"
+            "**Status**: {}\n"
+            "**Assigned**: {}\n"
+            "**Type**: {}\n\n",
+            position,
+            JobRequest::PriorityToString(job->GetPriority()),
+            utils::GuidToStringNoBrackets(job->GetID()),
+            JobRequest::StatusToString(job->GetStatus()),
+            job->GetWorkerName(cluster),
+            job->JobTypeToString()
+        );
     }
 
-    return ss.str();
+    // Convert buffer to std::string once at the end
+    return fmt::to_string(buffer);
 }
 
 // Method to print all job requests
@@ -118,21 +128,34 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster* cluster, const std::s
     if (!cluster)
         return {};
 
-    std::stringstream ss;
+    fmt::memory_buffer buffer;
     std::size_t position = 0;
+
     for (const auto& job : m_vQueue)
     {
         ++position;
-        if (!job->SupportsType(filter)) continue;
-        ss << "***Position: " << std::to_string(position) << "***\n"
-            << "ID (**" << JobRequest::PriorityToString(job->GetPriority()) << "**): "
-            << utils::GuidToStringNoBrackets(job->GetID())
-            << "\n**Status**: " << JobRequest::StatusToString(job->GetStatus())
-            << "\n**Assigned**: " << job->GetWorkerName(cluster)
-            << "\n**Type**: " << job->JobTypeToString() << "\n\n";
+
+        if (!job->SupportsType(filter))
+            continue;
+
+        fmt::format_to(
+            std::back_inserter(buffer),
+            "***Position: {}***\n"
+            "ID (**{}**): {}\n"
+            "**Status**: {}\n"
+            "**Assigned**: {}\n"
+            "**Type**: {}\n\n",
+            position,
+            JobRequest::PriorityToString(job->GetPriority()),
+            utils::GuidToStringNoBrackets(job->GetID()),
+            JobRequest::StatusToString(job->GetStatus()),
+            job->GetWorkerName(cluster),
+            job->JobTypeToString()
+        );
     }
 
-    return ss.str();
+    // Convert buffer to std::string once at the end
+    return fmt::to_string(buffer);
 }
 
 const std::string JobQueue::PrintQueueByUser(dpp::cluster* cluster, const dpp::snowflake& userID, const std::size_t filter) const
@@ -140,20 +163,29 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster* cluster, const dpp::s
     if (!cluster)
         return {};
 
-    std::stringstream ss;
+    fmt::memory_buffer buffer;
     std::size_t position = 0;
+
     for (const auto& job : m_vQueue)
     {
         ++position;
-        if (!job->SupportsType(filter)) continue;
+
+        if (!job->SupportsType(filter))
+            continue;
+
         if (job->GetCustomerID() == userID)
         {
-            ss << "***Position: " << std::to_string(position) << "***\n";
-            ss << job->PrintJobDetails(cluster) << '\n';
+            fmt::format_to(
+                std::back_inserter(buffer),
+                "***Position: {}***\n{}\n",
+                position,
+                job->PrintJobDetails(cluster)
+            );
         }
     }
 
-    return ss.str();
+    // Convert the buffer to a std::string once at the end
+    return fmt::to_string(buffer);
 }
 
 const std::string JobQueue::PrintQueueByWorker(dpp::cluster* cluster, const dpp::snowflake& userID) const

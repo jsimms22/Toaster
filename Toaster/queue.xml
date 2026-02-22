@@ -2,4 +2,6 @@
     <Request Created="1771636682" LastEdit="1771639283" GUID="{B6958134-59B8-44F5-BEB6-6388E57366A1}" Priority="1" Status="4" Type="20" Worker="464542267395538944" Requester="464542267395538944" GameHandle="helloooo" Description="helloooooooo" Quantity="1" Quality="any"/>
     <Request Created="1771637427" LastEdit="1771637478" GUID="{B6483D04-69CE-4C82-96FD-8ACFB3135F37}" Priority="1" Status="3" Type="20" Worker="464542267395538944" Requester="464542267395538944" GameHandle="aim" Description="crashtest" Quantity="1" Quality="any"/>
     <Request Created="1771637766" LastEdit="1771638739" GUID="{33661201-5CC2-480E-BA68-B48B058274C2}" Priority="1" Status="3" Type="20" Worker="464542267395538944" Requester="464542267395538944" GameHandle="aim" Description="crash2" Quantity="4" Quality="any"/>
+    <Request Created="1771778725" LastEdit="1771779702" GUID="{32D874F1-FA10-4DB8-9A7E-9D7F444A628D}" Priority="1" Status="1" Type="20" Worker="0" Requester="464542267395538944" GameHandle="aim" Description="msg test" Quantity="4" Quality="500-600"/>
+    <Request Created="1771781562" LastEdit="1771781562" GUID="{D8413848-45C5-476C-A33A-0023B664A046}" Priority="1" Status="1" Type="20" Worker="0" Requester="464542267395538944" GameHandle="test" Description="test" Quantity="1`" Quality="any"/>
 </RequestList>

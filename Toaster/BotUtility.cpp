@@ -1,7 +1,9 @@
 #include "BotUtility.h"
-
+// microsoft
 #include <objbase.h>
-
+// fmt
+#include <fmt/format.h>
+// std library
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
@@ -21,7 +23,7 @@ namespace utils
             }
         }
 
-        throw std::runtime_error("BOT_TOKEN not found in config file");
+        throw std::runtime_error(fmt::format("[{}] not found in config file",find));
     }
 
     // Helper function to convert string priority (e.g., "low", "med", "high") to numeric values

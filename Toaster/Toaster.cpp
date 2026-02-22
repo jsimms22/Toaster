@@ -11,12 +11,16 @@
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
-
+// d++
+#include <dpp/channel.h>
 #include <dpp/dpp.h>
 #include <dpp/snowflake.h>
-// Microsoft
+// fmt
+#include <fmt/base.h>
+#include <fmt/format.h>
+// microsoft
 #include <guiddef.h>
-
+// std library
 #include <unordered_map>
 
 namespace
@@ -42,7 +46,7 @@ void ToasterBot::onReady(const dpp::ready_t& event)
         //m_cluster->guild_bulk_command_delete(1472034166869852287);
         //m_cluster->global_bulk_command_delete();
 
-        //m_cluster->log(dpp::ll_debug, "Deleted commands for guild id: " + std::to_string(1472034166869852287));
+        //m_cluster->log(dpp::ll_debug, fmt::format("Deleted commands for guild id: {}.", 1472034166869852287));
     }
     if (dpp::run_once<struct register_bot_commands>())
     {
@@ -54,19 +58,39 @@ void ToasterBot::onReady(const dpp::ready_t& event)
         }
         m_cluster->guild_bulk_command_create(vCmd, 1472034166869852287);
 
-        m_cluster->log(dpp::ll_debug, "Registered " + std::to_string(vCmd.size()) + " commands with guild id: " + std::to_string(1472034166869852287));
+        m_cluster->log(dpp::ll_debug, fmt::format("Registered {} commands with guild id: {}.", vCmd.size(), 1472034166869852287));
     }
 }
 
 void ToasterBot::onMessage(const dpp::message_create_t& event)
 {
     if (!event.msg.author.id) {
-        m_cluster->log(dpp::ll_error, "Message dropped, no author: {}" + event.msg.content);
+        m_cluster->log(dpp::ll_error, fmt::format("Message dropped, no author: {}.", event.msg.content));
         return;
     } 
     else if (event.msg.author.id == m_cluster->me.id) 
     {
-        m_cluster->log(dpp::ll_info, "Bot sending outgoing message.");
+        dpp::channel* channel = dpp::find_channel(event.msg.channel_id);
+        if (channel && channel->get_type() == dpp::channel_type::DM)
+        {
+            for (auto& idUser : channel->recipients)
+            {
+                dpp::user* user = dpp::find_user(idUser);
+                if (user) 
+                {
+                    m_cluster->log(dpp::ll_info,
+                        fmt::format("Bot sending outgoing direct message to {}#{}.", user->username, user->discriminator));
+                }
+            }
+        }
+        else if (channel && 
+            (channel->get_type() == dpp::channel_type::CHANNEL_PUBLIC_THREAD || 
+             channel->get_type() == dpp::channel_type::CHANNEL_PRIVATE_THREAD))
+        {
+            // Guild channel
+            m_cluster->log(dpp::ll_info,
+                fmt::format("Bot sending outgoing message in channel {} - {}.", event.msg.channel_id, channel->name));
+        }
     }
 }
 
@@ -78,7 +102,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         // Reply to the user, but only let them see the response. 
         event.reply(dpp::message("Hello! How are you today?").set_flags(dpp::m_ephemeral));
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
     }
     else if (event.command.get_command_name() == Command_MyAssignments ||
              event.command.get_command_name() == Command_MyTopAssignment)
@@ -152,7 +176,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
             event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral).add_component(row));
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
     }
 }
 
@@ -189,7 +213,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             event.dialog(modal);
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name() + " with cmd option " + strCmdID);
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {} with cmd option {}", author.username, event.command.get_command_name(), strCmdID));
     }
     else if (event.command.get_command_name() == Command_MyRequests ||
              event.command.get_command_name() == Command_ShowQueue)
@@ -229,7 +253,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
     }
     else if (event.command.get_command_name() == Command_ModifyRequest)
     {
@@ -241,19 +265,19 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
         if (!job)
         {
-            event.reply(dpp::message("Could not find id: " + strJobID).set_flags(dpp::m_ephemeral));
-            m_cluster->log(dpp::ll_warning, author.username + " could not find " + strJobID + " to handle cmd " + strCmdID);
+            event.reply(dpp::message(fmt::format("Could not find id {}.", strJobID)).set_flags(dpp::m_ephemeral));
+            m_cluster->log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.username, strJobID, strCmdID));
             return;
         }
         // Check for permissions to edit a job request
         else if (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */)
         {
-            event.reply(dpp::message("You do not have permissions to modify: " + strJobID).set_flags(dpp::m_ephemeral));
-            m_cluster->log(dpp::ll_warning, author.username + " attempted to " + strCmdID  + " job " + strJobID);
+            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
+            m_cluster->log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.username, strJobID, strCmdID));
             return;
         }
 
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
 
         if (strCmdID == Option_Edit)
         {
@@ -283,18 +307,18 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             const bool result = m_spQueue->DeleteJobByGUID(strJobID);
             if (!result)
             {
-                event.reply(dpp::message("Failed to delete id: " + strJobID).set_flags(dpp::m_ephemeral));
-                m_cluster->log(dpp::ll_warning, author.username + " failed to delete " + strJobID);
+                event.reply(dpp::message(fmt::format("Failed to delete id: ", strJobID)).set_flags(dpp::m_ephemeral));
+                m_cluster->log(dpp::ll_warning, fmt::format("{} failed to delete {}.", author.username, strJobID));
             }
 
-            event.reply(dpp::message("Deleted job request:\n\n" + jobDetails).set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message(fmt::format("Deleted job request:\n\n{}", jobDetails)).set_flags(dpp::m_ephemeral));
             m_spQueue->SaveQueueToFile();
-            m_cluster->log(dpp::ll_warning, author.username + " deleted " + strJobID);
+            m_cluster->log(dpp::ll_warning, fmt::format("{} deleted {}", author.username, strJobID));
 
             if (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */)
             {
-                const std::string strNotifyUser = "Request **" + strJobID + "** has been deleted by " + author.username + ":\n\n";
-                NotifyIssuerMsg(job->GetCustomerID(), event, strNotifyUser + jobDetails);
+                NotifyIssuerMsg(job->GetCustomerID(), event,
+                    fmt::format("Request **{}** has been deleted by {}:\n\n{}", strJobID, author.username, jobDetails));
             }
         }
     }
@@ -304,7 +328,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
 
         const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
-        m_cluster->log(dpp::ll_info, author.username + " used command " + event.command.get_command_name());
+        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
 
         if (!job)
         {
@@ -349,7 +373,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobCraft->SetQualityThres(strParam3);
             jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobCraft->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobCraft->GetID()));
+            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobCraft->GetID())));
             m_spQueue->AddToQueue(std::move(jobCraft));
         }
         else if (event.custom_id == BuildRequestDlg::modalID)
@@ -362,7 +386,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobBuild->SetBuildZone(strParam3);
             jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobBuild->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobBuild->GetID()));
+            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobBuild->GetID())));
             m_spQueue->AddToQueue(std::move(jobBuild));
         }
         else if (event.custom_id == ComponentRequestDlg::modalID)
@@ -373,7 +397,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobComp->SetComponentList(strParam1);
             jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
             jobDetails = jobComp->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobComp->GetID()));
+            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobComp->GetID())));
             m_spQueue->AddToQueue(std::move(jobComp));
         }
         else if (event.custom_id == ResourceRequestDlg::modalID)
@@ -386,7 +410,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobRes->SetQualityThres(strParam3);
             jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobRes->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRes->GetID()));
+            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRes->GetID())));
             m_spQueue->AddToQueue(std::move(jobRes));
         }
         else if (event.custom_id == RefineryRequestDlg::modalID)
@@ -399,7 +423,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobRefine->SetRefinery(strParam3);
             jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobRefine->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, author.username + " added new request " + utils::GuidToString(jobRefine->GetID()));
+            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRefine->GetID())));
             m_spQueue->AddToQueue(std::move(jobRefine));
         }
 
@@ -424,7 +448,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, author.username + " attempted to edit " + strID);
+            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.username, strID));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -474,12 +498,13 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, author.username + " edited " + strID);
+        m_cluster->log(dpp::ll_info, fmt::format("{} edited {}.", author.username, strID));
 
         if ((author.id != job->GetCustomerID() && strOldJobDetails != strNewJobDetails) || m_debug)
         {
-            const std::string strNotifyUser = "Request **" + utils::GuidToStringNoBrackets(job->GetID()) + "** has been edited by " + author.username + ":\n\n";
-            NotifyIssuerMsg(job->GetCustomerID(), event, strNotifyUser + "New Job Details:\n" + strNewJobDetails);
+            NotifyIssuerMsg(job->GetCustomerID(), event,
+                fmt::format("Request **{}** has been edited by {}:\n\n New Job Details:\n{}",
+                    utils::GuidToStringNoBrackets(job->GetID()), author.username, strNewJobDetails));
         }
     }
     else if (event.custom_id == AssignRequestDlg::modalID)
@@ -493,7 +518,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, author.username + " attempted to assign " + strID + " to a worker");
+            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.username, strID));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -510,12 +535,12 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         m_spQueue->SaveQueueToFile();
 
         const std::string strWorker = job->GetWorkerName(m_cluster);
-        m_cluster->log(dpp::ll_info, author.username + " assigned " + strID + " to " + job->GetWorkerName(m_cluster));
+        m_cluster->log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.username, strID, job->GetWorkerName(m_cluster)));
 
         if (author.id != job->GetCustomerID() || m_debug)
         {
-            const std::string strNotifyUser = "Your request has been assigned to **" + strWorker + "** to by " + author.username + ":\n\n";
-            NotifyIssuerMsg(job->GetCustomerID(), event, strNotifyUser + embed.description);
+            NotifyIssuerMsg(job->GetCustomerID(), event,
+                fmt::format("Your request has been assigned to **{}** by {}:\n\n{}", strWorker, author.username, embed.description));
         }
     }
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
@@ -528,7 +553,8 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, author.username + " attempted to update " + strID + " to " + strStatus);
+            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.username, strID, strStatus));
+            return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
 
@@ -543,12 +569,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, author.username + " updated " + strID + " status to " + strStatus);
-
+        m_cluster->log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.username, strID, strStatus));
         if ((author.id != job->GetCustomerID() && strOldStatus != strStatus) || m_debug)
         {
-            const std::string strNotifyUser = "Your request's status has moved from **" + strOldStatus + "** to **" + strStatus + "** by " + author.username + ":\n\n";
-            NotifyIssuerMsg(job->GetCustomerID(), event, strNotifyUser + job->PrintJobDetails(m_cluster));
+            NotifyIssuerMsg(job->GetCustomerID(), event,
+                fmt::format("Your request's status has moved from **{}** to **{}** by {}:\n\n{}", strOldStatus, strStatus, author.username, job->PrintJobDetails(m_cluster)));
         }
     }
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
@@ -561,7 +586,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, author.username + " attempted to change priority for " + strID + " to " + strPriority);
+            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.username, strID, strPriority));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -577,12 +602,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, author.username + " changed priority for " + strID + " to " + strPriority);
-
+        m_cluster->log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.username, strID, strPriority));
         if ((author.id != job->GetCustomerID() && strOldPriority != strPriority) || m_debug)
         {
-            const std::string strNotifyUser = "Your request's priority has moved from **" + strOldPriority + "** to **" + strPriority + "** by " + author.username + ":\n\n";
-            NotifyIssuerMsg(job->GetCustomerID(), event, strNotifyUser + job->PrintJobDetails(m_cluster));
+            NotifyIssuerMsg(job->GetCustomerID(), event,
+                fmt::format("Your request's priority has moved from **{}** to **{}** by {}:\n\n{}", strOldPriority, strPriority, author.username, job->PrintJobDetails(m_cluster)));
         }
     }
 }
@@ -609,12 +633,23 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
     event.reply(dpp::message("Currently prototyping buttons and interactions - this button does not do anything right not.").set_flags(dpp::m_ephemeral));
 }
 
-void ToasterBot::NotifyIssuerMsg(const dpp::snowflake& userID, const dpp::event_dispatch_t& event, const std::string& msg)
+void ToasterBot::NotifyIssuerMsg(const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg)
 {
-    m_cluster->direct_message_create(userID, dpp::message(msg), [userID, cluster = m_cluster](const dpp::confirmation_callback_t& callback) {
+    m_cluster->direct_message_create(idUser, dpp::message(msg), [idUser, cluster = m_cluster](const dpp::confirmation_callback_t& callback) {
         if (callback.is_error())
-            cluster->log(dpp::ll_error, "Error sending private message to user: " + userID.str());
+        {
+            cluster->log(dpp::ll_error, fmt::format("Error sending direct message to user id {}.", idUser));
+        }
         else
-            cluster->log(dpp::ll_info, "Sent private message to user: " + userID.str());
-        });
+        {
+            dpp::user* user = dpp::find_user(idUser);
+            if (user)
+            {
+                cluster->log(dpp::ll_info, fmt::format("Sending direct message to {}#{}.", user->username, user->discriminator));
+            }
+            else
+            {
+                cluster->log(dpp::ll_warning, fmt::format("Sending direct message to unknown username with id {}.", idUser));
+            }
+        }});
 }

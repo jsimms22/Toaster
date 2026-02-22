@@ -1,12 +1,12 @@
 #include "ResourceJobRequest.h"
-
-#include <sstream>
+// fmt
+#include <fmt/format.h>
 
 namespace xmlRequest
 {
-    const char* pszXMLResourceState{ "ResourceState" };
-    const char* pszXMLResourceList{ "ResourceList" };
-    const char* pszXMLResourceQuality{ "Quality" };
+    constexpr const char* pszXMLResourceState{ "ResourceState" };
+    constexpr const char* pszXMLResourceList{ "ResourceList" };
+    constexpr const char* pszXMLResourceQuality{ "Quality" };
 }
 
 // Function to convert priority enum to string
@@ -83,10 +83,15 @@ std::string ResourceJobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::string str = JobRequest::PrintJobDetails(cluster);
-    std::stringstream ss;
-    ss << "**Resource Type**: " << StateToString(m_eResourceState) << std::endl;
-    ss << "**Resource List**: \n" << m_strResourceList << std::endl;
-    ss << "**Expected Quality**: " << m_strQuality << std::endl;
-    return str + ss.str();
+    std::string base = JobRequest::PrintJobDetails(cluster);
+
+    return fmt::format(
+        "{}"
+        "**Resource Type**: {}\n"
+        "**Resource List**: \n{}\n"
+        "**Expected Quality**: {}\n",
+        base,
+        StateToString(m_eResourceState),
+        m_strResourceList,
+        m_strQuality);
 }

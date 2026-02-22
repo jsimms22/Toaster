@@ -1,10 +1,10 @@
 #pragma once
 #include "JobRequest.h"
 #include "Resource.h"
-
+// d++
 #include <dpp/appcommand.h>
 #include <dpp/snowflake.h>
-
+// std library
 #include <memory>
 #include <string_view>
 #include <string>
@@ -176,6 +176,14 @@ private:
 class StatusChangeRequestDlg : public dpp::interaction_modal_response
 {
 public:
+	struct StatusOption {
+		std::string label;
+		std::string value;
+		const char* emoji;
+	};
+
+	static const std::vector<StatusOption> StatusList;
+
 	StatusChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
 		: dpp::interaction_modal_response(), m_spJob(job)
 	{
@@ -202,6 +210,15 @@ private:
 class PriorityChangeRequestDlg : public dpp::interaction_modal_response
 {
 public:
+	struct PriorityOption {
+		std::string label;
+		std::string value;
+		const char* emoji;
+		std::string description;
+	};
+
+	static const std::vector<PriorityOption> PriorityList;
+
 	PriorityChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
 		: dpp::interaction_modal_response(), m_spJob(job)
 	{

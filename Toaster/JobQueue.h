@@ -1,10 +1,10 @@
 #pragma once
 #include "JobRequest.h"
-// Microsoft
-#include <guiddef.h>
-
+// d++
 #include <dpp/snowflake.h>
-
+// microsoft
+#include <guiddef.h>
+// std library
 #include <cstdlib>
 #include <memory>
 #include <string>

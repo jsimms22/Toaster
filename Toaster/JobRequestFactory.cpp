@@ -1,6 +1,5 @@
 #include "JobRequestFactory.h"
 
-
 std::shared_ptr<JobRequest> JobRequestFactory::Create(const std::size_t type)
 {
     switch (type)

@@ -1,7 +1,6 @@
 #include "Command.h"
 #include "Resource.h"
 
-
 BotModule::CommandList BotModule::commands
 {
     {

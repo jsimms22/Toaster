@@ -1,12 +1,12 @@
 #include "CraftingJobRequest.h"
-
-#include <sstream>
+// fmt
+#include <fmt/format.h>
 
 namespace xmlRequest
 {
-    const char* pszXMLItemDesc{ "Description" };
-    const char* pszXMLItemQuantity{ "Quantity" };
-    const char* pszXMLItemQuality{ "Quality" };
+    constexpr const char* pszXMLItemDesc{ "Description" };
+    constexpr const char* pszXMLItemQuantity{ "Quantity" };
+    constexpr const char* pszXMLItemQuality{ "Quality" };
 }
 
 void CraftingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
@@ -57,10 +57,15 @@ std::string CraftingJobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::string str = JobRequest::PrintJobDetails(cluster);
-    std::stringstream ss;
-    ss << "**Item Description**: " << m_strItemDesc << std::endl;
-    ss << "**Item Quantity**: " << m_strQuantity << std::endl;
-    ss << "**Expected Quality**: " << m_strQuality << std::endl;
-    return str + ss.str();
+    std::string base = JobRequest::PrintJobDetails(cluster);
+
+    return fmt::format(
+        "{}"
+        "**Item Description**: {}\n"
+        "**Item Quantity**: {}\n"
+        "**Expected Quality**: {}\n",
+        base,
+        m_strItemDesc,
+        m_strQuantity,
+        m_strQuality);
 }

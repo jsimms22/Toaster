@@ -1,10 +1,10 @@
 #include "ComponentJobRequest.h"
-
-#include <sstream>
+// fmt
+#include <fmt/format.h>
 
 namespace xmlRequest
 {
-    const char* pszXMLCompList{ "ComponentList" };
+    constexpr const char* pszXMLCompList{ "ComponentList" };
 }
 
 void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
@@ -41,8 +41,11 @@ std::string ComponentJobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::string str = JobRequest::PrintJobDetails(cluster);
-    std::stringstream ss;
-    ss << "**Component List**: \n" << m_strComponentList << std::endl;
-    return str + ss.str();
+    std::string base = JobRequest::PrintJobDetails(cluster);
+
+    return fmt::format(
+        "{}"
+        "**Component List**: \n{}\n",
+        base,
+        m_strComponentList);
 }

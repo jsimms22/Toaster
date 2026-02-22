@@ -1,12 +1,12 @@
 #include "RefineryJobRequest.h"
-
-#include <sstream>
+// fmt
+#include <fmt/format.h>
 
 namespace xmlRequest
 {
-    const char* pszXMLRefineState{ "RefineType" };
-    const char* pszXMLRefineList{ "RefineList" };
-    const char* pszXMLRefineryLoc{ "Refinery" };
+    constexpr const char* pszXMLRefineState{ "RefineType" };
+    constexpr const char* pszXMLRefineList{ "RefineList" };
+    constexpr const char* pszXMLRefineryLoc{ "Refinery" };
 }
 
 // Function to convert priority enum to string
@@ -77,10 +77,15 @@ std::string RefineryJobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::string str = JobRequest::PrintJobDetails(cluster);
-    std::stringstream ss;
-    ss << "**Resource Type**: " << RefineryJobRequest::StateToString(m_eResourceState) << std::endl;
-    ss << "**Resource List**:\n" << m_strResourceList << std::endl;
-    ss << "**Refinery Site**: " << m_strRefinery << std::endl;
-    return str + ss.str();
+    std::string base = JobRequest::PrintJobDetails(cluster);
+
+    return fmt::format(
+        "{}"
+        "**Resource Type**: {}\n"
+        "**Resource List**:\n{}\n"
+        "**Refinery Site**: {}\n",
+        base,
+        RefineryJobRequest::StateToString(m_eResourceState),
+        m_strResourceList,
+        m_strRefinery);
 }

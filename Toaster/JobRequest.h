@@ -1,15 +1,16 @@
 #pragma once
 #include "Resource.h"
-#include "tinyxml2.h"
-
+// d++
 #include <dpp/cluster.h>
 #include <dpp/snowflake.h>
-
+// microsoft
+#include <guiddef.h>
+// tinyxml
+#include "tinyxml2.h"
+// std library
 #include <chrono>
 #include <string>
 #include <cstdlib>
-// Microsoft
-#include <guiddef.h>
 
 class JobRequest
 {

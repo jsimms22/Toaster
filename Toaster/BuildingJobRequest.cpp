@@ -1,12 +1,12 @@
 #include "BuildingJobRequest.h"
-
-#include <sstream>
+// fmt
+#include <fmt/format.h>
 
 namespace xmlRequest
 {
-    const char* pszXMLBuildDesignation{ "Designation" };
-    const char* pszXMLBuildRequirements{ "Requirements" };
-    const char* pszXMLBuildZone{ "Zone" };
+    constexpr const char* pszXMLBuildDesignation{ "Designation" };
+    constexpr const char* pszXMLBuildRequirements{ "Requirements" };
+    constexpr const char* pszXMLBuildZone{ "Zone" };
 }
 
 void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
@@ -57,10 +57,15 @@ std::string BuildingJobRequest::PrintJobDetails(dpp::cluster* cluster) const
     if (!cluster)
         return {};
 
-    std::string str = JobRequest::PrintJobDetails(cluster);
-    std::stringstream ss;
-    ss << "**Building Designation**: " << m_strBldgDesignation << std::endl;
-    ss << "**Building Requirements**: \n" << m_strBldgRequires << std::endl;
-    ss << "**Building Zone**: " << m_strBldgZone << std::endl;
-    return str + ss.str();
+    std::string base = JobRequest::PrintJobDetails(cluster);
+
+    return fmt::format(
+        "{}"
+        "**Building Designation**: {}\n"
+        "**Building Requirements**: \n{}\n"
+        "**Building Zone**: {}\n",
+        base,
+        m_strBldgDesignation,
+        m_strBldgRequires,
+        m_strBldgZone);
 }

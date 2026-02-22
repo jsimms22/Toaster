@@ -18,6 +18,6 @@ public:
     virtual std::string PrintJobDetails(dpp::cluster* cluster) const override;
 
 private:
-    std::string m_strComponentList;      // Description of the item being crafted
+    std::string m_strComponentList = "n/a";      // Description of the item being crafted
 };
 

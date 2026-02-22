@@ -82,13 +82,17 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>dependencies\include\dpp-10.1;$(IncludePath)</IncludePath>
-    <LibraryPath>dependencies\64\debug\lib\dpp-10.1;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>dependencies\$(Platform)\$(Configuration)\lib\mongocxx;dependencies\$(Platform)\$(Configuration)\lib\dpp;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\intermediate\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>dependencies\include\dpp-10.1;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>dependencies\64\release\lib\dpp-10.1;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>dependencies\$(Platform)\$(Configuration)\lib\mongocxx;dependencies\$(Platform)\$(Configuration)\lib\dpp;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\intermediate\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,14 +156,14 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dpp.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dpp.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;bson2.dll.lib;bsoncxx-v_noabi-rhi-md.lib;mongoc2.dll.lib;mongocxx-v_noabi-rhi-md.lib;utf8proc.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /y "$(ProjectDir)dependencies\64\debug\bin\*.dll" "$(OutDir)"</Command>
+      <Command>copy /y "$(ProjectDir)dependencies\$(Platform)\$(Configuration)\bin\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy 64 Bit Debug DLLs to Build</Message>
+      <Message>Copy 64 Bit DLLs to Build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -180,14 +184,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;dpp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dpp.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;bson2.dll.lib;bsoncxx-v_noabi-rhi-md.lib;mongoc2.dll.lib;mongocxx-v_noabi-rhi-md.lib;utf8proc.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /y "$(ProjectDir)dependencies\64\release\bin\*.dll" "$(OutDir)"</Command>
+      <Command>copy /y "$(ProjectDir)dependencies\$(Platform)\$(Configuration)\bin\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy 64 Bit Release DLLs to Build</Message>
+      <Message>Copy 64 Bit DLLs to Build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -8,16 +8,16 @@
 
 namespace utils
 {
-    std::string LoadBotToken(const std::string& filename)
+    std::string LoadSecret(const std::string& filename, const std::string& find)
     {
         std::ifstream file(filename);
         std::string line;
 
         while (std::getline(file, line))
         {
-            if (line.find("BOT_TOKEN=") == 0)
+            if (line.find(find + "=") == 0)
             {
-                return line.substr(std::string("BOT_TOKEN=").length());
+                return line.substr(std::string(find + "=").length());
             }
         }
 

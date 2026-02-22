@@ -7,7 +7,7 @@
 
 namespace utils
 {
-	std::string LoadBotToken(const std::string& filename);
+	std::string LoadSecret(const std::string& filename, const std::string& find);
 	int PriorityToString(const std::string& priority_str);
 	std::string GuidToString(const GUID& guid);
 	const GUID StringToGuid(const std::string& guidStr);

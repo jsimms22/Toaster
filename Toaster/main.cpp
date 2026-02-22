@@ -15,8 +15,43 @@
 #include <exception>
 #include <string>
 
+#include <bsoncxx/json.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+
+// URL Encoding guidelines for mongodb: https://www.mongodb.com/docs/atlas/troubleshoot-connection/#special-characters-in-connection-string-password
+
 auto main() -> int
 {
+    const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN")};
+    const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
+    const std::string DB_PASS{ utils::LoadSecret("../token.txt", "DB_PASS") };
+    const std::string DB_CLUSTER{ utils::LoadSecret("../token.txt", "DB_CLUSTER") };
+
+    try
+    {
+        // Create an instance.
+        mongocxx::v_noabi::instance inst{};
+        const auto uri = mongocxx::v_noabi::uri{ "mongodb+srv://" + DB_USER + ":" + DB_PASS + "@" + DB_CLUSTER };
+        // Set the version of the Stable API on the client
+        mongocxx::v_noabi::options::client client_options;
+        const auto api = mongocxx::v_noabi::options::server_api{ mongocxx::v_noabi::options::server_api::version::k_version_1 };
+        client_options.server_api_opts(api);
+        // Setup the connection and get a handle on the "admin" database.
+        mongocxx::v_noabi::client conn{ uri, client_options };
+        mongocxx::v_noabi::database db = conn["admin"];
+        // Ping the database.
+        const auto ping_cmd = bsoncxx::v_noabi::builder::basic::make_document(bsoncxx::v_noabi::builder::basic::kvp("ping", 1));
+        db.run_command(ping_cmd.view());
+        std::cout << "Pinged your deployment. You successfully connected to MongoDB!" << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        // Handle errors
+        std::cout << "Exception: " << e.what() << std::endl;
+        return 0;
+    }
+
     const std::string log_name{ "mybot.log" };
 
     // Initialize and setup spdlog
@@ -36,8 +71,6 @@ auto main() -> int
 
     // Rebuild our queue from persistence (for now just xml, eventually an actual DB)
     std::shared_ptr<JobQueue> spQueue = std::make_shared<JobQueue>();
-
-    const std::string BOT_TOKEN{ utils::LoadBotToken("../token.txt") };
 
     while (true)
     {

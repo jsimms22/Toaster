@@ -72,10 +72,10 @@ public:
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
-    virtual std::string PrintJobDetails(dpp::cluster* cluster) const;
+    virtual std::string PrintJobDetails(dpp::cluster& cluster) const;
 
-    const std::string GetCustomerName(dpp::cluster* cluster) const;
-    const std::string GetWorkerName(dpp::cluster* cluster) const;
+    const std::string GetCustomerName(dpp::cluster& cluster) const;
+    const std::string GetWorkerName(dpp::cluster& cluster) const;
 
 private:
     std::size_t m_timeCreated;

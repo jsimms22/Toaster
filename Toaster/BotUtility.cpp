@@ -97,4 +97,35 @@ namespace utils
     {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
+
+    const std::size_t CmdStringToJobType(const std::string& cmd)
+    {
+        if (cmd == Option_ItemCrafting) return JOB_TYPE_CRAFTING;
+        else if (cmd == Option_BaseBuidling) return JOB_TYPE_BUILDING;
+        else if (cmd == Option_ComponentRequest) return JOB_TYPE_COMPONENT;
+        else if (cmd == Option_ResourceCollect) return JOB_TYPE_RESOURCE;
+        else if (cmd == Option_RefineryJob) return JOB_TYPE_REFINERY;
+        else return JOB_TYPE_GENERAL;
+    }
+
+    void NotifyIssuerMsg(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg)
+    {
+        cluster.direct_message_create(idUser, dpp::message(msg), [&idUser, &cluster](const dpp::confirmation_callback_t& callback) {
+            if (callback.is_error())
+            {
+                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id {}.", idUser));
+            }
+            else
+            {
+                dpp::user* user = dpp::find_user(idUser);
+                if (user)
+                {
+                    cluster.log(dpp::ll_info, fmt::format("Sending direct message to {}#{}.", user->username, user->discriminator));
+                }
+                else
+                {
+                    cluster.log(dpp::ll_warning, fmt::format("Sending direct message to unknown username with id {}.", idUser));
+                }
+            }});
+    }
 }

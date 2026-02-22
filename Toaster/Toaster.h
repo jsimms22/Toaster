@@ -4,13 +4,14 @@
 #include <dpp/cluster.h>
 // std library
 #include <cstdint>
+#include <memory>
 
 class JobQueue;
 
 class ToasterBot final
 {
 public:
-	ToasterBot(dpp::cluster* cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug = false);
+	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug = false);
 	~ToasterBot() = default;
 
 	// Bot event handlers
@@ -20,8 +21,6 @@ public:
 	void onButtonClick(const dpp::button_click_t& event);
 	void onInteractionCreate(const dpp::interaction_create_t& event);
 	void onFormSubmit(const dpp::form_submit_t& event);
-
-	void NotifyIssuerMsg(const dpp::snowflake& userID, const dpp::event_dispatch_t& event, const std::string& msg);
 	
 private:
 	bool m_debug = false;
@@ -29,7 +28,7 @@ private:
 	std::shared_ptr<JobQueue> m_spQueue;
 
 	// Discord details
-	dpp::cluster* m_cluster = nullptr;
+	dpp::cluster& m_cluster;
 	std::uint32_t m_clusterId = 0;
 	std::uint32_t m_iShardCount = 0;
 	const std::unordered_map<dpp::snowflake, std::string_view> m_vWorkers = { std::pair(464542267395538944, "aimx83"),

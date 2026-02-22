@@ -196,23 +196,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BuildingJobRequest.cpp" />
-    <ClCompile Include="Command.cpp" />
+    <ClCompile Include="Commands.cpp" />
     <ClCompile Include="ComponentJobRequest.cpp" />
     <ClCompile Include="CraftingJobRequest.cpp" />
+    <ClCompile Include="CreateRequestCommandcpp.cpp" />
+    <ClCompile Include="HelloCommand.cpp" />
     <ClCompile Include="JobQueue.cpp" />
     <ClCompile Include="JobRequest.cpp" />
     <ClCompile Include="JobRequestFactory.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ModifyRequestCommand.cpp" />
+    <ClCompile Include="MyAssignmentsCommand.cpp" />
+    <ClCompile Include="MyRequestsCommands.cpp" />
+    <ClCompile Include="MyTopAssignmentCommand.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
     <ClCompile Include="ResourceJobRequest.cpp" />
+    <ClCompile Include="ShowQueueCommand.cpp" />
+    <ClCompile Include="ShowRequestCommand.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />
     <ClCompile Include="Toaster.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BuildingJobRequest.h" />
-    <ClInclude Include="Command.h" />
+    <ClInclude Include="CommandContext.h" />
+    <ClInclude Include="Commands.h" />
     <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
     <ClInclude Include="JobQueue.h" />

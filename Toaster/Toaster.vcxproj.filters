@@ -10,7 +10,7 @@
     <ClCompile Include="BuildingJobRequest.cpp">
       <Filter>Source Files\Requests</Filter>
     </ClCompile>
-    <ClCompile Include="Command.cpp">
+    <ClCompile Include="Commands.cpp">
       <Filter>Source Files\Commands</Filter>
     </ClCompile>
     <ClCompile Include="ComponentJobRequest.cpp">
@@ -43,6 +43,30 @@
     <ClCompile Include="JobRequestFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HelloCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="MyAssignmentsCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowQueueCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyRequestCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="MyTopAssignmentCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="MyRequestsCommands.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateRequestCommandcpp.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowRequestCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -54,7 +78,7 @@
     <ClInclude Include="BuildingJobRequest.h">
       <Filter>Header Files\Requests</Filter>
     </ClInclude>
-    <ClInclude Include="Command.h">
+    <ClInclude Include="Commands.h">
       <Filter>Header Files\Commands</Filter>
     </ClInclude>
     <ClInclude Include="JobQueue.h">
@@ -86,6 +110,9 @@
     </ClInclude>
     <ClInclude Include="JobRequestFactory.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandContext.h">
+      <Filter>Header Files\Commands</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

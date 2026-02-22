@@ -32,7 +32,7 @@ public:
     virtual bool SupportsType(const std::size_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) override;
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) override;
-    virtual std::string PrintJobDetails(dpp::cluster* cluster) const override;
+    virtual std::string PrintJobDetails(dpp::cluster& cluster) const override;
 
 private:
     RefineryJobRequest::state m_eResourceState = RefineryJobRequest::state::RefinedMineable;

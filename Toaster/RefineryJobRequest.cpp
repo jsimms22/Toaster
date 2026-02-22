@@ -72,11 +72,8 @@ void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
-std::string RefineryJobRequest::PrintJobDetails(dpp::cluster* cluster) const
+std::string RefineryJobRequest::PrintJobDetails(dpp::cluster& cluster) const
 {
-    if (!cluster)
-        return {};
-
     std::string base = JobRequest::PrintJobDetails(cluster);
 
     return fmt::format(

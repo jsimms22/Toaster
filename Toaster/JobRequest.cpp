@@ -181,11 +181,8 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
     }
 }
 
-std::string JobRequest::PrintJobDetails(dpp::cluster* cluster) const
+std::string JobRequest::PrintJobDetails(dpp::cluster& cluster) const
 {
-    if (!cluster)
-        return {};
-
     fmt::memory_buffer buffer;
 
     return fmt::format(
@@ -205,55 +202,49 @@ std::string JobRequest::PrintJobDetails(dpp::cluster* cluster) const
         m_timeLastEdit);
 }
 
-const std::string JobRequest::GetCustomerName(dpp::cluster* cluster) const
+const std::string JobRequest::GetCustomerName(dpp::cluster& cluster) const
 {
-    if (!cluster)
-        return std::string();
-
-    cluster->log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idCustomer));
+    cluster.log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idCustomer));
 
     dpp::user* user = dpp::find_user(m_idCustomer);
     if (user)
     {
-        cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
+        cluster.log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
         return user->username;
     }
-
+    
     std::string username;
-    cluster->user_get(m_idCustomer, [cluster, &username](const dpp::confirmation_callback_t& callback) {
+    cluster.user_get(m_idCustomer, [&cluster, &username](const dpp::confirmation_callback_t& callback) {
         if (!callback.is_error()) {
             dpp::user user = std::get<dpp::user>(callback.value);
-            cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
+            cluster.log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
             username = user.username;
         }
         });
-
+    
     return username;
 }
 
-const std::string JobRequest::GetWorkerName(dpp::cluster* cluster) const
+const std::string JobRequest::GetWorkerName(dpp::cluster& cluster) const
 {
-    if (!cluster)
-        return std::string();
-    
-    cluster->log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idWorker));
+    cluster.log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", m_idWorker));
 
     dpp::user* user = dpp::find_user(m_idWorker);
     if (user)
     {
-        cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
+        cluster.log(dpp::ll_debug, fmt::format("Found username: {}", user->username));
         return user->username;
     }
-
+    
     std::string username;
-    cluster->user_get(m_idWorker, [cluster, &username](const dpp::confirmation_callback_t& callback) 
+    cluster.user_get(m_idWorker, [&cluster, &username](const dpp::confirmation_callback_t& callback) 
         {
             if (!callback.is_error()) {
                 dpp::user user = std::get<dpp::user>(callback.value);
-                cluster->log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
+                cluster.log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
                 username = user.username;
             }
         });
-
+    
     return username;
 }

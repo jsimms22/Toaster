@@ -1,7 +1,8 @@
 #include "Toaster.h"
 
 #include "BotUtility.h"
-#include "Command.h"
+#include "CommandContext.h"
+#include "Commands.h"
 #include "JobQueue.h"
 #include "Resource.h"
 
@@ -36,39 +37,30 @@ namespace
     }
 }
 
-ToasterBot::ToasterBot(dpp::cluster* cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug)
-    : m_cluster{ cluster }, m_clusterId{ clusterId }, m_spQueue{ spQueue }, m_debug{ bDebug }, m_iShardCount{ 0 } { }
+ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug)
+    : m_cluster(cluster), m_clusterId(clusterId), m_spQueue(spQueue), m_debug(bDebug), m_iShardCount{ 0 } { }
 
 void ToasterBot::onReady(const dpp::ready_t& event)
 {
     if (dpp::run_once<struct clear_bot_commands>()) 
     {
-        //m_cluster->guild_bulk_command_delete(1472034166869852287);
-        //m_cluster->global_bulk_command_delete();
-
-        //m_cluster->log(dpp::ll_debug, fmt::format("Deleted commands for guild id: {}.", 1472034166869852287));
+        //ICustomCommand::UnregisterAll(m_cluster);
+        //ICustomCommand::UnregisterGuildAll(&m_cluster, 1472034166869852287);
     }
     if (dpp::run_once<struct register_bot_commands>())
     {
-        std::vector<dpp::slashcommand> vCmd;
-        for (std::pair<std::string, dpp::slashcommand>& cmd : BotModule::commands)
-        {
-            cmd.second.application_id = m_cluster->me.id;
-            vCmd.push_back(cmd.second);
-        }
-        m_cluster->guild_bulk_command_create(vCmd, 1472034166869852287);
-
-        m_cluster->log(dpp::ll_debug, fmt::format("Registered {} commands with guild id: {}.", vCmd.size(), 1472034166869852287));
+        //ICustomCommand::UnregisterAll(m_cluster);
+        ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
     }
 }
 
 void ToasterBot::onMessage(const dpp::message_create_t& event)
 {
     if (!event.msg.author.id) {
-        m_cluster->log(dpp::ll_error, fmt::format("Message dropped, no author: {}.", event.msg.content));
+        m_cluster.log(dpp::ll_error, fmt::format("Message dropped, no author: {}.", event.msg.content));
         return;
     } 
-    else if (event.msg.author.id == m_cluster->me.id) 
+    else if (event.msg.author.id == m_cluster.me.id) 
     {
         dpp::channel* channel = dpp::find_channel(event.msg.channel_id);
         if (channel && channel->get_type() == dpp::channel_type::DM)
@@ -78,7 +70,7 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
                 dpp::user* user = dpp::find_user(idUser);
                 if (user) 
                 {
-                    m_cluster->log(dpp::ll_info,
+                    m_cluster.log(dpp::ll_info,
                         fmt::format("Bot sending outgoing direct message to {}#{}.", user->username, user->discriminator));
                 }
             }
@@ -88,261 +80,78 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
              channel->get_type() == dpp::channel_type::CHANNEL_PRIVATE_THREAD))
         {
             // Guild channel
-            m_cluster->log(dpp::ll_info,
+            m_cluster.log(dpp::ll_info,
                 fmt::format("Bot sending outgoing message in channel {} - {}.", event.msg.channel_id, channel->name));
         }
     }
 }
 
 void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
-{   
-    if (event.command.get_command_name() == Command_Hello)
+{
+    std::chrono::time_point<std::chrono::steady_clock> start;
+    if (m_debug)
     {
-        const dpp::user author = event.command.get_issuing_user();
-        // Reply to the user, but only let them see the response. 
-        event.reply(dpp::message("Hello! How are you today?").set_flags(dpp::m_ephemeral));
-
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
+        start = std::chrono::steady_clock::now();
     }
-    else if (event.command.get_command_name() == Command_MyAssignments ||
-             event.command.get_command_name() == Command_MyTopAssignment)
+
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    for (auto cmd : Toaster::BotCommands)
     {
-        const dpp::user author = event.command.get_issuing_user();
-        const std::string header = event.command.get_command_name() == Command_MyTopAssignment ? "Top Assigment (by priority):" : "Your Assignments:";
-        if (m_spQueue->GetQueueSize() == 0)
-        {
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description("No requests or jobs currently assigned to you.")
-                .set_color(0x3498db);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-        else if (event.command.get_command_name() == Command_MyAssignments)
-        {
-            const std::string result = m_spQueue->PrintQueueByWorker(m_cluster, author.id);
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
-                .set_color(0x3498db);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-        else if (event.command.get_command_name() == Command_MyTopAssignment)
-        {
-            const auto& job = m_spQueue->FirstAssignment(author.username);
-            const std::string result = job->PrintJobDetails(m_cluster);
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
-                .set_color(0x3498db);
-
-            dpp::component button1 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Complete")
-                .set_style(dpp::cos_success)
-                .set_id(Button_Complete)
-                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
-            button1.value = utils::GuidToStringNoBrackets(job->GetID());
-
-            dpp::component button2 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Add Note")
-                .set_style(dpp::cos_primary)
-                .set_id(Button_Note)
-                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
-
-            dpp::component button3 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Unassign")
-                .set_style(dpp::cos_primary)
-                .set_id(Button_Unassign)
-                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
-
-            dpp::component button4 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Delete")
-                .set_style(dpp::cos_danger)
-                .set_id(Button_Delete)
-                .set_content(utils::GuidToStringNoBrackets(job->GetID()));
-
-            dpp::component row = dpp::component()
-                .set_type(dpp::cot_action_row)
-                .add_component(button1)
-                .add_component(button2)
-                .add_component(button3)
-                .add_component(button4);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral).add_component(row));
-        }
-
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
+        cmd->ExecuteCommand(ctx, event);
     }
+
+    if (m_debug)
+    {
+        auto end = std::chrono::steady_clock::now();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+        m_cluster.log(
+            dpp::ll_debug,
+            fmt::format(
+                "Slash '{}' executed in {} ms (user: {})",
+                event.command.get_command_name(),
+                duration,
+                event.command.get_issuing_user().username
+            )
+        );
+    }
+
+    m_cluster.log(dpp::ll_info, fmt::format("Toaster process slash command {} for user {}", event.command.get_command_name(), event.command.get_issuing_user().username));
 }
 
 void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
 {
-    if (event.command.get_command_name() == Command_JobRequest)
+    std::chrono::time_point<std::chrono::steady_clock> start;
+    if (m_debug)
     {
-        const dpp::user author = event.command.get_issuing_user();
-        const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
-
-        if (strCmdID == Option_ItemCrafting)
-        {
-            CraftRequestDlg modal;
-            event.dialog(modal);
-        }
-        else if (strCmdID == Option_ComponentRequest)
-        {
-            ComponentRequestDlg modal;
-            event.dialog(modal);
-        }
-        else if (strCmdID == Option_BaseBuidling)
-        {
-            BuildRequestDlg modal;
-            event.dialog(modal);
-        }
-        else if (strCmdID == Option_ResourceCollect)
-        {
-            ResourceRequestDlg modal;
-            event.dialog(modal);
-        }
-        else if (strCmdID == Option_RefineryJob)
-        {
-            RefineryRequestDlg modal;
-            event.dialog(modal);
-        }
-
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {} with cmd option {}", author.username, event.command.get_command_name(), strCmdID));
+        start = std::chrono::steady_clock::now();
     }
-    else if (event.command.get_command_name() == Command_MyRequests ||
-             event.command.get_command_name() == Command_ShowQueue)
+
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    for (auto cmd : Toaster::BotCommands)
     {
-        const dpp::user author = event.command.get_issuing_user();
-        const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
-        
-        const std::size_t filterType = CmdStringToJobType(strCmdID);
-        const std::string header = event.command.get_command_name() == Command_MyRequests ? "Your Requests:" : "Request Queue:";
-        if (m_spQueue->GetQueueSize() == 0)
-        {
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description("Request queue is currently empty.")
-                .set_color(0x3498db);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-        else if (event.command.get_command_name() == Command_MyRequests)
-        {
-            const std::string result = m_spQueue->PrintQueueByUser(m_cluster, author.id, filterType);
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(!result.empty() ? result : "You have no requests of this type in queue.")
-                .set_color(0x3498db);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-        else if (event.command.get_command_name() == Command_ShowQueue)
-        {
-            const std::string result = m_spQueue->PrintQueueByType(m_cluster, filterType);
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description(!result.empty() ? result : "No requests of this type in queue.")
-                .set_color(0x3498db);
-
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        }
-
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
+        cmd->ExecuteInteraction(ctx, event);
     }
-    else if (event.command.get_command_name() == Command_ModifyRequest)
+
+    if (m_debug)
     {
-        const dpp::snowflake guild = event.command.guild_id;
-        const dpp::user author = event.command.get_issuing_user();
-        const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
-        const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
+        auto end = std::chrono::steady_clock::now();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-        const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
-        if (!job)
-        {
-            event.reply(dpp::message(fmt::format("Could not find id {}.", strJobID)).set_flags(dpp::m_ephemeral));
-            m_cluster->log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.username, strJobID, strCmdID));
-            return;
-        }
-        // Check for permissions to edit a job request
-        else if (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */)
-        {
-            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
-            m_cluster->log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.username, strJobID, strCmdID));
-            return;
-        }
-
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
-
-        if (strCmdID == Option_Edit)
-        {
-            EditRequestDlg editModal(job);
-            event.dialog(editModal);
-        }
-        else if (strCmdID == Option_Assign)
-        {
-            const std::string_view sv = job->GetWorkerName(m_cluster);
-            AssignRequestDlg assignModal(job, m_vWorkers, sv);
-            event.dialog(assignModal);
-        }
-        else if (strCmdID == Option_Status)
-        {
-            StatusChangeRequestDlg statusModal(job);
-            event.dialog(statusModal);
-        }
-        else if (strCmdID == Option_Priority)
-        {
-            PriorityChangeRequestDlg statusModal(job);
-            event.dialog(statusModal);
-        }
-        else if (strCmdID == Option_Delete)
-        {
-            job->SetLastEditTime(utils::GetEpochTimestamp());
-            const std::string jobDetails = job->PrintJobDetails(m_cluster);
-            const bool result = m_spQueue->DeleteJobByGUID(strJobID);
-            if (!result)
-            {
-                event.reply(dpp::message(fmt::format("Failed to delete id: ", strJobID)).set_flags(dpp::m_ephemeral));
-                m_cluster->log(dpp::ll_warning, fmt::format("{} failed to delete {}.", author.username, strJobID));
-            }
-
-            event.reply(dpp::message(fmt::format("Deleted job request:\n\n{}", jobDetails)).set_flags(dpp::m_ephemeral));
-            m_spQueue->SaveQueueToFile();
-            m_cluster->log(dpp::ll_warning, fmt::format("{} deleted {}", author.username, strJobID));
-
-            if (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */)
-            {
-                NotifyIssuerMsg(job->GetCustomerID(), event,
-                    fmt::format("Request **{}** has been deleted by {}:\n\n{}", strJobID, author.username, jobDetails));
-            }
-        }
+        m_cluster.log(
+            dpp::ll_debug,
+            fmt::format(
+                "Interaction '{}' executed in {} ms (user: {})",
+                event.command.get_command_name(),
+                duration,
+                event.command.get_issuing_user().username
+            )
+        );
     }
-    else if (event.command.get_command_name() == Command_ShowRequest)
-    {
-        const dpp::user author = event.command.get_issuing_user();
-        const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
 
-        const std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strJobID);
-        m_cluster->log(dpp::ll_info, fmt::format("{} used command {}", author.username, event.command.get_command_name()));
-
-        if (!job)
-        {
-            event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
-            return;
-        }
-
-        dpp::embed embed;
-        embed.set_title("Here is the request:")
-            .set_description(job->PrintJobDetails(m_cluster))
-            .set_color(0x3498db);
-
-        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-    }
+    m_cluster.log(dpp::ll_info, fmt::format("Toaster process interaction command {} for user {}", event.command.get_command_name(), event.command.get_issuing_user().username));
 }
 
 void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
@@ -373,7 +182,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobCraft->SetQualityThres(strParam3);
             jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobCraft->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobCraft->GetID())));
+            m_cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobCraft->GetID())));
             m_spQueue->AddToQueue(std::move(jobCraft));
         }
         else if (event.custom_id == BuildRequestDlg::modalID)
@@ -386,7 +195,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobBuild->SetBuildZone(strParam3);
             jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobBuild->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobBuild->GetID())));
+            m_cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobBuild->GetID())));
             m_spQueue->AddToQueue(std::move(jobBuild));
         }
         else if (event.custom_id == ComponentRequestDlg::modalID)
@@ -397,7 +206,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobComp->SetComponentList(strParam1);
             jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
             jobDetails = jobComp->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobComp->GetID())));
+            m_cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobComp->GetID())));
             m_spQueue->AddToQueue(std::move(jobComp));
         }
         else if (event.custom_id == ResourceRequestDlg::modalID)
@@ -410,7 +219,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobRes->SetQualityThres(strParam3);
             jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobRes->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRes->GetID())));
+            m_cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRes->GetID())));
             m_spQueue->AddToQueue(std::move(jobRes));
         }
         else if (event.custom_id == RefineryRequestDlg::modalID)
@@ -423,7 +232,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             jobRefine->SetRefinery(strParam3);
             jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
             jobDetails = jobRefine->PrintJobDetails(m_cluster);
-            m_cluster->log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRefine->GetID())));
+            m_cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.username, utils::GuidToString(jobRefine->GetID())));
             m_spQueue->AddToQueue(std::move(jobRefine));
         }
 
@@ -448,7 +257,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.username, strID));
+            m_cluster.log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.username, strID));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -498,12 +307,12 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, fmt::format("{} edited {}.", author.username, strID));
+        m_cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.username, strID));
 
         if ((author.id != job->GetCustomerID() && strOldJobDetails != strNewJobDetails) || m_debug)
         {
-            NotifyIssuerMsg(job->GetCustomerID(), event,
-                fmt::format("Request **{}** has been edited by {}:\n\n New Job Details:\n{}",
+            utils::NotifyIssuerMsg(m_cluster, job->GetCustomerID(), event,
+                    fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
                     utils::GuidToStringNoBrackets(job->GetID()), author.username, strNewJobDetails));
         }
     }
@@ -518,11 +327,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.username, strID));
+            m_cluster.log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.username, strID));
             return;
         }
-        job->SetLastEditTime(utils::GetEpochTimestamp());
 
+        job->SetLastEditTime(utils::GetEpochTimestamp());
         job->SetWorkerID(workerID);
         job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
 
@@ -535,12 +344,12 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         m_spQueue->SaveQueueToFile();
 
         const std::string strWorker = job->GetWorkerName(m_cluster);
-        m_cluster->log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.username, strID, job->GetWorkerName(m_cluster)));
+        m_cluster.log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.username, strID, strWorker));
 
         if (author.id != job->GetCustomerID() || m_debug)
         {
-            NotifyIssuerMsg(job->GetCustomerID(), event,
-                fmt::format("Your request has been assigned to **{}** by {}:\n\n{}", strWorker, author.username, embed.description));
+            utils::NotifyIssuerMsg(m_cluster, job->GetCustomerID(), event,
+                fmt::format("Your request has been assigned to {} by {}:\n\n{}", strWorker, author.username, embed.description));
         }
     }
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
@@ -553,7 +362,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.username, strID, strStatus));
+            m_cluster.log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.username, strID, strStatus));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -569,11 +378,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.username, strID, strStatus));
+        m_cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.username, strID, strStatus));
         if ((author.id != job->GetCustomerID() && strOldStatus != strStatus) || m_debug)
         {
-            NotifyIssuerMsg(job->GetCustomerID(), event,
-                fmt::format("Your request's status has moved from **{}** to **{}** by {}:\n\n{}", strOldStatus, strStatus, author.username, job->PrintJobDetails(m_cluster)));
+            utils::NotifyIssuerMsg(m_cluster, job->GetCustomerID(), event,
+                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.username, job->PrintJobDetails(m_cluster)));
         }
     }
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
@@ -586,7 +395,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         std::shared_ptr<JobRequest> job = m_spQueue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !m_debug/*|| todo get permissions list */))
         {
-            m_cluster->log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.username, strID, strPriority));
+            m_cluster.log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.username, strID, strPriority));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -602,11 +411,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         m_spQueue->SaveQueueToFile();
 
-        m_cluster->log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.username, strID, strPriority));
+        m_cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.username, strID, strPriority));
         if ((author.id != job->GetCustomerID() && strOldPriority != strPriority) || m_debug)
         {
-            NotifyIssuerMsg(job->GetCustomerID(), event,
-                fmt::format("Your request's priority has moved from **{}** to **{}** by {}:\n\n{}", strOldPriority, strPriority, author.username, job->PrintJobDetails(m_cluster)));
+            utils::NotifyIssuerMsg(m_cluster, job->GetCustomerID(), event,
+                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.username, job->PrintJobDetails(m_cluster)));
         }
     }
 }
@@ -615,41 +424,20 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 {
     if (event.custom_id == Button_Complete)
     {
-        m_cluster->log(dpp::ll_info, Button_Complete);
+        m_cluster.log(dpp::ll_info, Button_Complete);
     }
     else if (event.custom_id == Button_Note)
     {
-        m_cluster->log(dpp::ll_info, Button_Note);
+        m_cluster.log(dpp::ll_info, Button_Note);
     }
     else if (event.custom_id == Button_Unassign)
     {
-        m_cluster->log(dpp::ll_info, Button_Unassign);
+        m_cluster.log(dpp::ll_info, Button_Unassign);
     }
     else if (event.custom_id == Button_Delete)
     {
-        m_cluster->log(dpp::ll_info, Button_Delete);
+        m_cluster.log(dpp::ll_info, Button_Delete);
     }
 
     event.reply(dpp::message("Currently prototyping buttons and interactions - this button does not do anything right not.").set_flags(dpp::m_ephemeral));
-}
-
-void ToasterBot::NotifyIssuerMsg(const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg)
-{
-    m_cluster->direct_message_create(idUser, dpp::message(msg), [idUser, cluster = m_cluster](const dpp::confirmation_callback_t& callback) {
-        if (callback.is_error())
-        {
-            cluster->log(dpp::ll_error, fmt::format("Error sending direct message to user id {}.", idUser));
-        }
-        else
-        {
-            dpp::user* user = dpp::find_user(idUser);
-            if (user)
-            {
-                cluster->log(dpp::ll_info, fmt::format("Sending direct message to {}#{}.", user->username, user->discriminator));
-            }
-            else
-            {
-                cluster->log(dpp::ll_warning, fmt::format("Sending direct message to unknown username with id {}.", idUser));
-            }
-        }});
 }

@@ -31,13 +31,13 @@ constexpr const char* Component_Status			{ "status_id" };
 
 /*-------------------------------COMMAND IDS------------------------------------*/
 constexpr const char* Command_Hello				{ "hello" };
-constexpr const char* Command_JobRequest		{ "job_request" };
+constexpr const char* Command_JobRequest		{ "create_request" };
 constexpr const char* Command_ModifyRequest		{ "modify_request" };
 constexpr const char* Command_ShowRequest		{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue			{ "show_queue" };
 constexpr const char* Command_MyAssignments		{ "my_assignments"};
-constexpr const char* Command_MyTopAssignment	{ "top_assignment" };
+constexpr const char* Command_MyTopAssignment	{ "my_top_assignment" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/

@@ -90,11 +90,8 @@ bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueue(dpp::cluster* cluster) const
+const std::string JobQueue::PrintQueue(dpp::cluster& cluster) const
 {
-    if (!cluster)
-        return {};
-
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -123,11 +120,8 @@ const std::string JobQueue::PrintQueue(dpp::cluster* cluster) const
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueueByType(dpp::cluster* cluster, const std::size_t filter) const
+const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter) const
 {
-    if (!cluster)
-        return {};
-
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -158,11 +152,8 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster* cluster, const std::s
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueueByUser(dpp::cluster* cluster, const dpp::snowflake& userID, const std::size_t filter) const
+const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t filter) const
 {
-    if (!cluster)
-        return {};
-
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -188,11 +179,8 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster* cluster, const dpp::s
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueueByWorker(dpp::cluster* cluster, const dpp::snowflake& userID) const
+const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID) const
 {
-    if (!cluster)
-        return {};
-
     std::stringstream ss;
     for (const auto& job : m_vQueue)
     {
@@ -205,11 +193,8 @@ const std::string JobQueue::PrintQueueByWorker(dpp::cluster* cluster, const dpp:
     return ss.str();
 }
 
-const std::string JobQueue::PrintFirstAssignment(dpp::cluster* cluster, const dpp::snowflake& userID) const
+const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID) const
 {
-    if (!cluster)
-        return {};
-
     for (const auto& job : m_vQueue)
     {
         if (job->GetWorkerID() == userID)

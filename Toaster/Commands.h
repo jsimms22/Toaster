@@ -94,6 +94,20 @@ public:
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
 };
 
+class ShowQueueSummaryCommand : public ICustomCommand
+{
+public:
+    ShowQueueSummaryCommand()
+        : ICustomCommand(Command_ShowQueue, "Retrieve a summary for the state of the request in queue.")
+    {}
+
+    virtual ~ShowQueueSummaryCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+};
+
 class ShowRequestCommand : public ICustomCommand
 {
 public:

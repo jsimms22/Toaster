@@ -213,6 +213,7 @@
     <ClCompile Include="RequestDlg.cpp" />
     <ClCompile Include="ResourceJobRequest.cpp" />
     <ClCompile Include="ShowQueueCommand.cpp" />
+    <ClCompile Include="ShowQueueSummaryCommand.cpp" />
     <ClCompile Include="ShowRequestCommand.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />

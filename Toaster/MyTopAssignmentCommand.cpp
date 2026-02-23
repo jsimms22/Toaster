@@ -23,8 +23,8 @@ void MyTopAssignmentCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
         return;
     }
 
-    const auto& job = ctx.queue->FirstAssignment(author.username);
-    const std::string result = job->PrintJobDetails(ctx.cluster);
+    const auto& job = ctx.queue->FirstAssignment(author.id);
+    const std::string result = job ? job->PrintJobDetails(ctx.cluster) : "";
     dpp::embed embed;
     embed.set_title(header)
         .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")

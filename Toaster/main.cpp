@@ -85,9 +85,20 @@ auto main() -> int
     std::uint8_t counter{ 0 };
     while (true)
     {
+        /* Set cache policy for D++ library
+         * --------------------------------
+         * User caching:     none
+         * Emoji caching:    none
+         * Role caching:     none
+         * Channel caching:  none
+         * Guild caching:    none
+         */
+        dpp::cache_policy_t cp = { dpp::cp_aggressive, dpp::cp_none, dpp::cp_aggressive, dpp::cp_aggressive, dpp::cp_none };
+
         // Reinitialize our bot to reestablish connection to discord
         dpp::cluster bot{ BOT_TOKEN };
-        bot.intents = dpp::intents::i_message_content | dpp::intents::i_default_intents;
+        bot.intents = dpp::intents::i_message_content | dpp::intents::i_default_intents | dpp::i_guild_members;
+        bot.cache_policy = cp;
 
         if (!(&bot))
         {

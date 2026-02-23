@@ -119,6 +119,98 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster) const
     return fmt::to_string(buffer);
 }
 
+const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
+{
+    std::map<std::size_t, std::size_t> typeCounts;
+    std::map<JobRequest::status, std::size_t> statusCounts;
+    std::map<JobRequest::priority, std::size_t> priorityCounts;
+    std::size_t unassignedCounts{ 0 };
+    std::vector<GUID> stalledJobs;
+
+    // Collect counts
+    for (const auto& job : m_vQueue)
+    {
+        typeCounts[job->JobType()]++;
+        statusCounts[job->GetStatus()]++;
+        priorityCounts[job->GetPriority()]++;
+
+        if ((job->GetWorkerID() == "0" || job->GetWorkerID() == "") && job->GetStatus() < JobRequest::status::hold)
+            ++unassignedCounts;
+
+        if (job->GetStatus() == JobRequest::status::stalled)
+            stalledJobs.push_back(job->GetID());
+    }
+
+    fmt::memory_buffer buffer;
+
+    // Type summary
+    fmt::format_to(std::back_inserter(buffer), "**Job Types**:\n");
+    for (const auto& [type, count] : typeCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", utils::JobTypeToString(type), count);
+    }
+
+    // Status summary
+    fmt::format_to(std::back_inserter(buffer), "\n**Job Statuses**:\n");
+    for (const auto& [status, count] : statusCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", JobRequest::StatusToString(status), count);
+    }
+
+    // Priority summary
+    fmt::format_to(std::back_inserter(buffer), "\n**Job Priorities**:\n");
+    for (const auto& [priority, count] : priorityCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", JobRequest::PriorityToString(priority), count);
+    }
+
+    // Unassigned summary
+    fmt::format_to(std::back_inserter(buffer), "\n**Open Jobs Unassigned**:\n");
+    fmt::format_to(std::back_inserter(buffer), "  Unassigned: {}\n", unassignedCounts);
+
+    // Stalled job IDs
+    fmt::format_to(std::back_inserter(buffer), "\n**Stalled Job IDs**:\n");
+    for (const auto& id : stalledJobs)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}\n", utils::GuidToStringNoBrackets(id));
+    }
+
+    // Convert memory_buffer to std::string
+    return fmt::to_string(buffer);
+}
+
+const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobRequest::status filter) const
+{
+    fmt::memory_buffer buffer;
+    std::size_t position = 0;
+
+    for (const auto& job : m_vQueue)
+    {
+        ++position;
+
+        if (job->GetStatus() != filter)
+            continue;
+
+        fmt::format_to(
+            std::back_inserter(buffer),
+            "***Position: {}***\n"
+            "ID (**{}**): {}\n"
+            "**Status**: {}\n"
+            "**Assigned**: {}\n"
+            "**Type**: {}\n\n",
+            position,
+            JobRequest::PriorityToString(job->GetPriority()),
+            utils::GuidToStringNoBrackets(job->GetID()),
+            JobRequest::StatusToString(job->GetStatus()),
+            job->GetWorkerName(cluster),
+            job->JobTypeToString()
+        );
+    }
+
+    // Convert buffer to std::string once at the end
+    return fmt::to_string(buffer);
+}
+
 // Method to print all job requests
 const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter) const
 {

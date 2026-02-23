@@ -22,6 +22,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) = 0;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) = 0;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) = 0;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) = 0;
 
     static void RegisterAll(dpp::cluster* cluster, const std::vector<ICustomCommand*>& vCommands);
     static void RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflake idGuild, const std::vector<ICustomCommand*>& vCommands);
@@ -48,6 +49,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class MyRequestsCommand : public ICustomCommand
@@ -70,6 +72,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class ShowQueueCommand : public ICustomCommand
@@ -92,13 +95,14 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class ShowQueueSummaryCommand : public ICustomCommand
 {
 public:
     ShowQueueSummaryCommand()
-        : ICustomCommand(Command_ShowQueue, "Retrieve a summary for the state of the request in queue.")
+        : ICustomCommand(Command_SummaryQueue, "Retrieve a summary for the state of the request in queue.")
     {}
 
     virtual ~ShowQueueSummaryCommand() = default;
@@ -106,6 +110,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
 class ShowRequestCommand : public ICustomCommand
@@ -122,6 +127,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class ModifyRequestCommand : public ICustomCommand
@@ -144,6 +150,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class MyAssignmentsCommand : public ICustomCommand
@@ -158,6 +165,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 class MyTopAssignmentCommand : public ICustomCommand
@@ -171,6 +179,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
 class HelloCommand : public ICustomCommand
@@ -185,6 +194,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
 namespace Toaster
@@ -195,6 +205,7 @@ namespace Toaster
         new CreateRequestCommand(),
         new MyRequestsCommand(),
         new ShowQueueCommand(),
+        new ShowQueueSummaryCommand(),
         new ShowRequestCommand(),
         new ModifyRequestCommand(),
         new MyAssignmentsCommand(),

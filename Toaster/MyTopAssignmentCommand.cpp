@@ -83,3 +83,29 @@ void MyTopAssignmentCommand::ExecuteInteraction(CommandContext& ctx, const dpp::
 void MyTopAssignmentCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
 {
 }
+
+void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
+{
+    if (event.custom_id == Button_Complete)
+    {
+        ctx.cluster.log(dpp::ll_info, Button_Complete);
+        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+    }
+    else if (event.custom_id == Button_Note)
+    {
+        ctx.cluster.log(dpp::ll_info, Button_Note);
+        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+    }
+    else if (event.custom_id == Button_Unassign)
+    {
+        ctx.cluster.log(dpp::ll_info, Button_Unassign);
+        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+    }
+    else if (event.custom_id == Button_Delete)
+    {
+        ctx.cluster.log(dpp::ll_info, Button_Delete);
+        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+    }
+}
+
+

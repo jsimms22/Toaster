@@ -36,6 +36,7 @@ constexpr const char* Command_ModifyRequest		{ "modify_request" };
 constexpr const char* Command_ShowRequest		{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue			{ "show_queue" };
+constexpr const char* Command_SummaryQueue		{ "show_summary" };
 constexpr const char* Command_MyAssignments		{ "my_assignments"};
 constexpr const char* Command_MyTopAssignment	{ "my_top_assignment" };
 /*-------------------------------COMMAND IDS------------------------------------*/
@@ -68,4 +69,6 @@ constexpr const char* Button_Complete			{ "btn_complete" };
 constexpr const char* Button_Note				{ "btn_note" };
 constexpr const char* Button_Unassign			{ "btn_unassign" };
 constexpr const char* Button_Delete				{ "btn_delete" };
+constexpr const char* Button_Stalled			{ "btn_summary_stalled" };
+constexpr const char* Button_Unassigned			{ "btn_summary_unassigned" };
 /*--------------------------------BUTTON IDS-------------------------------------*/

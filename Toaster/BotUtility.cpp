@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
+#include <future>
 
 namespace utils
 {
@@ -108,24 +109,64 @@ namespace utils
         else return JOB_TYPE_GENERAL;
     }
 
+    const std::string JobTypeToString(const std::size_t& type)
+    {
+        switch (type) {
+            case (JOB_TYPE_CRAFTING):       return "Crafting";
+            case (JOB_TYPE_BUILDING):   return "Basse Building";
+            case (JOB_TYPE_COMPONENT):  return "Component Request";
+            case (JOB_TYPE_RESOURCE):   return "Resource Collection";
+            case (JOB_TYPE_REFINERY):   return "Refinery Job";
+            default: return "General";
+        }
+    }
+
     void NotifyIssuerMsg(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg)
     {
-        cluster.direct_message_create(idUser, dpp::message(msg), [&idUser, &cluster](const dpp::confirmation_callback_t& callback) {
+        cluster.direct_message_create(idUser, dpp::message(msg), [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
             if (callback.is_error())
             {
                 cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id {}.", idUser));
             }
             else
             {
-                dpp::user* user = dpp::find_user(idUser);
-                if (user)
-                {
-                    cluster.log(dpp::ll_info, fmt::format("Sending direct message to {}#{}.", user->username, user->discriminator));
-                }
-                else
-                {
-                    cluster.log(dpp::ll_warning, fmt::format("Sending direct message to unknown username with id {}.", idUser));
-                }
+                dpp::user user = utils::FindUserByID(cluster, idUser);
+                cluster.log(dpp::ll_info, fmt::format("Sending direct message to {}.", user.username));
             }});
+    }
+
+    dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
+    {
+        cluster.log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", id));
+
+        std::promise<dpp::user> promise;
+        std::future<dpp::user> future = promise.get_future();
+        dpp::user* user = dpp::find_user(id);
+        if (user)
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Found cached username: {}", user->username));
+            promise.set_value(*user);
+            return future.get();
+        }
+
+        cluster.user_get(id, [&promise](const dpp::confirmation_callback_t& callback)
+            {
+                if (!callback.is_error()) 
+                {
+                    dpp::user_identified user = std::get<dpp::user_identified>(callback.value);
+                    callback.bot->log(dpp::ll_debug, fmt::format("Found username: {}", user.username));
+                    promise.set_value(user);
+
+                    // Manually cache the user
+                    dpp::user* cache_user = new dpp::user(user);
+                    dpp::get_user_cache()->store(cache_user);
+                }
+                else 
+                {
+                    promise.set_value({});  // Handle error case
+                }
+            });
+
+        return future.get();
     }
 }

@@ -80,11 +80,11 @@ public:
 private:
     std::size_t m_timeCreated;
     std::size_t m_timeLastEdit;
-    dpp::snowflake m_idCustomer;            // Customer id of who submitted the job
-    dpp::snowflake m_idWorker;              // Id of the worker assigned to the job
-    std::string m_strSCHandle;              // SC Handle for identification (could be username or custom ID)
-    priority m_eJobPriority = priority::low;// Priority of the job
-    status m_eJobStatus = status::open;     // Current status of the job
-    GUID m_id;                              // Unique identifier for the job
+    dpp::snowflake m_idCustomer = USERID_NULL;  // Customer id of who submitted the job
+    dpp::snowflake m_idWorker = USERID_NULL;    // Id of the worker assigned to the job
+    std::string m_strSCHandle = "n/a";          // SC Handle for identification (could be username or custom ID)
+    priority m_eJobPriority = priority::low;    // Priority of the job
+    status m_eJobStatus = status::open;         // Current status of the job
+    GUID m_id;                                  // Unique identifier for the job
     // todo std::vector<std::string> m_vNotes
 };

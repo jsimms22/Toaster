@@ -79,7 +79,6 @@ void MyAssignmentsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         auto parts = utils::Split(id, ':');
         dpp::snowflake worker = parts[1];
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
-        fmt::println("(0) Page is: {}", page);
 
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, worker, page);
         const std::size_t size = ctx.queue->GetFilteredQueueSize(worker);

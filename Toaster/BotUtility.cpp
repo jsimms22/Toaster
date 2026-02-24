@@ -137,7 +137,7 @@ namespace utils
 
     dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
-        if (id == 0)
+        if (id == USERID_NULL)
         {
             cluster.log(dpp::ll_debug, fmt::format("Skipping look up for id: {}", id));
             return {};

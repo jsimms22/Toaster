@@ -51,6 +51,9 @@ const std::vector<PriorityChangeRequestDlg::PriorityOption> PriorityChangeReques
 const std::string EditRequestDlg::modalID = "EditRequestModal";
 const std::string EditRequestDlg::modalDesc = "Edit Active Job Request";
 
+const std::string DeleteRequestDlg::modalID = "DeleteRequestModal";
+const std::string DeleteRequestDlg::modalDesc = "Delete Job Request";
+
 void CraftRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -365,7 +368,7 @@ void AssignRequestDlg::InitializeControls()
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
         .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
-        .set_min_length(1)
+        .set_min_length(0)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
@@ -408,7 +411,7 @@ void StatusChangeRequestDlg::InitializeControls()
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
         .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
-        .set_min_length(1)
+        .set_min_length(0)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
@@ -438,7 +441,7 @@ void PriorityChangeRequestDlg::InitializeControls()
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
         .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
-        .set_min_length(1)
+        .set_min_length(0)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
@@ -469,7 +472,7 @@ void EditRequestDlg::InitializeControls()
     JobRequestIDEdit.set_label("Job Request ID")
         .set_type(dpp::cot_text)
         .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
-        .set_min_length(1)
+        .set_min_length(0)
         .set_max_length(128)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
@@ -616,4 +619,43 @@ void EditRequestDlg::AddChildrenComponents()
         add_component(ResourceListEdit);
         add_component(RefinerySiteEdit);
     }
+}
+
+void DeleteRequestDlg::InitializeControls()
+{
+    // Create a text box component
+    JobRequestIDEdit.set_label("Job Request ID")
+        .set_type(dpp::cot_text)
+        .set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
+        .set_min_length(0)
+        .set_max_length(128)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_RequestID);
+
+    // Create the combo box component
+    JobDescriptionEdit.set_label("Details")
+        .set_type(dpp::cot_text)
+        .set_default_value(m_strDetails)
+        .set_min_length(0)
+        .set_max_length(500)
+        .set_required(true)
+        .set_text_style(dpp::text_paragraph)
+        .set_id(Component_JobDescription);
+
+    // Create the combo box component
+    DeleteJustificationEdit.set_label("Reason")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Enter justification here...")
+        .set_min_length(2)
+        .set_max_length(256)
+        .set_required(true)
+        .set_text_style(dpp::text_paragraph)
+        .set_id(Component_DeleteJustification);
+}
+
+void DeleteRequestDlg::AddChildrenComponents()
+{
+    add_component(JobRequestIDEdit);
+    add_component(JobDescriptionEdit);
+    add_component(DeleteJustificationEdit);
 }

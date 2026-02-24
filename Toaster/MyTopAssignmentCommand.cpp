@@ -1,6 +1,9 @@
 #include "Commands.h"
 #include "JobQueue.h"
+#include "RequestDlg.h"
 #include "BotUtility.h"
+// fmt
+#include <fmt/format.h>
 
 void MyTopAssignmentCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
 {
@@ -38,30 +41,25 @@ void MyTopAssignmentCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
             .set_type(dpp::cot_button)
             .set_label("Complete")
             .set_style(dpp::cos_success)
-            .set_id(Button_Complete)
-            .set_content(utils::GuidToStringNoBrackets(job->GetID()));
-        button1.value = utils::GuidToStringNoBrackets(job->GetID());
+            .set_id(fmt::format("{}:{}:{}",Button_Complete, author.id, utils::GuidToStringNoBrackets(job->GetID())));
 
         dpp::component button2 = dpp::component()
             .set_type(dpp::cot_button)
             .set_label("Add Note")
             .set_style(dpp::cos_primary)
-            .set_id(Button_Note)
-            .set_content(utils::GuidToStringNoBrackets(job->GetID()));
+            .set_id(fmt::format("{}:{}:{}", Button_Note, author.id, utils::GuidToStringNoBrackets(job->GetID())));
 
         dpp::component button3 = dpp::component()
             .set_type(dpp::cot_button)
-            .set_label("Unassign")
+            .set_label("Unassign Me")
             .set_style(dpp::cos_primary)
-            .set_id(Button_Unassign)
-            .set_content(utils::GuidToStringNoBrackets(job->GetID()));
+            .set_id(fmt::format("{}:{}:{}", Button_Unassign, author.id, utils::GuidToStringNoBrackets(job->GetID())));
 
         dpp::component button4 = dpp::component()
             .set_type(dpp::cot_button)
             .set_label("Delete")
             .set_style(dpp::cos_danger)
-            .set_id(Button_Delete)
-            .set_content(utils::GuidToStringNoBrackets(job->GetID()));
+            .set_id(fmt::format("{}:{}:{}", Button_Delete, author.id, utils::GuidToStringNoBrackets(job->GetID())));
 
         dpp::component row = dpp::component()
             .set_type(dpp::cot_action_row)
@@ -86,25 +84,101 @@ void MyTopAssignmentCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
 
 void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    if (event.custom_id == Button_Complete)
+    const std::string id = event.custom_id; // "buttonType:workerid:guid"
+
+    if (id.starts_with(fmt::format("{}:", Button_Complete)))
     {
-        ctx.cluster.log(dpp::ll_info, Button_Complete);
-        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake worker = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
+        {
+            job->SetStatus(JobRequest::status::complete);
+
+            const dpp::snowflake customer = job->GetCustomerID();
+            if (customer != worker || ctx.debug)
+            {
+                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
+                    fmt::format("Request {} has been completed by {}.", guid, event.command.get_issuing_user().username));
+            }
+
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().username));
+            event.reply(dpp::message(fmt::format("Request {} has been set to completed.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
     }
-    else if (event.custom_id == Button_Note)
+    else if (id.starts_with(fmt::format("{}:", Button_Note)))
     {
-        ctx.cluster.log(dpp::ll_info, Button_Note);
-        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake worker = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && job->GetWorkerID() == worker)
+        {
+            /* todo add note functionality to job class */
+            event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
+            return;
+
+            // todo note modal dlg
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
     }
-    else if (event.custom_id == Button_Unassign)
+    else if (id.starts_with(fmt::format("{}:", Button_Unassign)))
     {
-        ctx.cluster.log(dpp::ll_info, Button_Unassign);
-        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake worker = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
+        {
+            job->SetWorkerID(0);
+            if (job->GetStatus() == JobRequest::status::active ||
+                job->GetStatus() == JobRequest::status::assigned)
+            {
+                job->SetStatus(JobRequest::status::open);
+            }
+
+            const dpp::snowflake customer = job->GetCustomerID();
+            if (customer != worker || ctx.debug)
+            {
+                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
+                    fmt::format("Request {} has been unassigned by {}.", guid, event.command.get_issuing_user().username));
+            }
+
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().username));
+            event.reply(dpp::message(fmt::format("Request {} has been unassigned.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
     }
-    else if (event.custom_id == Button_Delete)
+    else if (id.starts_with(fmt::format("{}:", Button_Delete)))
     {
-        ctx.cluster.log(dpp::ll_info, Button_Delete);
-        event.reply(dpp::message("Currently this button does not do anything right not.").set_flags(dpp::m_ephemeral));
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake worker = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
+        {
+            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster));
+            event.dialog(modal);
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
     }
 }
 

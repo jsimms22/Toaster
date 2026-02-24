@@ -44,45 +44,29 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
 
     if (strCmdID == Option_Edit)
     {
-        EditRequestDlg editModal(job);
-        event.dialog(editModal);
+        EditRequestDlg modal(job);
+        event.dialog(modal);
     }
     else if (strCmdID == Option_Assign)
     {
         const std::string_view sv = job->GetWorkerName(ctx.cluster);
-        AssignRequestDlg assignModal(job, ctx.workers, sv);
-        event.dialog(assignModal);
+        AssignRequestDlg modal(job, ctx.workers, sv);
+        event.dialog(modal);
     }
     else if (strCmdID == Option_Status)
     {
-        StatusChangeRequestDlg statusModal(job);
-        event.dialog(statusModal);
+        StatusChangeRequestDlg modal(job);
+        event.dialog(modal);
     }
     else if (strCmdID == Option_Priority)
     {
-        PriorityChangeRequestDlg statusModal(job);
-        event.dialog(statusModal);
+        PriorityChangeRequestDlg modal(job);
+        event.dialog(modal);
     }
     else if (strCmdID == Option_Delete)
     {
-        job->SetLastEditTime(utils::GetEpochTimestamp());
-        const std::string jobDetails = job->PrintJobDetails(ctx.cluster);
-        const bool result = ctx.queue->DeleteJobByGUID(strJobID);
-        if (!result)
-        {
-            event.reply(dpp::message(fmt::format("Failed to delete id: ", strJobID)).set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_warning, fmt::format("{} failed to delete {}.", author.username, strJobID));
-        }
-
-        event.reply(dpp::message(fmt::format("Deleted job request:\n\n{}", jobDetails)).set_flags(dpp::m_ephemeral));
-        ctx.queue->SaveQueueToFile();
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} deleted {}", author.username, strJobID));
-
-        if (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */)
-        {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Request {} has been deleted by {}:\n\n{}", strJobID, author.username, jobDetails));
-        }
+        DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster));
+        event.dialog(modal);
     }
 }
 
@@ -266,6 +250,60 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.username, job->PrintJobDetails(ctx.cluster)));
+        }
+    }
+    else if (event.custom_id == DeleteRequestDlg::modalID)
+    {
+        const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+        //const std::string strDesc = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+        const std::string strJustification = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+
+        auto job = ctx.queue->GetJobByGUID(strID);
+        if (!job)
+        {
+            event.reply(dpp::message("Job not found.")
+                .set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        const dpp::user author = event.command.get_issuing_user();
+
+        job->SetLastEditTime(utils::GetEpochTimestamp());
+        const std::string jobDetails = job->PrintJobDetails(ctx.cluster);
+        const dpp::snowflake customerID = job->GetCustomerID();
+
+        const bool result = ctx.queue->DeleteJobByGUID(strID);
+        if (!result)
+        {
+            event.reply(dpp::message("Failed to delete job.")
+                .set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        ctx.queue->SaveQueueToFile();
+
+        event.reply(dpp::message(
+            fmt::format("Deleted job request.\n\n**Reason:** {}\n\n{}",
+                strJustification, jobDetails))
+            .set_flags(dpp::m_ephemeral));
+
+        ctx.cluster.log(dpp::ll_warning,
+            fmt::format("{} deleted {}. Reason: {}",
+                author.username,
+                strID,
+                strJustification));
+
+        // Notify original customer if needed
+        if (event.command.usr.id != customerID || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster,
+                                   customerID,
+                                   event,
+                                   fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
+                                        strID,
+                                        author.username,
+                                        strJustification,
+                                        jobDetails));
         }
     }
 }

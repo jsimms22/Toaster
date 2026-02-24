@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <string_view>
 
+constexpr std::size_t USERID_NULL{ 0 };
+
 constexpr std::size_t JOB_TYPE_GENERAL	{ 10 };
 constexpr std::size_t JOB_TYPE_CRAFTING	{ 20 };
 constexpr std::size_t JOB_TYPE_BUILDING	{ 30 };
@@ -27,6 +29,8 @@ constexpr const char* Component_RefinerySite	{ "refinerysite_id" };
 constexpr const char* Component_Priority		{ "priority_id" };
 constexpr const char* Component_Assignment		{ "assign_id" };
 constexpr const char* Component_Status			{ "status_id" };
+constexpr const char* Component_JobDescription	{ "description_id" };
+constexpr const char* Component_DeleteJustification	{ "justification_id" };
 /*------------------------------COMPONENT IDS-----------------------------------*/
 
 /*-------------------------------COMMAND IDS------------------------------------*/

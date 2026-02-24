@@ -280,3 +280,31 @@ private:
 
 	std::shared_ptr<JobRequest> m_spJob;
 };
+
+class DeleteRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	DeleteRequestDlg(const std::shared_ptr<JobRequest>& job, const std::string details)
+		: dpp::interaction_modal_response(), m_spJob(job), m_strDetails(details)
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~DeleteRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component JobRequestIDEdit;
+	dpp::component JobDescriptionEdit;
+	dpp::component DeleteJustificationEdit;
+
+	std::shared_ptr<JobRequest> m_spJob;
+	std::string m_strDetails;
+};

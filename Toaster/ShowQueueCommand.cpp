@@ -17,14 +17,13 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
 
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
+    const std::size_t type = utils::CmdStringToJobType(strCmdID);
 
-    const std::size_t filterType = utils::CmdStringToJobType(strCmdID);
-    const std::string header = "Request Queue:";
     if (ctx.queue->GetQueueSize() == 0)
     {
         dpp::embed embed;
-        embed.set_title(header)
-            .set_description("Request queue is currently empty.")
+        embed.set_title("Request Queue:")
+            .set_description("Request queue is currently empty for this type.")
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
@@ -32,15 +31,91 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
         return;
     }
 
-    const std::string result = ctx.queue->PrintQueueByType(ctx.cluster, filterType);
+    // acknowledge immediately to avoid timing out
+    event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
+
+    std::size_t page = 0;
+    const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page);
+    const std::size_t size = ctx.queue->GetFilteredQueueSize(type);
+    const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_QUEUE_PAGE;
+    const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
+
     dpp::embed embed;
     embed.set_title(header)
-        .set_description(!result.empty() ? result : "No requests of this type in queue.")
+        .set_description(size != 0 ? result : "Request queue is currently empty for this type.")
         .set_color(0x3498db);
 
-    event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+    dpp::message msg;
+    if (page != lastPage)
+    {
+        dpp::component row;
+        row.add_component(
+            dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Prev")
+            .set_style(dpp::cos_primary)
+            .set_id(fmt::format("queue:{}:{}", type, 0)));
+
+        row.add_component(
+            dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Next")
+            .set_style(dpp::cos_primary)
+            .set_id(fmt::format("queue:{}:{}", type, page + 1)));
+        msg.add_component(row);
+    }
+
+    event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
 }
 
 void ShowQueueCommand::ExecuteFormSubmit(CommandContext& ctx,  const dpp::form_submit_t& event)
 {
+}
+
+void ShowQueueCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
+{
+    const std::string id = event.custom_id; // "queue:type:page"
+
+    if (id.starts_with("queue:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const std::size_t type = std::stoul(parts[1]);
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+
+        const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page);
+        const std::size_t size = ctx.queue->GetFilteredQueueSize(type);
+        const std::size_t lastPage = size / JobQueue::JOBS_PER_QUEUE_PAGE;
+        const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
+
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(size != 0 ? result : "Request queue is currently empty for this type.")
+            .set_color(0x3498db);
+
+        const std::size_t prev_page = page > 0 ? page - 1 : 0;
+        const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
+
+        dpp::message msg;
+        if (prev_page != next_page)
+        {
+            dpp::component row;
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Prev")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("queue:{}:{}", type, prev_page)));
+
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Next")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("queue:{}:{}", type, next_page)));
+            msg.add_component(row);
+        }
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, msg.add_embed(embed));
+    }
 }

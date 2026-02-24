@@ -29,6 +29,9 @@ namespace xmlQueue
     const char* pszXMLJobType{ "Type" };
 }
 
+const std::size_t JobQueue::JOBS_PER_QUEUE_PAGE{ 8 };
+const std::size_t JobQueue::JOBS_PER_DETAIL_PAGE{ 4 };
+
 // Constructor: Reads the XML and loads the job requests into the container
 JobQueue::JobQueue()
 {
@@ -186,6 +189,9 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
 
     for (const auto& job : m_vQueue)
     {
+        if (job->GetStatus() == JobRequest::status::complete)
+            continue;
+
         ++position;
 
         if (job->GetStatus() != filter)
@@ -211,6 +217,49 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
     return fmt::to_string(buffer);
 }
 
+const std::string JobQueue::PrintQueuePageByStatus(dpp::cluster& cluster, const JobRequest::status filter, const std::size_t page) const
+{
+    fmt::memory_buffer buffer;
+
+    const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
+    const std::size_t end_index = start_index + JOBS_PER_DETAIL_PAGE;
+
+    std::size_t filtered_index = 0;
+    std::size_t display_pos = 0;
+    std::size_t position = 0;
+
+    for (const auto& job : m_vQueue)
+    {
+        if (job->GetStatus() == JobRequest::status::complete)
+            continue;
+        
+        ++position;
+
+        if (job->GetStatus() != filter)
+            continue;
+
+        // Only count filtered jobs
+        if (filtered_index >= end_index)
+            break;
+
+        if (filtered_index >= start_index)
+        {
+            ++display_pos;
+
+            fmt::format_to(
+                std::back_inserter(buffer),
+                "***Position: {}***\n{}\n",
+                position,
+                job->PrintJobDetails(cluster)
+            );
+        }
+
+        ++filtered_index;
+    }
+
+    return fmt::to_string(buffer);
+}
+
 // Method to print all job requests
 const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter) const
 {
@@ -219,6 +268,9 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
 
     for (const auto& job : m_vQueue)
     {
+        if (job->GetStatus() == JobRequest::status::complete)
+            continue;
+
         ++position;
 
         if (!job->SupportsType(filter))
@@ -244,6 +296,54 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
     return fmt::to_string(buffer);
 }
 
+const std::string JobQueue::PrintQueuePageByType(dpp::cluster& cluster, const std::size_t filter, const std::size_t page) const
+{
+    fmt::memory_buffer buffer;
+
+    const std::size_t start_index = page * JOBS_PER_QUEUE_PAGE;
+    const std::size_t end_index = start_index + JOBS_PER_QUEUE_PAGE;
+
+    std::size_t filtered_index = 0;
+    std::size_t display_pos = 0;
+
+    for (const auto& job : m_vQueue)
+    {
+        if (job->GetStatus() == JobRequest::status::complete)
+            continue;
+
+        if (!job->SupportsType(filter))
+            continue;
+
+        // Only count filtered jobs
+        if (filtered_index >= end_index)
+            break;
+
+        if (filtered_index >= start_index)
+        {
+            ++display_pos;
+
+            fmt::format_to(
+                std::back_inserter(buffer),
+                "***Position: {}***\n"
+                "ID (**{}**): {}\n"
+                "**Status**: {}\n"
+                "**Assigned**: {}\n"
+                "**Type**: {}\n\n",
+                start_index + display_pos,
+                JobRequest::PriorityToString(job->GetPriority()),
+                utils::GuidToStringNoBrackets(job->GetID()),
+                JobRequest::StatusToString(job->GetStatus()),
+                job->GetWorkerName(cluster),
+                job->JobTypeToString()
+            );
+        }
+
+        ++filtered_index;
+    }
+
+    return fmt::to_string(buffer);
+}
+
 const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t filter) const
 {
     fmt::memory_buffer buffer;
@@ -251,24 +351,38 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, const dpp::s
 
     for (const auto& job : m_vQueue)
     {
-        ++position;
-
-        if (!job->SupportsType(filter))
+        if (job->GetStatus() == JobRequest::status::complete)
             continue;
 
-        if (job->GetCustomerID() == userID)
-        {
-            fmt::format_to(
-                std::back_inserter(buffer),
-                "***Position: {}***\n{}\n",
-                position,
-                job->PrintJobDetails(cluster)
-            );
-        }
+        ++position;
+
+        if (job->GetCustomerID() != userID || !job->SupportsType(filter))
+            continue;
+
+        fmt::format_to(
+            std::back_inserter(buffer),
+            "***Position: {}***\n{}\n",
+            position,
+            job->PrintJobDetails(cluster)
+        );
     }
 
     // Convert the buffer to a std::string once at the end
     return fmt::to_string(buffer);
+}
+
+const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
+{
+    std::vector<std::shared_ptr<JobRequest>> list;
+    for (const auto& job : m_vQueue)
+    {
+        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+            continue;
+
+        list.push_back(job);
+    }
+
+    return list;
 }
 
 const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID) const
@@ -276,10 +390,45 @@ const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp:
     std::stringstream ss;
     for (const auto& job : m_vQueue)
     {
-        if (job->GetWorkerID() == userID)
+        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+            continue;
+        
+        ss << job->PrintJobDetails(cluster) << '\n';
+        
+    }
+
+    return ss.str();
+}
+
+const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t page) const
+{
+    const auto list = GetQueueByWorker(userID);
+    if (list.empty()) return {};
+
+    const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
+    const std::size_t end_index = start_index + JOBS_PER_DETAIL_PAGE;
+
+    std::size_t filtered_index = 0;
+    std::size_t display_pos = 0;
+
+    std::stringstream ss;
+    for (const auto& job : list)
+    {
+        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+            continue;
+
+        // Only count filtered jobs
+        if (filtered_index >= end_index)
+            break;
+
+        if (filtered_index >= start_index)
         {
+            ++display_pos;
+
             ss << job->PrintJobDetails(cluster) << '\n';
         }
+
+        ++filtered_index;
     }
 
     return ss.str();
@@ -289,10 +438,10 @@ const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dp
 {
     for (const auto& job : m_vQueue)
     {
-        if (job->GetWorkerID() == userID)
-        {
-            return job->PrintJobDetails(cluster);
-        }
+        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+            continue;
+            
+        return job->PrintJobDetails(cluster);
     }
 
     return {};
@@ -302,10 +451,10 @@ std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& user
 {
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
-        if (job->GetWorkerID() == userID)
-        {
-            return job;
-        }
+        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+            continue;
+           
+        return job;
     }
 
     return {};

@@ -42,7 +42,7 @@ void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp:
         dpp::component button1 = dpp::component()
             .set_type(dpp::cot_button)
             .set_label("Show Stalled Jobs")
-            .set_style(dpp::cos_success)
+            .set_style(dpp::cos_primary)
             .set_id(Button_Stalled);
 
         dpp::component button2 = dpp::component()
@@ -76,11 +76,10 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
     if (event.custom_id == Button_Stalled)
     {
         const dpp::user author = event.command.get_issuing_user();
-        const std::string header = "Stalled Jobs Report:";
         if (ctx.queue->GetQueueSize() == 0)
         {
             dpp::embed embed;
-            embed.set_title(header)
+            embed.set_title("Stalled Jobs Report:")
                 .set_description("Request queue is currently empty.")
                 .set_color(0x3498db);
 
@@ -89,24 +88,51 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
             return;
         }
 
-        const std::string result = ctx.queue->PrintQueueByStatus(ctx.cluster, JobRequest::status::stalled);
+        // acknowledge immediately to avoid timing out
+        event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
+
+        std::size_t page = 0;
+        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page);
+        const std::size_t size = ctx.queue->GetFilteredQueueSize(JobRequest::status::stalled);
+        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
+
         dpp::embed embed;
         embed.set_title(header)
-            .set_description(!result.empty() ? result : "No requests of this type in queue.")
+            .set_description(size != 0 ? result : "No stalled jobs in queue.")
             .set_color(0x3498db);
 
         dpp::message msg;
-        msg.add_embed(embed).set_flags(dpp::m_ephemeral);
-        event.reply(msg);
+        if (page != lastPage)
+        {
+            dpp::component row;
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Prev")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), 0)));
+
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Next")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), page + 1)));
+            msg.add_component(row);
+        }
+
+        event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        return;
     }
     else if (event.custom_id == Button_Unassigned)
     {
         const dpp::user author = event.command.get_issuing_user();
-        const std::string header = "Unassigned Jobs Report:";
         if (ctx.queue->GetQueueSize() == 0)
         {
             dpp::embed embed;
-            embed.set_title(header)
+            embed.set_title("Unassigned Jobs Report:")
                 .set_description("Request queue is currently empty.")
                 .set_color(0x3498db);
 
@@ -115,14 +141,140 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
             return;
         }
 
-        const std::string result = ctx.queue->PrintQueueByWorker(ctx.cluster, 0);
+        // acknowledge immediately to avoid timing out
+        event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
+
+        std::size_t page = 0;
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page);
+        const std::size_t size = ctx.queue->GetFilteredQueueSize(dpp::snowflake(0));
+        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
+
         dpp::embed embed;
         embed.set_title(header)
-            .set_description(!result.empty() ? result : "No requests of this type in queue.")
+            .set_description(size != 0 ? result : "No unassigned jobs in queue.")
+            .set_color(0x3498db);
+
+
+        dpp::message msg;
+        if (page != lastPage)
+        {
+            dpp::component row;
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Prev")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("unassigned:{}:{}", 0, 0)));
+
+            row.add_component(
+                dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Next")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("unassigned:{}:{}", 0, page + 1)));
+            msg.add_component(row);
+        }
+
+        event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
+
+        return;
+    }
+
+    const std::string id = event.custom_id; // "stalled:JobRequest::status:page"
+
+    if (id.starts_with("stalled:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const JobRequest::status type = static_cast<JobRequest::status>(std::stoi(parts[1]));
+        if (type != JobRequest::status::stalled) return;
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+
+        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page);
+        const std::size_t size = ctx.queue->GetFilteredQueueSize(JobRequest::status::stalled);
+        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
+
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(size != 0 ? result : "No stalled jobs in queue.")
             .set_color(0x3498db);
 
         dpp::message msg;
-        msg.add_embed(embed).set_flags(dpp::m_ephemeral);
-        event.reply(msg);
+        if (size != 0)
+        {
+            const std::size_t prev_page = page > 0 ? page - 1 : 0;
+            const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
+            if (prev_page != next_page)
+            {
+                dpp::component row;
+                row.add_component(
+                    dpp::component()
+                    .set_type(dpp::cot_button)
+                    .set_label("Prev")
+                    .set_style(dpp::cos_primary)
+                    .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), prev_page)));
+
+                row.add_component(
+                    dpp::component()
+                    .set_type(dpp::cot_button)
+                    .set_label("Next")
+                    .set_style(dpp::cos_primary)
+                    .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), next_page)));
+                msg.add_component(row);
+            }
+        }
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, msg.add_embed(embed));
+
+        return;
+    }
+    else if (id.starts_with("unassigned:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake worker = 0;
+        if (worker != 0) return;
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page);
+        const std::size_t size = ctx.queue->GetFilteredQueueSize(dpp::snowflake(0));
+        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
+
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description(size != 0 ? result : "No unassigned jobs in queue.")
+            .set_color(0x3498db);
+
+        dpp::message msg;
+        if (size != 0)
+        {
+            const std::size_t prev_page = page > 0 ? page - 1 : 0;
+            const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
+            if (prev_page != next_page)
+            {
+                dpp::component row;
+                row.add_component(
+                    dpp::component()
+                    .set_type(dpp::cot_button)
+                    .set_label("Prev")
+                    .set_style(dpp::cos_primary)
+                    .set_id(fmt::format("unassigned:{}:{}", 0, prev_page)));
+
+                row.add_component(
+                    dpp::component()
+                    .set_type(dpp::cot_button)
+                    .set_label("Next")
+                    .set_style(dpp::cos_primary)
+                    .set_id(fmt::format("unassigned:{}:{}", 0, next_page)));
+                msg.add_component(row);
+            }
+        }
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, msg.add_embed(embed));
+
+        return;
     }
 }

@@ -137,7 +137,15 @@ namespace utils
 
     dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
-        cluster.log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", id));
+        if (id == 0)
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Skipping look up for id: {}", id));
+            return {};
+        }
+        else
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Retrieving discord name for id: {}", id));
+        }
 
         std::promise<dpp::user> promise;
         std::future<dpp::user> future = promise.get_future();
@@ -168,5 +176,37 @@ namespace utils
             });
 
         return future.get();
+    }
+
+    std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len)
+    {
+        std::vector<std::string> pages;
+        const size_t page_count = (input.size() + max_len - 1) / max_len;
+        pages.reserve(page_count); 
+
+        for (size_t i = 0; i < input.length(); i += max_len) 
+        {
+            pages.push_back(input.substr(i, max_len));
+        }
+
+        return pages;
+    }
+
+    std::vector<std::string> Split(const std::string& input, char delimiter)
+    {
+        std::vector<std::string> result;
+
+        size_t start = 0;
+        size_t end = 0;
+
+        while ((end = input.find(delimiter, start)) != std::string::npos)
+        {
+            result.emplace_back(input.substr(start, end - start));
+            start = end + 1;
+        }
+
+        result.emplace_back(input.substr(start));
+
+        return result;
     }
 }

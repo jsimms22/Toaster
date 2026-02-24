@@ -95,7 +95,10 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+    using PaginationState = std::pair<std::size_t, std::vector<std::string>>;
+    std::unordered_map<dpp::snowflake, PaginationState> sessions;
 };
 
 class ShowQueueSummaryCommand : public ICustomCommand
@@ -165,7 +168,7 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
 class MyTopAssignmentCommand : public ICustomCommand

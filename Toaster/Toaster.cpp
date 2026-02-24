@@ -160,8 +160,8 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         m_cluster.log(
             dpp::ll_debug,
             fmt::format(
-                "Interaction '{}' executed in {} ms (user: {})",
-                event.command.get_command_name(),
+                "Form '{}' executed in {} ms (user: {})",
+                event.custom_id,
                 duration,
                 event.command.get_issuing_user().username
             )

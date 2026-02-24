@@ -57,11 +57,11 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
 void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
 {
     if (!ctx.queue || 
-        event.custom_id != CraftRequestDlg::modalID ||
-        event.custom_id != BuildRequestDlg::modalID ||
-        event.custom_id != ComponentRequestDlg::modalID ||
-        event.custom_id != ResourceRequestDlg::modalID ||
-        event.custom_id != RefineryRequestDlg::modalID)
+        !(event.custom_id == CraftRequestDlg::modalID ||
+        event.custom_id == BuildRequestDlg::modalID ||
+        event.custom_id == ComponentRequestDlg::modalID ||
+        event.custom_id == ResourceRequestDlg::modalID ||
+        event.custom_id == RefineryRequestDlg::modalID))
     {
         return;
     }

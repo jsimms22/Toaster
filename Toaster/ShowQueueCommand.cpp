@@ -35,8 +35,8 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
     event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
     std::size_t page = 0;
-    const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page);
-    const std::size_t size = ctx.queue->GetFilteredQueueSize(type);
+    const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page, event.command.guild_id);
+    const std::size_t size = ctx.queue->GetFilteredQueueSizeByType(type);
     const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_QUEUE_PAGE;
     const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
 
@@ -82,8 +82,8 @@ void ShowQueueCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button
         const std::size_t type = std::stoul(parts[1]);
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
-        const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(type);
+        const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByType(type);
         const std::size_t lastPage = size / JobQueue::JOBS_PER_QUEUE_PAGE;
         const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
 

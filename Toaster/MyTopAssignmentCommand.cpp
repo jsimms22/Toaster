@@ -27,7 +27,7 @@ void MyTopAssignmentCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
     }
 
     const auto& job = ctx.queue->FirstAssignment(author.id);
-    const std::string result = job ? job->PrintJobDetails(ctx.cluster) : "";
+    const std::string result = job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "";
     dpp::embed embed;
     embed.set_title(header)
         .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
@@ -98,13 +98,13 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
             job->SetStatus(JobRequest::status::complete);
 
             const dpp::snowflake customer = job->GetCustomerID();
-            if (customer != worker || ctx.debug)
+            if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been completed by {}.", guid, event.command.get_issuing_user().username));
+                    fmt::format("Request {} has been completed by {}.", guid, event.command.get_issuing_user().global_name));
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().username));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
             event.reply(dpp::message(fmt::format("Request {} has been set to completed.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
         }
         else
@@ -149,13 +149,13 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
             }
 
             const dpp::snowflake customer = job->GetCustomerID();
-            if (customer != worker || ctx.debug)
+            if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been unassigned by {}.", guid, event.command.get_issuing_user().username));
+                    fmt::format("Request {} has been unassigned by {}.", guid, event.command.get_issuing_user().global_name));
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().username));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
             event.reply(dpp::message(fmt::format("Request {} has been unassigned.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
         }
         else
@@ -172,7 +172,7 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
         auto job = ctx.queue->GetJobByGUID(guid);
         if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
         {
-            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster));
+            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
             event.dialog(modal);
         }
         else

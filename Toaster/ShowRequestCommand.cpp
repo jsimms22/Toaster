@@ -26,7 +26,7 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 
     dpp::embed embed;
     embed.set_title("Here is the request:")
-        .set_description(job->PrintJobDetails(ctx.cluster))
+        .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
         .set_color(0x3498db);
 
     event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));

@@ -29,8 +29,8 @@ void MyAssignmentsCommand::ExecuteCommand(CommandContext& ctx,  const dpp::slash
     event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
     std::size_t page = 0;
-    const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, author.id, page);
-    const std::size_t size = ctx.queue->GetFilteredQueueSize(author.id);
+    const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, author.id, page, event.command.guild_id);
+    const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(author.id);
     const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
     const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
 
@@ -80,8 +80,8 @@ void MyAssignmentsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         dpp::snowflake worker = parts[1];
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, worker, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(worker);
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, worker, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(worker);
         const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
 

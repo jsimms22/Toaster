@@ -92,8 +92,8 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
         std::size_t page = 0;
-        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(JobRequest::status::stalled);
+        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
         const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
@@ -145,8 +145,8 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
         std::size_t page = 0;
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(dpp::snowflake(0));
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
         const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
@@ -190,8 +190,8 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         if (type != JobRequest::status::stalled) return;
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
-        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(JobRequest::status::stalled);
+        const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
         const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
@@ -237,8 +237,8 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         if (worker != 0) return;
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page);
-        const std::size_t size = ctx.queue->GetFilteredQueueSize(dpp::snowflake(0));
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
         const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
 

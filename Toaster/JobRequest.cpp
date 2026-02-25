@@ -24,6 +24,7 @@ namespace xmlRequest
     constexpr const char* pszXMLJobStatus{ "Status" };
     constexpr const char* pszXMLJobGUID{ "GUID" };
     constexpr const char* pszXMLJobType{ "Type" };
+    constexpr const char* pszXMLSubscribed{ "Subscribed" };
 }
 
 // Function to convert priority enum to string
@@ -123,6 +124,7 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlNode->SetAttribute(xmlRequest::pszXMLJobWorker, m_idWorker);
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_idCustomer);
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestSCHandle, m_strSCHandle.c_str());
+    xmlNode->SetAttribute(xmlRequest::pszXMLSubscribed, m_bNotifyCustomer);
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -180,9 +182,11 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
     {
         m_eJobStatus = static_cast<JobRequest::status>(std::stoi(jobStatus));
     }
+
+    m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLJobStatus, false);
 }
 
-std::string JobRequest::PrintJobDetails(dpp::cluster& cluster) const
+std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
 
@@ -195,7 +199,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster) const
         "**Created**: <t:{}:F>\n"
         "**Last Edit**: <t:{}:F>\n",
         utils::GuidToStringNoBrackets(m_id),
-        GetCustomerName(cluster),
+        GetCustomerName(cluster, idGuild),
         JobTypeToString(),
         StatusToString(m_eJobStatus),
         PriorityToString(m_eJobPriority),
@@ -203,12 +207,57 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster) const
         m_timeLastEdit);
 }
 
-const std::string JobRequest::GetCustomerName(dpp::cluster& cluster) const
+const std::string JobRequest::GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    return utils::FindUserByID(cluster, m_idCustomer).username;
+    if (idGuild)
+    {
+        // Fetch the guild from the cluster (check if the guild is cached)
+        dpp::guild* guild = utils::FindGuildByID(cluster, idGuild);
+        if (!guild)
+        {
+            // Handle case where guild is not found (maybe return the global username or an error)
+            return utils::FindUserByID(cluster, m_idCustomer).global_name;
+        }
+
+        // Check if the user is in the guild
+        const auto member = guild->members.find(m_idCustomer);
+        if (member != guild->members.end())
+        {
+            // If the user has a nickname in the guild, return it, else return the global username
+            return !member->second.get_nickname().empty() ? member->second.get_nickname() : member->second.get_user()->global_name;
+        }
+    }
+
+    return utils::FindUserByID(cluster, m_idCustomer).global_name;
 }
 
-const std::string JobRequest::GetWorkerName(dpp::cluster& cluster) const
+const std::string JobRequest::GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    return utils::FindUserByID(cluster, m_idWorker).username;
+    if (idGuild)
+    {
+        // Fetch the guild from the cluster (check if the guild is cached)
+        dpp::guild* guild = utils::FindGuildByID(cluster, idGuild);
+        if (!guild)
+        {
+            // Handle case where guild is not found (maybe return the global username or an error)
+            return utils::FindUserByID(cluster, m_idWorker).global_name;
+        }
+
+        // Check if the user is in the guild
+        const auto member = guild->members.find(m_idWorker);
+        if (member != guild->members.end())
+        {
+            return !member->second.get_nickname().empty() ? 
+                member->second.get_nickname() : member->second.get_user()->global_name;
+        }
+    }
+
+    return utils::FindUserByID(cluster, m_idWorker).global_name;
+}
+
+void JobRequest::AddNote(const dpp::snowflake& id, const std::string& note)
+{
+    const std::size_t timestamp = utils::GetEpochTimestamp();
+    m_notes[id].push_back(std::pair{ timestamp,note });
+    m_timeLastEdit = timestamp;
 }

@@ -31,14 +31,14 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     if (!job)
     {
         event.reply(dpp::message(fmt::format("Could not find id {}.", strJobID)).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.username, strJobID, strCmdID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.global_name, strJobID, strCmdID));
         return;
     }
     // Check for permissions to edit a job request
     else if (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */)
     {
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.username, strJobID, strCmdID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.global_name, strJobID, strCmdID));
         return;
     }
 
@@ -49,7 +49,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     }
     else if (strCmdID == Option_Assign)
     {
-        const std::string_view sv = job->GetWorkerName(ctx.cluster);
+        const std::string_view sv = job->GetWorkerName(ctx.cluster,event.command.guild_id);
         AssignRequestDlg modal(job, ctx.workers, sv);
         event.dialog(modal);
     }
@@ -65,7 +65,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     }
     else if (strCmdID == Option_Delete)
     {
-        DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster));
+        DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         event.dialog(modal);
     }
 }
@@ -91,12 +91,12 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.username, strID));
+            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.global_name, strID));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
 
-        const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster);
+        const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
             std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
@@ -132,22 +132,54 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             jobRefine->SetRefinery(strParam2);
         }
 
-        const std::string strNewJobDetails = job->PrintJobDetails(ctx.cluster);
+        dpp::component row;
+        dpp::component button1 = dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Edit")
+            .set_style(dpp::cos_primary)
+            .set_id(fmt::format("modify_edit:{}:{}", author.id, strID));
+        row.add_component(button1);
+
+        dpp::component button2 = dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Add Note")
+            .set_style(dpp::cos_primary)
+            .set_id(fmt::format("modify_note:{}:{}", author.id, strID));
+        row.add_component(button2);
+
+        if (job->GetCustomerID() == author.id)
+        {
+            dpp::component button3 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label(job->IsCustomerSubscribed() ? "Subscribed" : "Unsubscribed")
+                .set_style(job->IsCustomerSubscribed() ? dpp::cos_primary : dpp::cos_secondary)
+                .set_id(fmt::format("modify_subscribe:{}:{}", author.id, strID));
+            row.add_component(button3);
+        }
+
+        dpp::component button4 = dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Delete")
+            .set_style(dpp::cos_danger)
+            .set_id(fmt::format("modify_delete:{}:{}", author.id, strID));
+        row.add_component(button4);
+
+        const std::string strNewJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         dpp::embed embed;
         embed.set_title("Edited job:")
             .set_description(strNewJobDetails)
             .set_color(0x3498db);
 
-        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
         ctx.queue->SaveQueueToFile();
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.username, strID));
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
 
-        if ((author.id != job->GetCustomerID() && strOldJobDetails != strNewJobDetails) || ctx.debug)
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldJobDetails != strNewJobDetails) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
-                    utils::GuidToStringNoBrackets(job->GetID()), author.username, strNewJobDetails));
+                    utils::GuidToStringNoBrackets(job->GetID()), author.global_name, strNewJobDetails));
         }
     }
     else if (event.custom_id == AssignRequestDlg::modalID)
@@ -161,7 +193,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.username, strID));
+            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.global_name, strID));
             return;
         }
 
@@ -171,19 +203,19 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         dpp::embed embed;
         embed.set_title("Assigned job:")
-            .set_description(job->PrintJobDetails(ctx.cluster))
+            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         ctx.queue->SaveQueueToFile();
 
-        const std::string strWorker = job->GetWorkerName(ctx.cluster);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.username, strID, strWorker));
+        const std::string strWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.global_name, strID, strWorker));
 
-        if (author.id != job->GetCustomerID() || ctx.debug)
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID()) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request has been assigned to {} by {}:\n\n{}", strWorker, author.username, embed.description));
+                fmt::format("Your request has been assigned to {} by {}:\n\n{}", strWorker, author.global_name, embed.description));
         }
     }
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
@@ -196,7 +228,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.username, strID, strStatus));
+            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.global_name, strID, strStatus));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -206,17 +238,17 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         dpp::embed embed;
         embed.set_title("Status changed for job:")
-            .set_description(job->PrintJobDetails(ctx.cluster))
+            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         ctx.queue->SaveQueueToFile();
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.username, strID, strStatus));
-        if ((author.id != job->GetCustomerID() && strOldStatus != strStatus) || ctx.debug)
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strStatus));
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldStatus != strStatus) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.username, job->PrintJobDetails(ctx.cluster)));
+                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
         }
     }
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
@@ -229,7 +261,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.username, strID, strPriority));
+            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.global_name, strID, strPriority));
             return;
         }
         job->SetLastEditTime(utils::GetEpochTimestamp());
@@ -239,17 +271,17 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         dpp::embed embed;
         embed.set_title("Priority changed for job:")
-            .set_description(job->PrintJobDetails(ctx.cluster))
+            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
         ctx.queue->SaveQueueToFile();
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.username, strID, strPriority));
-        if ((author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.global_name, strID, strPriority));
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.username, job->PrintJobDetails(ctx.cluster)));
+                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
         }
     }
     else if (event.custom_id == DeleteRequestDlg::modalID)
@@ -269,7 +301,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::user author = event.command.get_issuing_user();
 
         job->SetLastEditTime(utils::GetEpochTimestamp());
-        const std::string jobDetails = job->PrintJobDetails(ctx.cluster);
+        const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         const dpp::snowflake customerID = job->GetCustomerID();
 
         const bool result = ctx.queue->DeleteJobByGUID(strID);
@@ -289,21 +321,144 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         ctx.cluster.log(dpp::ll_warning,
             fmt::format("{} deleted {}. Reason: {}",
-                author.username,
+                author.global_name,
                 strID,
                 strJustification));
 
         // Notify original customer if needed
-        if (event.command.usr.id != customerID || ctx.debug)
+        if ((job->IsCustomerSubscribed() && event.command.usr.id != customerID) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster,
                                    customerID,
                                    event,
                                    fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
                                         strID,
-                                        author.username,
+                                        author.global_name,
                                         strJustification,
                                         jobDetails));
+        }
+    }
+}
+
+void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
+{
+    const std::string id = event.custom_id; // "modify_type:workerid:guid"
+
+    if (id.starts_with("modify_edit:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        {
+            EditRequestDlg modal(job);
+            event.dialog(modal);
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
+    }
+    else if (id.starts_with("modify_note:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        {
+            /* todo add note functionality to job class */
+            event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
+            return;
+
+            // todo note modal dlg
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
+    }
+    else if (id.starts_with("modify_subscribe:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && job->GetCustomerID() == user)
+        {
+            const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
+            const dpp::user author = event.command.get_issuing_user();
+
+            const std::size_t timestamp = utils::GetEpochTimestamp();
+            job->SubscribeCustomer(!job->IsCustomerSubscribed());
+            job->SetLastEditTime(timestamp);
+
+            dpp::component button1 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Edit")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("modify_edit:{}:{}", author.id, strJobID));
+
+            dpp::component button2 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Add Note")
+                .set_style(dpp::cos_primary)
+                .set_id(fmt::format("modify_note:{}:{}", author.id, strJobID));
+
+            dpp::component button3 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label(job->IsCustomerSubscribed() ? "Subscribed" : "Unsubscribed")
+                .set_style(job->IsCustomerSubscribed() ? dpp::cos_primary : dpp::cos_secondary)
+                .set_id(fmt::format("modify_subscribe:{}:{}", author.id, strJobID));
+
+            dpp::component button4 = dpp::component()
+                .set_type(dpp::cot_button)
+                .set_label("Delete")
+                .set_style(dpp::cos_danger)
+                .set_id(fmt::format("modify_delete:{}:{}", author.id, strJobID));
+
+            dpp::component row = dpp::component()
+                .set_type(dpp::cot_action_row)
+                .add_component(button1)
+                .add_component(button2)
+                .add_component(button3)
+                .add_component(button4);
+
+            dpp::embed embed;
+            embed.set_title("Submitted job request:")
+                .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+                .set_color(0x3498db);
+
+            event.reply(dpp::ir_update_message,
+                dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
+
+            ctx.cluster.log(dpp::ll_info, fmt::format("User changed subscribed status for {} to {}", strJobID,
+                !job->IsCustomerSubscribed() ? "Unsubscribe" : "Subscribe"));
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+        }
+    }
+    else if (id.starts_with("modify_delete:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+
+        auto job = ctx.queue->GetJobByGUID(guid);
+        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        {
+            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+            event.dialog(modal);
+        }
+        else
+        {
+            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
         }
     }
 }

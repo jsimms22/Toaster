@@ -9,8 +9,9 @@
 #include "tinyxml2.h"
 // std library
 #include <chrono>
-#include <string>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
 class JobRequest
 {
@@ -34,6 +35,8 @@ public:
         high,
         critical
     };
+    using UserNotes = std::vector<std::pair< std::size_t /* timestamp */, std::string /* message */>>;
+    using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
 
     JobRequest();
     ~JobRequest() = default;
@@ -67,24 +70,32 @@ public:
 
     const GUID& GetID() const { return m_id; }
 
+    const NoteHistory GetNoteHistory() const { return m_notes; }
+    const UserNotes GetNoteHistory(const dpp::snowflake user) const { return m_notes.at(user); }
+    void AddNote(const dpp::snowflake& id, const std::string& note);
+
+    bool IsCustomerSubscribed() const { return m_bNotifyCustomer; }
+    void SubscribeCustomer(const bool bUpdate) { m_bNotifyCustomer = bUpdate; }
+
     virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
-    virtual std::string PrintJobDetails(dpp::cluster& cluster) const;
+    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
-    const std::string GetCustomerName(dpp::cluster& cluster) const;
-    const std::string GetWorkerName(dpp::cluster& cluster) const;
+    const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    const std::string GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
 private:
-    std::size_t m_timeCreated;
-    std::size_t m_timeLastEdit;
+    std::size_t m_timeCreated = 0;
+    std::size_t m_timeLastEdit = 0;
     dpp::snowflake m_idCustomer = USERID_NULL;  // Customer id of who submitted the job
     dpp::snowflake m_idWorker = USERID_NULL;    // Id of the worker assigned to the job
     std::string m_strSCHandle = "n/a";          // SC Handle for identification (could be username or custom ID)
     priority m_eJobPriority = priority::low;    // Priority of the job
     status m_eJobStatus = status::open;         // Current status of the job
-    GUID m_id;                                  // Unique identifier for the job
-    // todo std::vector<std::string> m_vNotes
+    GUID m_id = GUID_NULL;                      // Unique identifier for the job
+    NoteHistory m_notes;
+    bool m_bNotifyCustomer = false;
 };

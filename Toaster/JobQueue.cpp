@@ -93,7 +93,7 @@ bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueue(dpp::cluster& cluster) const
+const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
     std::size_t position = 0;
@@ -113,7 +113,7 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster) const
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
-            job->GetWorkerName(cluster),
+            job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
     }
@@ -182,7 +182,7 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobRequest::status filter) const
+const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobRequest::status filter, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
     std::size_t position = 0;
@@ -208,7 +208,7 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
-            job->GetWorkerName(cluster),
+            job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
     }
@@ -217,7 +217,11 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueuePageByStatus(dpp::cluster& cluster, const JobRequest::status filter, const std::size_t page) const
+const std::string JobQueue::PrintQueuePageByStatus(
+    dpp::cluster& cluster, 
+    const JobRequest::status filter, 
+    const std::size_t page,
+    const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
 
@@ -250,7 +254,7 @@ const std::string JobQueue::PrintQueuePageByStatus(dpp::cluster& cluster, const 
                 std::back_inserter(buffer),
                 "***Position: {}***\n{}\n",
                 position,
-                job->PrintJobDetails(cluster)
+                job->PrintJobDetails(cluster, idGuild)
             );
         }
 
@@ -261,7 +265,7 @@ const std::string JobQueue::PrintQueuePageByStatus(dpp::cluster& cluster, const 
 }
 
 // Method to print all job requests
-const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter) const
+const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
     std::size_t position = 0;
@@ -287,7 +291,7 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
-            job->GetWorkerName(cluster),
+            job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
     }
@@ -296,7 +300,11 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueuePageByType(dpp::cluster& cluster, const std::size_t filter, const std::size_t page) const
+const std::string JobQueue::PrintQueuePageByType(
+    dpp::cluster& cluster, 
+    const std::size_t filter, 
+    const std::size_t page, 
+    const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
 
@@ -333,7 +341,7 @@ const std::string JobQueue::PrintQueuePageByType(dpp::cluster& cluster, const st
                 JobRequest::PriorityToString(job->GetPriority()),
                 utils::GuidToStringNoBrackets(job->GetID()),
                 JobRequest::StatusToString(job->GetStatus()),
-                job->GetWorkerName(cluster),
+                job->GetWorkerName(cluster, idGuild),
                 job->JobTypeToString()
             );
         }
@@ -344,7 +352,24 @@ const std::string JobQueue::PrintQueuePageByType(dpp::cluster& cluster, const st
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t filter) const
+const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByUser(const dpp::snowflake& userID,
+                                                                        const std::size_t filter) const
+{
+    std::vector<std::shared_ptr<JobRequest>> list;
+    for (const auto& job : m_vQueue)
+    {
+        if (job->GetCustomerID() != userID || !job->SupportsType(filter))
+            continue;
+
+        list.push_back(job);
+    }
+
+    return list;
+}
+
+const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, 
+    const dpp::snowflake& userID, 
+    const std::size_t filter, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
     std::size_t position = 0;
@@ -363,12 +388,49 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, const dpp::s
             std::back_inserter(buffer),
             "***Position: {}***\n{}\n",
             position,
-            job->PrintJobDetails(cluster)
+            job->PrintJobDetails(cluster, idGuild)
         );
     }
 
     // Convert the buffer to a std::string once at the end
     return fmt::to_string(buffer);
+}
+
+const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster, 
+                                                 const dpp::snowflake& userID,
+                                                 const std::size_t filter,
+                                                 const std::size_t page, const dpp::snowflake& idGuild) const
+{
+    const auto list = GetQueueByUser(userID, filter);
+    if (list.empty()) return {};
+
+    const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
+    const std::size_t end_index = start_index + JOBS_PER_DETAIL_PAGE;
+
+    std::size_t filtered_index = 0;
+    std::size_t display_pos = 0;
+
+    std::stringstream ss;
+    for (const auto& job : list)
+    {
+        if (job->GetCustomerID() != userID || !job->SupportsType(filter))
+            continue;
+
+        // Only count filtered jobs
+        if (filtered_index >= end_index)
+            break;
+
+        if (filtered_index >= start_index)
+        {
+            ++display_pos;
+
+            ss << job->PrintJobDetails(cluster, idGuild) << '\n';
+        }
+
+        ++filtered_index;
+    }
+
+    return ss.str();
 }
 
 const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
@@ -385,7 +447,7 @@ const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const 
     return list;
 }
 
-const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID) const
+const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
     std::stringstream ss;
     for (const auto& job : m_vQueue)
@@ -393,14 +455,14 @@ const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp:
         if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
             continue;
         
-        ss << job->PrintJobDetails(cluster) << '\n';
+        ss << job->PrintJobDetails(cluster, idGuild) << '\n';
         
     }
 
     return ss.str();
 }
 
-const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t page) const
+const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t page, const dpp::snowflake& idGuild) const
 {
     const auto list = GetQueueByWorker(userID);
     if (list.empty()) return {};
@@ -425,7 +487,7 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
         {
             ++display_pos;
 
-            ss << job->PrintJobDetails(cluster) << '\n';
+            ss << job->PrintJobDetails(cluster, idGuild) << '\n';
         }
 
         ++filtered_index;
@@ -434,14 +496,14 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
     return ss.str();
 }
 
-const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID) const
+const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
     for (const auto& job : m_vQueue)
     {
         if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
             continue;
             
-        return job->PrintJobDetails(cluster);
+        return job->PrintJobDetails(cluster, idGuild);
     }
 
     return {};

@@ -11,7 +11,9 @@ class JobQueue;
 class ToasterBot final
 {
 public:
-	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug = false);
+	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, 
+			   const std::shared_ptr<JobQueue>& spQueue, 
+		       const bool bDebug = false);
 	~ToasterBot() = default;
 
 	// Bot event handlers

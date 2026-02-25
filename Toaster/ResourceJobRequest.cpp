@@ -78,9 +78,9 @@ void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
-std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster) const
+std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    std::string base = JobRequest::PrintJobDetails(cluster);
+    std::string base = JobRequest::PrintJobDetails(cluster, idGuild);
 
     return fmt::format(
         "{}"

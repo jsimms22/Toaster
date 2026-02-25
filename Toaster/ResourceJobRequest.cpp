@@ -44,7 +44,7 @@ void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 
     JobRequest::WriteAttributes(xmlNode, xmlParent);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLResourceState, StateToString(m_eResourceState).c_str());
+    xmlNode->SetAttribute(xmlRequest::pszXMLResourceState, static_cast<int>(m_eResourceState));
     xmlNode->SetAttribute(xmlRequest::pszXMLResourceList, m_strResourceList.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLResourceQuality, m_strQuality.c_str());
     xmlParent->InsertEndChild(xmlNode);
@@ -59,11 +59,8 @@ void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
 
     JobRequest::ReadAttributes(xmlNode, xmlParent);
 
-    const char* pszState = xmlNode->Attribute(xmlRequest::pszXMLResourceState);
-    if (pszState)
-    {
-        m_eResourceState = ResourceJobRequest::StringToState(pszState);
-    }
+    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLResourceState, state::UnrefinedMineable));
+
 
     const char* pszResourceList = xmlNode->Attribute(xmlRequest::pszXMLResourceList);
     if (pszResourceList)

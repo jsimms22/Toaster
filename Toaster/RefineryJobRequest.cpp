@@ -38,7 +38,7 @@ void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 
     JobRequest::WriteAttributes(xmlNode, xmlParent);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLRefineState, RefineryJobRequest::StateToString(m_eResourceState).c_str());
+    xmlNode->SetAttribute(xmlRequest::pszXMLRefineState, static_cast<int>(m_eResourceState));
     xmlNode->SetAttribute(xmlRequest::pszXMLRefineList, m_strResourceList.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLRefineryLoc, m_strRefinery.c_str());
     xmlParent->InsertEndChild(xmlNode);
@@ -53,11 +53,8 @@ void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
 
     JobRequest::ReadAttributes(xmlNode, xmlParent);
 
-    const char* pszState = xmlNode->Attribute(xmlRequest::pszXMLRefineState);
-    if (pszState)
-    {
-        m_eResourceState = RefineryJobRequest::StringToState(pszState);
-    }
+    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLRefineState, state::RefinedMineable));
+
 
     const char* pszResourceList = xmlNode->Attribute(xmlRequest::pszXMLRefineList);
     if (pszResourceList)

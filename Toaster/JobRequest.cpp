@@ -118,8 +118,8 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlNode->SetAttribute(xmlRequest::pszXMLCreation, m_timeCreated);
     xmlNode->SetAttribute(xmlRequest::pszXMLLastEdit, m_timeLastEdit);
     xmlNode->SetAttribute(xmlRequest::pszXMLJobGUID, utils::GuidToString(m_id).c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobPriority, m_eJobPriority);
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobStatus, m_eJobStatus);
+    xmlNode->SetAttribute(xmlRequest::pszXMLJobPriority, static_cast<int>(m_eJobPriority));
+    xmlNode->SetAttribute(xmlRequest::pszXMLJobStatus, static_cast<int>(m_eJobStatus));
     xmlNode->SetAttribute(xmlRequest::pszXMLJobType, JobType());
     xmlNode->SetAttribute(xmlRequest::pszXMLJobWorker, m_idWorker);
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_idCustomer);
@@ -135,55 +135,32 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
         return;
     }
 
-    const char* created = xmlNode->Attribute(xmlRequest::pszXMLCreation);
-    if (created)
+    m_timeCreated = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLCreation, 0);
+    m_timeLastEdit = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLLastEdit, 0);
+    const char* pszJobGUID = xmlNode->Attribute(xmlRequest::pszXMLJobGUID);
+    if (pszJobGUID)
     {
-        m_timeCreated = std::stoull(created);
+        try
+        {
+            m_id = utils::StringToGuid(pszJobGUID);
+        }
+        catch (std::exception e)
+        {
+            m_id = GUID_NULL;
+        }
     }
 
-    const char* lastEdit = xmlNode->Attribute(xmlRequest::pszXMLLastEdit);
-    if (lastEdit)
+    m_eJobPriority = static_cast<priority>(xmlNode->IntAttribute(xmlRequest::pszXMLJobPriority, priority::low));
+    m_eJobStatus = static_cast<status>(xmlNode->IntAttribute(xmlRequest::pszXMLJobStatus, status::open));
+    m_idWorker = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLJobWorker, USERID_NULL);
+    m_idCustomer = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLRequestUser, USERID_NULL);
+    const char* pszHandle = xmlNode->Attribute(xmlRequest::pszXMLRequestSCHandle);
+    if (pszHandle)
     {
-        m_timeLastEdit = std::stoull(lastEdit);
+        m_strSCHandle = pszHandle;
     }
 
-    const char* jobGUID = xmlNode->Attribute(xmlRequest::pszXMLJobGUID);
-    if (jobGUID)
-    {
-        m_id = utils::StringToGuid(jobGUID);
-    }
-
-    const char* customerID = xmlNode->Attribute(xmlRequest::pszXMLRequestUser);
-    if (customerID)
-    {
-        m_idCustomer = customerID;
-    }
-
-    const char* workerID = xmlNode->Attribute(xmlRequest::pszXMLJobWorker);
-    if (workerID)
-    {
-        m_idWorker = workerID;
-    }
-
-    const char* requestSCHandle = xmlNode->Attribute(xmlRequest::pszXMLRequestSCHandle);
-    if (requestSCHandle)
-    {
-        m_strSCHandle = requestSCHandle;
-    }
-
-    const char* jobPriority = xmlNode->Attribute(xmlRequest::pszXMLJobPriority);
-    if (jobPriority)
-    {
-        m_eJobPriority = static_cast<JobRequest::priority>(std::stoi(jobPriority));
-    }
-
-    const char* jobStatus = xmlNode->Attribute(xmlRequest::pszXMLJobStatus);
-    if (jobStatus)
-    {
-        m_eJobStatus = static_cast<JobRequest::status>(std::stoi(jobStatus));
-    }
-
-    m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLJobStatus, false);
+    m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLSubscribed, false);
 }
 
 std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const

@@ -37,6 +37,6 @@ public:
 private:
     RefineryJobRequest::state m_eResourceState = RefineryJobRequest::state::RefinedMineable;
     std::string m_strResourceList = "n/a";  // Description of the items to be refined
-    std::string m_strRefinery = "n/a";  // Description of the items to be refined
+    std::string m_strRefinery = "any";      // Where the items are to be refined
 };
 

@@ -186,50 +186,12 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 
 const std::string JobRequest::GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    if (idGuild)
-    {
-        // Fetch the guild from the cluster (check if the guild is cached)
-        dpp::guild* guild = utils::FindGuildByID(cluster, idGuild);
-        if (!guild)
-        {
-            // Handle case where guild is not found (maybe return the global username or an error)
-            return utils::FindUserByID(cluster, m_idCustomer).global_name;
-        }
-
-        // Check if the user is in the guild
-        const auto member = guild->members.find(m_idCustomer);
-        if (member != guild->members.end())
-        {
-            // If the user has a nickname in the guild, return it, else return the global username
-            return !member->second.get_nickname().empty() ? member->second.get_nickname() : member->second.get_user()->global_name;
-        }
-    }
-
-    return utils::FindUserByID(cluster, m_idCustomer).global_name;
+    return utils::FindPreferredNameByID(cluster, m_idCustomer, idGuild);
 }
 
 const std::string JobRequest::GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    if (idGuild)
-    {
-        // Fetch the guild from the cluster (check if the guild is cached)
-        dpp::guild* guild = utils::FindGuildByID(cluster, idGuild);
-        if (!guild)
-        {
-            // Handle case where guild is not found (maybe return the global username or an error)
-            return utils::FindUserByID(cluster, m_idWorker).global_name;
-        }
-
-        // Check if the user is in the guild
-        const auto member = guild->members.find(m_idWorker);
-        if (member != guild->members.end())
-        {
-            return !member->second.get_nickname().empty() ? 
-                member->second.get_nickname() : member->second.get_user()->global_name;
-        }
-    }
-
-    return utils::FindUserByID(cluster, m_idWorker).global_name;
+    return utils::FindPreferredNameByID(cluster, m_idWorker, idGuild);
 }
 
 void JobRequest::AddNote(const dpp::snowflake& id, const std::string& note)

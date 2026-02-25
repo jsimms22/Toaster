@@ -46,7 +46,7 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
     std::size_t page = 0;
     const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page, event.command.guild_id);
     const std::size_t size = ctx.queue->GetFilteredQueueSizeByType(type);
-    const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_QUEUE_PAGE;
+    const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_QUEUE_PAGE;
     const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
 
     dpp::embed embed;
@@ -93,7 +93,7 @@ void ShowQueueCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button
 
         const std::string result = ctx.queue->PrintQueuePageByType(ctx.cluster, type, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByType(type);
-        const std::size_t lastPage = size / JobQueue::JOBS_PER_QUEUE_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_QUEUE_PAGE;
         const std::string header = fmt::format("Request Queue (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;

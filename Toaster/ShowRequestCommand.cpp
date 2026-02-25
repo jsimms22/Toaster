@@ -16,9 +16,11 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     }
 
     const dpp::user author = event.command.get_issuing_user();
-    const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
-    const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
 
+    std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
+    utils::FilterWhiteSpace(strJobID);
+
+    const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));

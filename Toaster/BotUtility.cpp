@@ -221,6 +221,43 @@ namespace utils
         return future.get();
     }
 
+    const std::string FindPreferredNameByID(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::snowflake& idGuild)
+    {
+        dpp::user customer;
+        std::string nickname;
+        std::string global;
+        if (idGuild)
+        {
+            // Fetch the guild from the cluster (check if the guild is cached)
+            dpp::guild* guild = utils::FindGuildByID(cluster, idGuild);
+            if (!guild)
+            {
+                // Handle case where guild is not found (maybe return the global username or an error)
+                customer = utils::FindUserByID(cluster, idUser);
+                global = customer.global_name;
+            }
+            else
+            {
+                // Check if the user is in the guild
+                const auto member = guild->members.find(idUser);
+                if (member != guild->members.end())
+                {
+                    // If the user has a nickname in the guild, return it, else return the global username
+                    customer = *(member->second.get_user());
+                    nickname = member->second.get_nickname();
+                }
+                else
+                {
+                    customer = utils::FindUserByID(cluster, idUser);
+                    global = customer.global_name;
+                }
+            }
+        }
+
+        // If no nickname, check global, if no global, return their actual username
+        return !nickname.empty() ? nickname : !global.empty() ? global : customer.username;
+    }
+
     std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len)
     {
         std::vector<std::string> pages;
@@ -251,5 +288,27 @@ namespace utils
         result.emplace_back(input.substr(start));
 
         return result;
+    }
+
+    void RemoveChar(std::string& str, const char sym)
+    {
+        str.erase(std::remove(str.begin(), str.end(), sym), str.end());
+    }
+
+    void FilterWhiteSpace(std::string& str)
+    {
+        str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
+    }
+
+    void FilterUserString(std::string& str)
+    {
+        const std::vector<char> filterList{
+            '\n', '\r', '\t',               // Newlines, carriage returns, tabs
+            '`', '*', '~', '@', '<', '>',   // Discord formatting characters
+            '|',                            // Potential table formatting
+        };
+
+        for (const auto sym : filterList)
+            RemoveChar(str, sym);
     }
 }

@@ -40,7 +40,7 @@ void MyAssignmentsCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashc
     std::size_t page = 0;
     const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, author.id, page, event.command.guild_id);
     const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(author.id);
-    const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+    const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
     const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
 
     dpp::embed embed;
@@ -91,7 +91,7 @@ void MyAssignmentsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, worker, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(worker);
-        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;

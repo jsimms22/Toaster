@@ -65,13 +65,19 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     
     const dpp::user author = event.command.get_issuing_user();
-    const std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+    std::string strSCHandle = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
 
     // These parameters are input that depend on the dialog form's order as defined by the type of the job
-    const std::string strParam1 = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-    const std::string strParam2 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-    const std::string strParam3 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-    const std::string strParam4 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+    std::string strParam1 = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+    std::string strParam2 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+    std::string strParam3 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+    std::string strParam4 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+
+    utils::FilterUserString(strSCHandle);
+    utils::FilterUserString(strParam1);
+    utils::FilterUserString(strParam2);
+    utils::FilterUserString(strParam3);
+    utils::FilterUserString(strParam4);
 
     std::string jobDetails;
     GUID jobID;

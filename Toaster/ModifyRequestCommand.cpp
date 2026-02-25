@@ -24,8 +24,10 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
 
     const dpp::snowflake guild = event.command.guild_id;
     const dpp::user author = event.command.get_issuing_user();
-    const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
+
+    std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
+    utils::FilterWhiteSpace(strJobID);
 
     const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
     if (!job)
@@ -51,7 +53,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         std::unordered_map<dpp::snowflake, std::string> mapWorkerNames;
         for (const auto& id : ctx.workers)
         {
-            mapWorkerNames[id] = utils::FindUserByID(ctx.cluster, id).global_name;
+            mapWorkerNames[id] = utils::FindPreferredNameByID(ctx.cluster, id, event.command.guild_id);
         }
 
         AssignRequestDlg modal(job, mapWorkerNames, current);
@@ -101,11 +103,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::user author = event.command.get_issuing_user();
 
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strSCHandle = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+        std::string strSCHandle = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
         // These parameters are input that depend on the dialog form's order as defined by the type of the job
-        const std::string strParam1 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-        const std::string strParam2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-        const std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+        std::string strParam1 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+        std::string strParam2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+        std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job)
@@ -113,6 +115,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
+
+        utils::FilterUserString(strSCHandle);
+        utils::FilterUserString(strParam1);
+        utils::FilterUserString(strParam2);
+        utils::FilterUserString(strParam3);
 
         job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);

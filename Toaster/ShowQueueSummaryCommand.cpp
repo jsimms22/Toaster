@@ -3,6 +3,8 @@
 #include "JobQueue.h"
 // fmt
 #include <fmt/format.h>
+// std library
+#include <algorithm>
 
 void ShowQueueSummaryCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
 {
@@ -103,7 +105,7 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         std::size_t page = 0;
         const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
-        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;
@@ -156,7 +158,7 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         std::size_t page = 0;
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
-        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;
@@ -201,7 +203,7 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
 
         const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
-        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;
@@ -248,7 +250,7 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
 
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
-        const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
         const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
 
         dpp::embed embed;

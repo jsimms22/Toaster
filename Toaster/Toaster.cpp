@@ -77,7 +77,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance()};
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteCommand(ctx, event);
@@ -111,7 +111,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteInteraction(ctx, event);
@@ -145,7 +145,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteFormSubmit(ctx, event);
@@ -177,7 +177,7 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers };
+    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteButtonClick(ctx, event);

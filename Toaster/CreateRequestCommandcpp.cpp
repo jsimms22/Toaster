@@ -182,6 +182,8 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         .set_description(jobDetails)
         .set_color(0x3498db);
 
+    // todo announce in a specific channel
+
     event.reply(dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
 }
 
@@ -196,14 +198,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetCustomerID() == user)
+        if (job && ctx.manager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             EditRequestDlg modal(job);
             event.dialog(modal);
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            return;
         }
     }
     else if (id.starts_with("create_note:"))
@@ -213,17 +216,19 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetCustomerID() == user)
+        if (job && ctx.manager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             /* todo add note functionality to job class */
             event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
             return;
 
+            ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            return;
         }
     }
     else if (id.starts_with("create_subscribe:"))
@@ -233,7 +238,7 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetCustomerID() == user)
+        if (job && ctx.manager->IsRequestOwner(user, job))
         {
             const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
             const dpp::user author = event.command.get_issuing_user();
@@ -241,6 +246,7 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             const std::size_t timestamp = utils::GetEpochTimestamp();
             job->SubscribeCustomer(!job->IsCustomerSubscribed());
             job->SetLastEditTime(timestamp);
+            ctx.queue->SaveQueueToFile();
 
             dpp::component button1 = dpp::component()
                 .set_type(dpp::cot_button)
@@ -286,7 +292,8 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            return;
         }
     }
     else if (id.starts_with("create_delete:"))
@@ -296,14 +303,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetCustomerID() == user)
+        if (job && ctx.manager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
             event.dialog(modal);
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            return;
         }
     }
 }

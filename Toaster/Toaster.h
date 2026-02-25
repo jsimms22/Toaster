@@ -33,9 +33,12 @@ private:
 	dpp::cluster& m_cluster;
 	std::uint32_t m_clusterId = 0;
 	std::uint32_t m_iShardCount = 0;
-	const std::unordered_map<dpp::snowflake, std::string_view> m_vWorkers = { std::pair(464542267395538944, "aimx83"),
-																			  std::pair(332728115430162444, "mike.d.spectre"),
-																			  std::pair(710847331871883294, "linealign"),
-																			  std::pair(195997205864120320, "leaf1318") };
+	const std::vector<dpp::snowflake> m_vWorkers = 
+	{	
+		464542267395538944, 
+		332728115430162444,												  
+		710847331871883294,																	  
+		195997205864120320 
+	};
 };
 

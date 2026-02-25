@@ -16,6 +16,14 @@ void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp:
     }
 
     const dpp::user author = event.command.get_issuing_user();
+    if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
+        ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+        ctx.manager->IsBotOwner(author.id)))
+    {
+        event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
     const std::string header = "Queue Summary:";
     if (ctx.queue->GetQueueSize() == 0)
     {

@@ -1,5 +1,6 @@
 #include "Commands.h"
 #include "JobQueue.h"
+#include "BotUtility.h"
 // fmt
 #include <fmt/format.h>
 
@@ -17,6 +18,16 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     const dpp::user author = event.command.get_issuing_user();
     const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
+
+    if (!(ctx.manager->IsRequestOwner(author.id, job) ||
+          ctx.manager->IsRequestWorker(author.id, job) ||
+          ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
+          ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          ctx.manager->IsBotOwner(author.id)))
+    {
+        event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        return;
+    }
 
     if (!job)
     {

@@ -4,7 +4,7 @@
 // fmt
 #include <fmt/format.h>
 
-void MyAssignmentsCommand::ExecuteCommand(CommandContext& ctx,  const dpp::slashcommand_t& event)
+void MyAssignmentsCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
 {
     if (!ctx.queue || event.command.get_command_name() != this->name)
     {
@@ -12,6 +12,14 @@ void MyAssignmentsCommand::ExecuteCommand(CommandContext& ctx,  const dpp::slash
     }
 
     const dpp::user author = event.command.get_issuing_user();
+
+    if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
+        ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+        ctx.manager->IsBotOwner(author.id)))
+    {
+        event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        return;
+    }
 
     if (ctx.queue->GetQueueSize() == 0)
     {

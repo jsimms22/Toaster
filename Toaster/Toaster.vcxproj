@@ -209,6 +209,7 @@
     <ClCompile Include="MyAssignmentsCommand.cpp" />
     <ClCompile Include="MyRequestsCommands.cpp" />
     <ClCompile Include="MyTopAssignmentCommand.cpp" />
+    <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
     <ClCompile Include="ResourceJobRequest.cpp" />
@@ -228,6 +229,7 @@
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="JobRequestFactory.h" />
+    <ClInclude Include="PermissionsMgr.h" />
     <ClInclude Include="RefineryJobRequest.h" />
     <ClInclude Include="RequestDlg.h" />
     <ClInclude Include="Resource.h" />

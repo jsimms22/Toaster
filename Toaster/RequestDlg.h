@@ -146,8 +146,8 @@ class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
 	AssignRequestDlg(const std::shared_ptr<JobRequest>& job,
-					 const std::unordered_map<dpp::snowflake, std::string_view>& mapWorkerList,
-					 const std::string_view& worker = "")
+					 const std::unordered_map<dpp::snowflake, std::string>& mapWorkerList,
+					 const std::string& worker = "")
 		: dpp::interaction_modal_response(), m_spJob(job), m_mapWorkersList(mapWorkerList), m_svWorker(worker)
 	{
 		set_custom_id(modalID);
@@ -169,8 +169,8 @@ private:
 	dpp::component StatusUpdateSelect;
 
 	std::shared_ptr<JobRequest> m_spJob;
-	std::unordered_map<dpp::snowflake, std::string_view> m_mapWorkersList;
-	std::string_view m_svWorker;
+	std::unordered_map<dpp::snowflake, std::string> m_mapWorkersList;
+	std::string m_svWorker;
 };
 
 class StatusChangeRequestDlg : public dpp::interaction_modal_response

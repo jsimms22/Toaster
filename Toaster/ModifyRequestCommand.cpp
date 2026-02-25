@@ -35,38 +35,59 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         return;
     }
     // Check for permissions to edit a job request
-    else if (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */)
+    
+
+    if (strCmdID == Option_Edit && 
+        ctx.manager->CanEditJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    {
+        EditRequestDlg modal(job);
+        event.dialog(modal);
+        return;
+    }
+    else if (strCmdID == Option_Assign && 
+            (ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+             ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id))))
+    {
+        const std::string current = job->GetWorkerName(ctx.cluster,event.command.guild_id);
+
+        std::unordered_map<dpp::snowflake, std::string> mapWorkerNames;
+        for (const auto& id : ctx.workers)
+        {
+            mapWorkerNames[id] = utils::FindUserByID(ctx.cluster, id).global_name;
+        }
+
+        AssignRequestDlg modal(job, mapWorkerNames, current);
+        event.dialog(modal);
+        return;
+    }
+    else if (strCmdID == Option_Status &&
+            (ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+             ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id))))
+    {
+        StatusChangeRequestDlg modal(job);
+        event.dialog(modal);
+        return;
+    }
+    else if (strCmdID == Option_Priority &&
+            (ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+             ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id))))
+    {
+        PriorityChangeRequestDlg modal(job);
+        event.dialog(modal);
+        return;
+    }
+    else if (strCmdID == Option_Delete &&
+        ctx.manager->CanDeleteJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    {
+        DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        event.dialog(modal);
+        return;
+    }
+    else
     {
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.global_name, strJobID, strCmdID));
         return;
-    }
-
-    if (strCmdID == Option_Edit)
-    {
-        EditRequestDlg modal(job);
-        event.dialog(modal);
-    }
-    else if (strCmdID == Option_Assign)
-    {
-        const std::string_view sv = job->GetWorkerName(ctx.cluster,event.command.guild_id);
-        AssignRequestDlg modal(job, ctx.workers, sv);
-        event.dialog(modal);
-    }
-    else if (strCmdID == Option_Status)
-    {
-        StatusChangeRequestDlg modal(job);
-        event.dialog(modal);
-    }
-    else if (strCmdID == Option_Priority)
-    {
-        PriorityChangeRequestDlg modal(job);
-        event.dialog(modal);
-    }
-    else if (strCmdID == Option_Delete)
-    {
-        DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
-        event.dialog(modal);
     }
 }
 
@@ -89,13 +110,13 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
-        if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
+        if (!job)
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to edit {}", author.global_name, strID));
+            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
             return;
         }
-        job->SetLastEditTime(utils::GetEpochTimestamp());
 
+        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
@@ -191,9 +212,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strStatus = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
-        if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
+        if (!job)
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to assign {} to a worker.", author.global_name, strID));
+            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -226,13 +247,13 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
-        if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
+        if (!job)
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change the status for {} to {}", author.global_name, strID, strStatus));
+            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
             return;
         }
-        job->SetLastEditTime(utils::GetEpochTimestamp());
 
+        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldStatus = JobRequest::StatusToString(job->GetStatus());
         job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
 
@@ -259,13 +280,13 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strPriority = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
-        if (!job || (author.id != job->GetCustomerID() && !ctx.debug/*|| todo get permissions list */))
+        if (!job)
         {
-            ctx.cluster.log(dpp::ll_error, fmt::format("{} attempted to change priority for {} to {}", author.global_name, strID, strPriority));
+            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
             return;
         }
-        job->SetLastEditTime(utils::GetEpochTimestamp());
 
+        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldPriority = JobRequest::PriorityToString(job->GetPriority());
         job->SetPriority(JobRequest::StringToPriority(strPriority));
 
@@ -293,8 +314,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job not found.")
-                .set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -351,14 +371,15 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        if (job &&
+            ctx.manager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             EditRequestDlg modal(job);
             event.dialog(modal);
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         }
     }
     else if (id.starts_with("modify_note:"))
@@ -368,17 +389,18 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        if (job && ctx.manager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             /* todo add note functionality to job class */
             event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
             return;
 
+            ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         }
     }
     else if (id.starts_with("modify_subscribe:"))
@@ -396,6 +418,7 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             const std::size_t timestamp = utils::GetEpochTimestamp();
             job->SubscribeCustomer(!job->IsCustomerSubscribed());
             job->SetLastEditTime(timestamp);
+            ctx.queue->SaveQueueToFile();
 
             dpp::component button1 = dpp::component()
                 .set_type(dpp::cot_button)
@@ -441,7 +464,7 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         }
     }
     else if (id.starts_with("modify_delete:"))
@@ -451,14 +474,14 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         const std::string guid = parts[2];
 
         auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && (job->GetCustomerID() == user || job->GetWorkerID() == user))
+        if (job && ctx.manager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
         {
             DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
             event.dialog(modal);
         }
         else
         {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         }
     }
 }

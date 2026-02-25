@@ -139,7 +139,7 @@ auto main() -> int
             }
             });
 
-        ToasterBot toaster(bot, 0, spQueue, true);
+        ToasterBot toaster(bot, 0, spQueue, false);
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
         bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });

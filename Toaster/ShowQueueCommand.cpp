@@ -16,6 +16,14 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
     }
 
     const dpp::user author = event.command.get_issuing_user();
+    if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
+          ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          ctx.manager->IsBotOwner(author.id)))
+    {
+        event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
     const std::size_t type = utils::CmdStringToJobType(strCmdID);
 

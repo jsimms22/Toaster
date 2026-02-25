@@ -30,12 +30,10 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
     if (!job)
     {
-        event.reply(dpp::message(fmt::format("Could not find id {}.", strJobID)).set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.global_name, strJobID, strCmdID));
         return;
     }
-    // Check for permissions to edit a job request
-    
 
     if (strCmdID == Option_Edit && 
         ctx.manager->CanEditJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
@@ -112,7 +110,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -214,7 +212,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -249,7 +247,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -282,7 +280,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -314,7 +312,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
-            event.reply(dpp::message("Job does not found.").set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
@@ -377,9 +375,16 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             EditRequestDlg modal(job);
             event.dialog(modal);
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+            return;
         }
     }
     else if (id.starts_with("modify_note:"))
@@ -398,9 +403,16 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+            return;
         }
     }
     else if (id.starts_with("modify_subscribe:"))
@@ -462,9 +474,16 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             ctx.cluster.log(dpp::ll_info, fmt::format("User changed subscribed status for {} to {}", strJobID,
                 !job->IsCustomerSubscribed() ? "Unsubscribe" : "Subscribe"));
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+            return;
         }
     }
     else if (id.starts_with("modify_delete:"))
@@ -479,9 +498,16 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
             event.dialog(modal);
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+            return;
         }
     }
 }

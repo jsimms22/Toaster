@@ -126,12 +126,12 @@ namespace utils
         cluster.direct_message_create(idUser, dpp::message(msg), [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
             if (callback.is_error())
             {
-                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id {}.", idUser));
+                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", idUser));
             }
             else
             {
                 dpp::user user = utils::FindUserByID(cluster, idUser);
-                cluster.log(dpp::ll_info, fmt::format("Sending direct message to {}.", user.global_name));
+                cluster.log(dpp::ll_info, fmt::format("Sending direct message to '{}'.", user.global_name));
             }});
     }
 
@@ -139,12 +139,12 @@ namespace utils
     {
         if (id == USERID_NULL)
         {
-            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for user id: {}", id));
+            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for user id '{}'.", id));
             return {};
         }
         else
         {
-            cluster.log(dpp::ll_debug, fmt::format("Retrieving user data for id: {}", id));
+            cluster.log(dpp::ll_debug, fmt::format("Retrieving user data for id '{}'.", id));
         }
 
         std::promise<dpp::user> promise;
@@ -152,7 +152,7 @@ namespace utils
         dpp::user* user = dpp::find_user(id);
         if (user)
         {
-            cluster.log(dpp::ll_debug, fmt::format("Found cached user data: {}", user->global_name));
+            cluster.log(dpp::ll_debug, fmt::format("Found cached user data '{}'.", user->global_name));
             promise.set_value(*user);
             return future.get();
         }
@@ -162,7 +162,7 @@ namespace utils
                 if (!callback.is_error()) 
                 {
                     dpp::user_identified user = std::get<dpp::user_identified>(callback.value);
-                    callback.bot->log(dpp::ll_debug, fmt::format("Found user data: {}", user.global_name));
+                    callback.bot->log(dpp::ll_debug, fmt::format("Found user data '{}'.", user.global_name));
                     promise.set_value(user);
 
                     // Manually cache the user
@@ -182,12 +182,12 @@ namespace utils
     {
         if (id == USERID_NULL)
         {
-            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for guild id: {}", id));
+            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for guild id '{}'.", id));
             return {};
         }
         else
         {
-            cluster.log(dpp::ll_debug, fmt::format("Retrieving guild data for id: {}", id));
+            cluster.log(dpp::ll_debug, fmt::format("Retrieving guild data for id '{}'.", id));
         }
 
         std::promise<dpp::guild*> promise;
@@ -195,7 +195,7 @@ namespace utils
         dpp::guild* guild = dpp::find_guild(id);
         if (guild)
         {
-            cluster.log(dpp::ll_debug, fmt::format("Found cached guild data: {}", guild->name));
+            cluster.log(dpp::ll_debug, fmt::format("Found cached guild data '{}'.", guild->name));
             promise.set_value(guild);
             return future.get();
         }
@@ -205,7 +205,7 @@ namespace utils
                 if (!callback.is_error())
                 {
                     dpp::guild guild = std::get<dpp::guild>(callback.value);
-                    callback.bot->log(dpp::ll_debug, fmt::format("Found guild data: {}", guild.name));
+                    callback.bot->log(dpp::ll_debug, fmt::format("Found guild data '{}'.", guild.name));
 
                     // Manually cache the user
                     dpp::guild* cache_guild = new dpp::guild(guild);

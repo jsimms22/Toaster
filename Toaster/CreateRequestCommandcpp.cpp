@@ -50,8 +50,6 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         RefineryRequestDlg modal;
         event.dialog(modal);
     }
-
-    ctx.cluster.log(dpp::ll_info, fmt::format("{} used command {} with cmd option {}", author.global_name, event.command.get_command_name(), strCmdID));
 }
 
 void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
@@ -88,7 +86,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobCraft->SetQualityThres(strParam3);
         jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobCraft->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.global_name, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new CRAFTING request '{}'.", author.global_name, utils::GuidToString(jobID)));
         ctx.queue->AddToQueue(std::move(jobCraft));
     }
     else if (event.custom_id == BuildRequestDlg::modalID)
@@ -102,7 +100,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobBuild->SetBuildZone(strParam3);
         jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobBuild->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.global_name, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, utils::GuidToString(jobID)));
         ctx.queue->AddToQueue(std::move(jobBuild));
     }
     else if (event.custom_id == ComponentRequestDlg::modalID)
@@ -114,7 +112,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobComp->SetComponentList(strParam1);
         jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
         jobDetails = jobComp->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.global_name, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, utils::GuidToString(jobID)));
         ctx.queue->AddToQueue(std::move(jobComp));
     }
     else if (event.custom_id == ResourceRequestDlg::modalID)
@@ -128,7 +126,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRes->SetQualityThres(strParam3);
         jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRes->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.global_name, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, utils::GuidToString(jobID)));
         ctx.queue->AddToQueue(std::move(jobRes));
     }
     else if (event.custom_id == RefineryRequestDlg::modalID)
@@ -142,7 +140,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRefine->SetRefinery(strParam3);
         jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRefine->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added new request {}.", author.global_name, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToString(jobID)));
         ctx.queue->AddToQueue(std::move(jobRefine));
     }
 
@@ -203,9 +201,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             EditRequestDlg modal(job);
             event.dialog(modal);
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
             return;
         }
     }
@@ -225,9 +229,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
             return;
         }
     }
@@ -290,9 +300,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             ctx.cluster.log(dpp::ll_info,fmt::format("User changed subscribed status for {} to {}", strJobID,
                 !job->IsCustomerSubscribed() ? "Unsubscribe" : "Subscribe"));
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
             return;
         }
     }
@@ -308,9 +324,15 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
             event.dialog(modal);
         }
+        else if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
         else
         {
             event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
             return;
         }
     }

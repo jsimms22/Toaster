@@ -18,6 +18,7 @@ void MyTopAssignmentCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
         ctx.manager->IsBotOwner(author.id)))
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
         return;
     }
 

@@ -32,13 +32,6 @@ void ToasterBot::onReady(const dpp::ready_t& event)
     {
         //ICustomCommand::UnregisterAll(m_cluster);
         ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
-        /*
-        m_cluster.guild_get_members(1472034166869852287, 1000, 0, [](const dpp::confirmation_callback_t& callback) {
-            if (callback.is_error()) { 
-                callback.bot->log(dpp::ll_error, fmt::format("Error during guild_get_members: {}", callback.get_error().message));
-                return; 
-            } });
-        */
     }
 }
 
@@ -46,7 +39,7 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
 {
     if (!event.msg.author.id) 
     {
-        m_cluster.log(dpp::ll_error, fmt::format("Message dropped, no author: {}.", event.msg.content));
+        m_cluster.log(dpp::ll_error, fmt::format("Message dropped. No author '{}'.", event.msg.content));
         return;
     } 
     else if (event.msg.author.id == m_cluster.me.id) 
@@ -57,14 +50,14 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
             for (auto& idUser : channel->recipients)
             {
                 dpp::user user = utils::FindUserByID(m_cluster, idUser);
-                m_cluster.log(dpp::ll_info, fmt::format("Bot sending outgoing direct message to {}.", user.global_name));
+                m_cluster.log(dpp::ll_info, fmt::format("Sending outgoing direct message to '{}'.", user.global_name));
             }
         }
         else if (channel)
         {
             // Guild channel
             m_cluster.log(dpp::ll_info,
-                fmt::format("Bot sending outgoing message in channel {} - {}.", event.msg.channel_id, channel->name));
+                fmt::format("Sending outgoing message in channel '{}' - '{}'.", event.msg.channel_id, channel->name));
         }
     }
 }
@@ -92,15 +85,15 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         m_cluster.log(
             dpp::ll_debug,
             fmt::format(
-                "Slash '{}' executed in {} ms (user: {})",
+                "Slash '{}' executed in '{}' ms (user: '{}').",
                 event.command.get_command_name(),
                 duration,
-                event.command.get_issuing_user().global_name
+                event.command.get_issuing_user().id
             )
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("Toaster process slash command {} for user {}", event.command.get_command_name(), event.command.get_issuing_user().global_name));
+    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed SLASHCOMMAND '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
 }
 
 void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
@@ -126,15 +119,15 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         m_cluster.log(
             dpp::ll_debug,
             fmt::format(
-                "Interaction '{}' executed in {} ms (user: {})",
+                "Interaction '{}' executed in '{}' ms (user: '{}').",
                 event.command.get_command_name(),
                 duration,
-                event.command.get_issuing_user().global_name
+                event.command.get_issuing_user().id
             )
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("Toaster process interaction command {} for user {}", event.command.get_command_name(), event.command.get_issuing_user().global_name));
+    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed INTERACTION '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
 }
 
 void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
@@ -160,13 +153,15 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         m_cluster.log(
             dpp::ll_debug,
             fmt::format(
-                "Form '{}' executed in {} ms (user: {})",
+                "Form '{}' executed in '{}' ms (user: '{}').",
                 event.custom_id,
                 duration,
-                event.command.get_issuing_user().global_name
+                event.command.get_issuing_user().id
             )
         );
     }
+
+    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed FORM_SUBMIT '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
 }
 
 void ToasterBot::onButtonClick(const dpp::button_click_t& event)
@@ -192,11 +187,13 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
         m_cluster.log(
             dpp::ll_debug,
             fmt::format(
-                "Button '{}' executed in {} ms (user: {})",
+                "Button '{}' executed in '{}' ms (user: '{}').",
                 event.custom_id,
                 duration,
-                event.command.get_issuing_user().global_name
+                event.command.get_issuing_user().id
             )
         );
     }
+
+    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed BUTTON_CLICK '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
 }

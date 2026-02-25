@@ -13,7 +13,7 @@ void ICustomCommand::RegisterAll(dpp::cluster* cluster, const std::vector<ICusto
         Sleep(250); // Avoid rate limit
     }
 
-    cluster->log(dpp::ll_debug, fmt::format("Created {} global commands.", vCommands.size()));
+    cluster->log(dpp::ll_debug, fmt::format("Created '{}' global commands.", vCommands.size()));
 }
 
 void ICustomCommand::RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflake idGuild, const std::vector<ICustomCommand*>& vCommands)
@@ -27,7 +27,7 @@ void ICustomCommand::RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflak
         Sleep(250); // Avoid rate limit
     }
 
-    cluster->log(dpp::ll_debug, fmt::format("Created {} commands for guild id {}.", vCommands.size(), 1472034166869852287));
+    cluster->log(dpp::ll_debug, fmt::format("Created '{}' commands for guild id '{}'.", vCommands.size(), idGuild));
 }
 
 void ICustomCommand::UnregisterAll(dpp::cluster* cluster)
@@ -43,5 +43,5 @@ void ICustomCommand::UnregisterGuildAll(dpp::cluster* cluster, const dpp::snowfl
     if (!cluster) return;
 
     cluster->guild_bulk_command_delete(idGuild);
-    cluster->log(dpp::ll_debug, fmt::format("Deleted commands for guild id: {}.", idGuild));
+    cluster->log(dpp::ll_debug, fmt::format("Deleted commands for guild id '{}'.", idGuild));
 }

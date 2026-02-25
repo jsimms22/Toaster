@@ -19,6 +19,12 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     const std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
 
+    if (!job)
+    {
+        event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
     if (!(ctx.manager->IsRequestOwner(author.id, job) ||
           ctx.manager->IsRequestWorker(author.id, job) ||
           ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
@@ -26,12 +32,7 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
           ctx.manager->IsBotOwner(author.id)))
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-        return;
-    }
-
-    if (!job)
-    {
-        event.reply(dpp::message("This id does not exist in queue.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
         return;
     }
 

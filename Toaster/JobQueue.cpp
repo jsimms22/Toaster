@@ -66,6 +66,8 @@ JobQueue::JobQueue()
 
 std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& searchGUID)
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
         if (utils::GuidToStringNoBrackets(job->GetID()) == searchGUID)
@@ -79,6 +81,8 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& searchGUID
 
 bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
 {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+
     for (auto itr = m_vQueue.begin(); itr < m_vQueue.cend(); ++itr)
     {
         if (utils::GuidToStringNoBrackets((*itr)->GetID()) == searchGUID)
@@ -95,6 +99,8 @@ bool JobQueue::DeleteJobByGUID(const std::string& searchGUID)
 // Method to print all job requests
 const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -124,6 +130,8 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 
 const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     std::map<std::size_t, std::size_t> typeCounts;
     std::map<JobRequest::status, std::size_t> statusCounts;
     std::map<JobRequest::priority, std::size_t> priorityCounts;
@@ -184,6 +192,8 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 
 const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobRequest::status filter, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -223,6 +233,8 @@ const std::string JobQueue::PrintQueuePageByStatus(
     const std::size_t page,
     const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
 
     const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
@@ -267,6 +279,8 @@ const std::string JobQueue::PrintQueuePageByStatus(
 // Method to print all job requests
 const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -306,6 +320,8 @@ const std::string JobQueue::PrintQueuePageByType(
     const std::size_t page, 
     const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
 
     const std::size_t start_index = page * JOBS_PER_QUEUE_PAGE;
@@ -355,6 +371,8 @@ const std::string JobQueue::PrintQueuePageByType(
 const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByUser(const dpp::snowflake& userID,
                                                                         const std::size_t filter) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     std::vector<std::shared_ptr<JobRequest>> list;
     for (const auto& job : m_vQueue)
     {
@@ -371,6 +389,8 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster,
     const dpp::snowflake& userID, 
     const std::size_t filter, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     fmt::memory_buffer buffer;
     std::size_t position = 0;
 
@@ -404,6 +424,7 @@ const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster,
     const auto list = GetQueueByUser(userID, filter);
     if (list.empty()) return {};
 
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
     const std::size_t end_index = start_index + JOBS_PER_DETAIL_PAGE;
 
@@ -435,6 +456,8 @@ const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster,
 
 const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     std::vector<std::shared_ptr<JobRequest>> list;
     for (const auto& job : m_vQueue)
     {
@@ -449,6 +472,8 @@ const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const 
 
 const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    
     std::stringstream ss;
     for (const auto& job : m_vQueue)
     {
@@ -466,6 +491,8 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
 {
     const auto list = GetQueueByWorker(userID);
     if (list.empty()) return {};
+
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
 
     const std::size_t start_index = page * JOBS_PER_DETAIL_PAGE;
     const std::size_t end_index = start_index + JOBS_PER_DETAIL_PAGE;
@@ -498,6 +525,8 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
 
 const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     for (const auto& job : m_vQueue)
     {
         if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
@@ -511,6 +540,8 @@ const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dp
 
 std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
         if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
@@ -524,6 +555,8 @@ std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& user
 
 void JobQueue::SaveQueueToFile()
 {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+
     tinyxml2::XMLDocument doc;
     doc.LoadFile("queue.xml");
     doc.Clear();
@@ -554,8 +587,69 @@ void JobQueue::SaveQueueToFile()
 
 bool JobQueue::IsInQueue(const std::string& strID) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
     const auto& itr = std::find_if(m_vQueue.cbegin(), m_vQueue.cend(), [&strID](const auto& job) -> 
                             bool { return utils::GuidToStringNoBrackets(job->GetID()) == strID; });
     return (itr != m_vQueue.cend());
 
+}
+
+void JobQueue::AddToQueue(std::shared_ptr<JobRequest> job)
+{
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+
+    m_vQueue.emplace_back(std::move(job));
+    SaveQueueToFile();
+}
+
+const std::size_t JobQueue::GetFilteredQueueSizeByType(const std::size_t filter) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
+    return std::count_if(
+        m_vQueue.begin(),
+        m_vQueue.end(),
+        [&filter](const auto& job) {
+            return (job->SupportsType(filter) &&
+                job->GetStatus() != JobRequest::status::complete);
+        }
+    );
+}
+const std::size_t JobQueue::GetFilteredQueueSizeByStatus(const JobRequest::status filter) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
+    return std::count_if(
+        m_vQueue.begin(),
+        m_vQueue.end(),
+        [&filter](const auto& job) {
+            return job->GetStatus() == filter;
+        }
+    );
+}
+const std::size_t JobQueue::GetFilteredQueueSizeByWorker(const dpp::snowflake& worker) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
+    return std::count_if(
+        m_vQueue.begin(),
+        m_vQueue.end(),
+        [&worker](const auto& job) {
+            return (job->GetWorkerID() == worker &&
+                job->GetStatus() != JobRequest::status::complete);
+        }
+    );
+}
+const std::size_t JobQueue::GetFilteredQueueSizeByUser(const dpp::snowflake& user, const std::size_t filter) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+
+    return std::count_if(
+        m_vQueue.begin(),
+        m_vQueue.end(),
+        [&user, &filter](const auto& job) {
+            return (job->GetCustomerID() == user && job->SupportsType(filter));
+        }
+    );
 }

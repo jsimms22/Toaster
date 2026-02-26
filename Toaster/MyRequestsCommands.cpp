@@ -54,14 +54,14 @@ void MyRequestsCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inte
             .set_type(dpp::cot_button)
             .set_label("Prev")
             .set_style(dpp::cos_primary)
-            .set_id(fmt::format("myrequests:{}:{}", author.id, 0)));
+            .set_id(fmt::format("myrequests:{}:{}:{}", type, author.id, 0)));
 
         row.add_component(
             dpp::component()
             .set_type(dpp::cot_button)
             .set_label("Next")
             .set_style(dpp::cos_primary)
-            .set_id(fmt::format("myrequests:{}:{}", author.id, page + 1)));
+            .set_id(fmt::format("myrequests:{}:{}:{}", type, author.id, page + 1)));
         msg.add_component(row);
     }
 
@@ -79,8 +79,9 @@ void MyRequestsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
     if (id.starts_with("myrequests:"))
     {
         auto parts = utils::Split(id, ':');
-        dpp::snowflake user = parts[1];
-        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        std::size_t type = std::stoul(parts[1]);
+        dpp::snowflake user = parts[2];
+        std::size_t page = parts[3] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[3]) : 0;
 
         const std::string result = ctx.queue->PrintQueuePageByUser(ctx.cluster, user, type, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByUser(user, type);
@@ -104,14 +105,14 @@ void MyRequestsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
                 .set_type(dpp::cot_button)
                 .set_label("Prev")
                 .set_style(dpp::cos_primary)
-                .set_id(fmt::format("myrequests:{}:{}", user, prev_page)));
+                .set_id(fmt::format("myrequests:{}:{}:{}", type, user, prev_page)));
 
             row.add_component(
                 dpp::component()
                 .set_type(dpp::cot_button)
                 .set_label("Next")
                 .set_style(dpp::cos_primary)
-                .set_id(fmt::format("myrequests:{}:{}", user, next_page)));
+                .set_id(fmt::format("myrequests:{}:{}:{}", type, user, next_page)));
             msg.add_component(row);
         }
 

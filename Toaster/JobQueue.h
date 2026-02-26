@@ -7,6 +7,7 @@
 // std library
 #include <cstdlib>
 #include <memory>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -62,61 +63,18 @@ public:
     const std::string PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const;
     std::shared_ptr<JobRequest> FirstAssignment(const dpp::snowflake& userID);
 
-    void AddToQueue(std::shared_ptr<JobRequest> job)
-    {
-        m_vQueue.emplace_back(std::move(job));
-        SaveQueueToFile();
-    }
-    bool IsInQueue(const std::string& strID) const;
-
     void SaveQueueToFile();
-
+    void AddToQueue(std::shared_ptr<JobRequest> job);
+    bool IsInQueue(const std::string& strID) const;
     const std::size_t GetQueueSize() const { return m_vQueue.size(); }
-    const std::size_t GetFilteredQueueSizeByType(const std::size_t filter) const
-    {
-        return std::count_if(
-            m_vQueue.begin(),
-            m_vQueue.end(),
-            [&filter](const auto& job) {
-                return (job->SupportsType(filter) &&
-                        job->GetStatus() != JobRequest::status::complete);
-            }
-        );
-    }
-    const std::size_t GetFilteredQueueSizeByStatus(const JobRequest::status filter) const
-    {
-        return std::count_if(
-            m_vQueue.begin(),
-            m_vQueue.end(),
-            [&filter](const auto& job) {
-                return job->GetStatus() == filter;
-            }
-        );
-    }
-    const std::size_t GetFilteredQueueSizeByWorker(const dpp::snowflake& worker) const
-    {
-        return std::count_if(
-            m_vQueue.begin(),
-            m_vQueue.end(),
-            [&worker](const auto& job) {
-                return (job->GetWorkerID() == worker && 
-                        job->GetStatus() != JobRequest::status::complete);
-            }
-        );
-    }
-    const std::size_t GetFilteredQueueSizeByUser(const dpp::snowflake& user, const std::size_t filter) const
-    {
-        return std::count_if(
-            m_vQueue.begin(),
-            m_vQueue.end(),
-            [&user, &filter](const auto& job) {
-                return (job->GetCustomerID() == user && job->SupportsType(filter));
-            }
-        );
-    }
+    const std::size_t GetFilteredQueueSizeByType(const std::size_t filter) const;
+    const std::size_t GetFilteredQueueSizeByStatus(const JobRequest::status filter) const;
+    const std::size_t GetFilteredQueueSizeByWorker(const dpp::snowflake& worker) const;
+    const std::size_t GetFilteredQueueSizeByUser(const dpp::snowflake& user, const std::size_t filter) const;
 
 private:
     std::vector<std::shared_ptr<JobRequest>> m_vQueue;
+    mutable std::shared_mutex m_mutex;
 };
 
 

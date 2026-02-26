@@ -93,7 +93,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobCraft->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new CRAFTING request '{}'.", author.global_name, utils::GuidToString(jobID)));
-        ctx.queue->AddToQueue(std::move(jobCraft));
+        ctx.queue->RequestAddToQueue(std::move(jobCraft));
     }
     else if (event.custom_id == BuildRequestDlg::modalID)
     {
@@ -107,7 +107,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobBuild->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, utils::GuidToString(jobID)));
-        ctx.queue->AddToQueue(std::move(jobBuild));
+        ctx.queue->RequestAddToQueue(std::move(jobBuild));
     }
     else if (event.custom_id == ComponentRequestDlg::modalID)
     {
@@ -119,7 +119,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
         jobDetails = jobComp->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, utils::GuidToString(jobID)));
-        ctx.queue->AddToQueue(std::move(jobComp));
+        ctx.queue->RequestAddToQueue(std::move(jobComp));
     }
     else if (event.custom_id == ResourceRequestDlg::modalID)
     {
@@ -133,7 +133,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRes->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, utils::GuidToString(jobID)));
-        ctx.queue->AddToQueue(std::move(jobRes));
+        ctx.queue->RequestAddToQueue(std::move(jobRes));
     }
     else if (event.custom_id == RefineryRequestDlg::modalID)
     {
@@ -147,7 +147,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRefine->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToString(jobID)));
-        ctx.queue->AddToQueue(std::move(jobRefine));
+        ctx.queue->RequestAddToQueue(std::move(jobRefine));
     }
 
     dpp::component button1 = dpp::component()
@@ -232,7 +232,6 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
             return;
 
-            ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
         else if (!job)
@@ -260,9 +259,11 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             const dpp::user author = event.command.get_issuing_user();
 
             const std::size_t timestamp = utils::GetEpochTimestamp();
-            job->SubscribeCustomer(!job->IsCustomerSubscribed());
-            job->SetLastEditTime(timestamp);
-            ctx.queue->SaveQueueToFile();
+            ctx.queue->RequestModifyJob(job->GetID(), [timestamp](std::shared_ptr<JobRequest> job)
+            {
+                job->SubscribeCustomer(!job->IsCustomerSubscribed());
+                job->SetLastEditTime(timestamp);
+            });
 
             dpp::component button1 = dpp::component()
                 .set_type(dpp::cot_button)

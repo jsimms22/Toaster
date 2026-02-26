@@ -161,7 +161,7 @@ auto main() -> int
         Sleep(50);
     }
 
-    spQueue->SaveQueueToFile();
+    //spQueue->SaveQueueToFile();
 
     return 0;
 }

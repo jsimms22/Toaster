@@ -10,6 +10,8 @@
 #include "RefineryJobRequest.h"
 // fmt
 #include <fmt/format.h>
+// std library
+#include <future>
 
 void ModifyRequestCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
 {
@@ -125,37 +127,57 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
-            std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
-            craft->SetSCHandle(strSCHandle);
-            craft->SetItemDesc(strParam1);
-            craft->SetQuantity(strParam2);
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1, strParam2](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
+                    craft->SetSCHandle(strSCHandle);
+                    craft->SetItemDesc(strParam1);
+                    craft->SetQuantity(strParam2);
+                });
         }
         else if (job->SupportsType(JOB_TYPE_BUILDING))
         {
-            std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(job);
-            bldg->SetSCHandle(strSCHandle);
-            bldg->SetBuildDesign(strParam1);
-            bldg->SetBuildRequirments(strParam2);
-            bldg->SetBuildZone(strParam3);
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1, strParam2, strParam3](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(job);
+                    bldg->SetSCHandle(strSCHandle);
+                    bldg->SetBuildDesign(strParam1);
+                    bldg->SetBuildRequirments(strParam2);
+                    bldg->SetBuildZone(strParam3);
+                });
         }
         else if (job->SupportsType(JOB_TYPE_COMPONENT))
         {
-            std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(job);
-            comp->SetSCHandle(strSCHandle);
-            comp->SetComponentList(strParam1);
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(job);
+                    comp->SetSCHandle(strSCHandle);
+                    comp->SetComponentList(strParam1);
+                });
         }
         else if (job->SupportsType(JOB_TYPE_RESOURCE))
         {
-            std::shared_ptr<ResourceJobRequest> resrc = std::dynamic_pointer_cast<ResourceJobRequest>(job);
-            resrc->SetSCHandle(strSCHandle);
-            resrc->SetResourcelist(strParam1);
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<ResourceJobRequest> resrc = std::dynamic_pointer_cast<ResourceJobRequest>(job);
+                    resrc->SetSCHandle(strSCHandle);
+                    resrc->SetResourcelist(strParam1);
+                });
         }
         else if (job->SupportsType(JOB_TYPE_REFINERY))
         {
-            std::shared_ptr<RefineryJobRequest> jobRefine = std::dynamic_pointer_cast<RefineryJobRequest>(job);
-            jobRefine->SetSCHandle(strSCHandle);
-            jobRefine->SetResourcelist(strParam1);
-            jobRefine->SetRefinery(strParam2);
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1, strParam2](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<RefineryJobRequest> jobRefine = std::dynamic_pointer_cast<RefineryJobRequest>(job);
+                    jobRefine->SetSCHandle(strSCHandle);
+                    jobRefine->SetResourcelist(strParam1);
+                    jobRefine->SetRefinery(strParam2);
+                });
         }
 
         dpp::component row;
@@ -197,7 +219,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
-        ctx.queue->SaveQueueToFile();
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
 
@@ -223,9 +244,14 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             return;
         }
 
-        job->SetLastEditTime(utils::GetEpochTimestamp());
-        job->SetWorkerID(workerID);
-        job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+        const std::string strWorker = utils::FindPreferredNameByID(ctx.cluster, workerID, event.command.guild_id);
+        ctx.queue->RequestModifyJob(job->GetID(),
+            [workerID, strStatus](std::shared_ptr<JobRequest> job)
+            {
+                job->SetLastEditTime(utils::GetEpochTimestamp());
+                job->SetWorkerID(workerID);
+                job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+            });
 
         dpp::embed embed;
         embed.set_title("Assigned job:")
@@ -233,9 +259,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        ctx.queue->SaveQueueToFile();
-
-        const std::string strWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.global_name, strID, strWorker));
 
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID()) || ctx.debug)
@@ -258,9 +281,13 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             return;
         }
 
-        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldStatus = JobRequest::StatusToString(job->GetStatus());
-        job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+        ctx.queue->RequestModifyJob(job->GetID(),
+            [strStatus](std::shared_ptr<JobRequest> job)
+            {
+                job->SetLastEditTime(utils::GetEpochTimestamp());
+                job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+            });
 
         dpp::embed embed;
         embed.set_title("Status changed for job:")
@@ -268,7 +295,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        ctx.queue->SaveQueueToFile();
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strStatus));
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldStatus != strStatus) || ctx.debug)
@@ -291,9 +317,13 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             return;
         }
 
-        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldPriority = JobRequest::PriorityToString(job->GetPriority());
-        job->SetPriority(JobRequest::StringToPriority(strPriority));
+        ctx.queue->RequestModifyJob(job->GetID(),
+            [strPriority](std::shared_ptr<JobRequest> job)
+            {
+                job->SetLastEditTime(utils::GetEpochTimestamp());
+                job->SetPriority(JobRequest::StringToPriority(strPriority));
+            });
 
         dpp::embed embed;
         embed.set_title("Priority changed for job:")
@@ -301,7 +331,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        ctx.queue->SaveQueueToFile();
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.global_name, strID, strPriority));
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
@@ -324,20 +353,15 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
 
         const dpp::user author = event.command.get_issuing_user();
-
-        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         const dpp::snowflake customerID = job->GetCustomerID();
-
-        const bool result = ctx.queue->DeleteJobByGUID(strID);
+        const bool result = ctx.queue->RequestDeleteJobByGUID(utils::StringToGuid("{" + strID + "}")).get();
         if (!result)
         {
             event.reply(dpp::message("Failed to delete job.")
                 .set_flags(dpp::m_ephemeral));
             return;
         }
-
-        ctx.queue->SaveQueueToFile();
 
         event.reply(dpp::message(
             fmt::format("Deleted job request.\n\n**Reason:** {}\n\n{}",
@@ -407,7 +431,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
             return;
 
-            ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
         else if (!job)
@@ -434,10 +457,12 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
             const dpp::user author = event.command.get_issuing_user();
 
-            const std::size_t timestamp = utils::GetEpochTimestamp();
-            job->SubscribeCustomer(!job->IsCustomerSubscribed());
-            job->SetLastEditTime(timestamp);
-            ctx.queue->SaveQueueToFile();
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [](std::shared_ptr<JobRequest> job)
+                {
+                    job->SubscribeCustomer(!job->IsCustomerSubscribed());
+                    job->SetLastEditTime(utils::GetEpochTimestamp());
+                });
 
             dpp::component button1 = dpp::component()
                 .set_type(dpp::cot_button)

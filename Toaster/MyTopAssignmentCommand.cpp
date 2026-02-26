@@ -104,7 +104,10 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
         auto job = ctx.queue->GetJobByGUID(guid);
         if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
         {
-            job->SetStatus(JobRequest::status::complete);
+            ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
+                {
+                    job->SetStatus(JobRequest::status::complete);
+                });
 
             const dpp::snowflake customer = job->GetCustomerID();
             if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
@@ -134,7 +137,6 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
             event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
             return;
 
-            ctx.queue->SaveQueueToFile();
             // todo note modal dlg
         }
         else
@@ -151,12 +153,16 @@ void MyTopAssignmentCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::
         auto job = ctx.queue->GetJobByGUID(guid);
         if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
         {
-            job->SetWorkerID(0);
-            if (job->GetStatus() == JobRequest::status::active ||
-                job->GetStatus() == JobRequest::status::assigned)
-            {
-                job->SetStatus(JobRequest::status::open);
-            }
+            ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
+                {
+                    job->SetWorkerID(0);
+                    if (job->GetStatus() == JobRequest::status::active ||
+                        job->GetStatus() == JobRequest::status::assigned)
+                    {
+                        job->SetStatus(JobRequest::status::open);
+                    }
+                    job->SetStatus(JobRequest::status::complete);
+                });
 
             const dpp::snowflake customer = job->GetCustomerID();
             if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)

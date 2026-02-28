@@ -18,23 +18,32 @@
 #include <chrono>
 #include <unordered_map>
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief Constructor
+//---------------------------------------------------------------------------------------------------------------------
 ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug)
     : m_cluster(cluster), m_clusterId(clusterId), m_spQueue(spQueue), m_debug(bDebug), m_iShardCount{ 0 } { }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onReady(const dpp::ready_t& event)
 {
     if (dpp::run_once<struct clear_bot_commands>()) 
     {
-        //ICustomCommand::UnregisterAll(m_cluster);
+        //ICustomCommand::UnregisterAll(&m_cluster);
         //ICustomCommand::UnregisterGuildAll(&m_cluster, 1472034166869852287);
     }
     if (dpp::run_once<struct register_bot_commands>())
     {
-        //ICustomCommand::UnregisterAll(m_cluster);
+        //ICustomCommand::RegisterAll(&m_cluster, Toaster::BotCommands);
         ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onMessage(const dpp::message_create_t& event)
 {
     if (!event.msg.author.id) 
@@ -62,6 +71,9 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 {
     std::chrono::time_point<std::chrono::steady_clock> start;
@@ -96,6 +108,9 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
     m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed SLASHCOMMAND '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
 {
     std::chrono::time_point<std::chrono::steady_clock> start;
@@ -130,6 +145,9 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
     m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed INTERACTION '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 {
     std::chrono::time_point<std::chrono::steady_clock> start;
@@ -164,6 +182,9 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
     m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed FORM_SUBMIT '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 {
     std::chrono::time_point<std::chrono::steady_clock> start;

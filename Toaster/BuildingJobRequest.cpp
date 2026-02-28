@@ -9,6 +9,9 @@ namespace xmlRequest
     constexpr const char* pszXMLBuildZone{ "Zone" };
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -24,6 +27,9 @@ void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     xmlParent->InsertEndChild(xmlNode);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -52,6 +58,9 @@ void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string BuildingJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     std::string base = JobRequest::PrintJobDetails(cluster, idGuild);

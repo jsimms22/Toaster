@@ -195,20 +195,19 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AdminPanelCommand.cpp" />
     <ClCompile Include="BuildingJobRequest.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="ComponentJobRequest.cpp" />
     <ClCompile Include="CraftingJobRequest.cpp" />
     <ClCompile Include="CreateRequestCommandcpp.cpp" />
-    <ClCompile Include="HelloCommand.cpp" />
+    <ClCompile Include="HelpCommand.cpp" />
     <ClCompile Include="JobQueue.cpp" />
     <ClCompile Include="JobRequest.cpp" />
     <ClCompile Include="JobRequestFactory.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModifyRequestCommand.cpp" />
-    <ClCompile Include="MyAssignmentsCommand.cpp" />
     <ClCompile Include="MyRequestsCommands.cpp" />
-    <ClCompile Include="MyTopAssignmentCommand.cpp" />
     <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
@@ -219,6 +218,7 @@
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />
     <ClCompile Include="Toaster.cpp" />
+    <ClCompile Include="WorkerPanelCommand.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BuildingJobRequest.h" />

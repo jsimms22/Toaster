@@ -2,6 +2,9 @@
 // fmt
 #include <fmt/format.h>
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ICustomCommand::RegisterAll(dpp::cluster* cluster, const std::vector<ICustomCommand*>& vCommands)
 {
     if (!cluster) return;
@@ -16,6 +19,9 @@ void ICustomCommand::RegisterAll(dpp::cluster* cluster, const std::vector<ICusto
     cluster->log(dpp::ll_debug, fmt::format("Created '{}' global commands.", vCommands.size()));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ICustomCommand::RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflake idGuild, const std::vector<ICustomCommand*>& vCommands)
 {
     if (!cluster) return;
@@ -30,6 +36,9 @@ void ICustomCommand::RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflak
     cluster->log(dpp::ll_debug, fmt::format("Created '{}' commands for guild id '{}'.", vCommands.size(), idGuild));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ICustomCommand::UnregisterAll(dpp::cluster* cluster)
 {
     if (!cluster) return;
@@ -38,6 +47,9 @@ void ICustomCommand::UnregisterAll(dpp::cluster* cluster)
     cluster->log(dpp::ll_debug, "Deleted global commands.");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void ICustomCommand::UnregisterGuildAll(dpp::cluster* cluster, const dpp::snowflake idGuild)
 {
     if (!cluster) return;

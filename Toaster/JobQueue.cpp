@@ -21,7 +21,9 @@
 const std::size_t JobQueue::JOBS_PER_QUEUE_PAGE{ 8 };
 const std::size_t JobQueue::JOBS_PER_DETAIL_PAGE{ 4 };
 
-// Constructor: Reads the XML and loads the job requests into the container
+//---------------------------------------------------------------------------------------------------------------------
+// \brief Constructor: Reads the XML and loads the job requests into the container
+//---------------------------------------------------------------------------------------------------------------------
 JobQueue::JobQueue()
 {
     m_worker = std::jthread(&JobQueue::MutationWorker, this);
@@ -55,6 +57,9 @@ JobQueue::JobQueue()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief Destructor. Frees the worker thread of its task and saves the queue as is to persistent storage.
+//---------------------------------------------------------------------------------------------------------------------
 JobQueue::~JobQueue()
 {
     {
@@ -77,6 +82,9 @@ void JobQueue::EnqueueMutation(QueueMutation mutation)
     m_cv.notify_one();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 template<typename T>
 std::future<T> JobQueue::EnqueueTaskWithResult(std::function<T(std::shared_ptr<JobQueue>)> task)
 {
@@ -93,6 +101,9 @@ std::future<T> JobQueue::EnqueueTaskWithResult(std::function<T(std::shared_ptr<J
     return future;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::MutationWorker()
 {
     while (true)
@@ -114,6 +125,9 @@ void JobQueue::MutationWorker()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
 {
     EnqueueMutation(
@@ -126,6 +140,9 @@ void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
     );
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::future<bool> JobQueue::RequestDeleteJobByGUID(const GUID& guid)
 {
     return EnqueueTaskWithResult<bool>(
@@ -151,6 +168,9 @@ std::future<bool> JobQueue::RequestDeleteJobByGUID(const GUID& guid)
     );
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
 /* Example usage:
     jobQueue.ModifyJob(guid, [](JobRequest& job)
     {
@@ -158,6 +178,7 @@ std::future<bool> JobQueue::RequestDeleteJobByGUID(const GUID& guid)
         job.SetStatus(JobRequest::status::in_progress);
     });
 */
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 {
     EnqueueMutation(
@@ -172,6 +193,9 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
     );
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::SaveQueueToFile()
 {
     tinyxml2::XMLDocument doc;
@@ -202,6 +226,9 @@ void JobQueue::SaveQueueToFile()
     doc.SaveFile("queue.xml");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobRequest> JobQueue::GetJobByGUID_NoLock(const GUID& guid) const
 {
     auto it = std::find_if(
@@ -219,12 +246,18 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID_NoLock(const GUID& guid) cons
     return nullptr;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const GUID& guid) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
     return GetJobByGUID_NoLock(guid);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& guid) const
 {
     GUID search;
@@ -237,7 +270,9 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& guid) cons
     return GetJobByGUID_NoLock(search);
 }
 
-// Method to print all job requests
+//---------------------------------------------------------------------------------------------------------------------
+// \brief Method to print all job requests
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -269,7 +304,10 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
     return fmt::to_string(buffer);
 }
 
-const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
@@ -277,7 +315,6 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     std::map<JobRequest::status, std::size_t> statusCounts;
     std::map<JobRequest::priority, std::size_t> priorityCounts;
     std::size_t unassignedCounts{ 0 };
-    std::vector<GUID> stalledJobs;
 
     // Collect counts
     for (const auto& job : m_vQueue)
@@ -288,9 +325,6 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 
         if ((job->GetWorkerID() == "0" || job->GetWorkerID() == "") && job->GetStatus() < JobRequest::status::hold)
             ++unassignedCounts;
-
-        if (job->GetStatus() == JobRequest::status::stalled)
-            stalledJobs.push_back(job->GetID());
     }
 
     fmt::memory_buffer buffer;
@@ -320,6 +354,29 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     fmt::format_to(std::back_inserter(buffer), "\n**Open Jobs Unassigned**:\n");
     fmt::format_to(std::back_inserter(buffer), "  Unassigned: {}\n", unassignedCounts);
 
+    // Convert memory_buffer to std::string
+    return fmt::to_string(buffer);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
+{
+    const std::string strAdminPortion = PrintQueueAdminSummary(cluster);
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+
+    std::vector<GUID> stalledJobs;
+
+    // Collect counts
+    for (const auto& job : m_vQueue)
+    {
+        if (job->GetStatus() == JobRequest::status::stalled)
+            stalledJobs.push_back(job->GetID());
+    }
+
+    fmt::memory_buffer buffer;
+
     // Stalled job IDs
     fmt::format_to(std::back_inserter(buffer), "\n**Stalled Job IDs**:\n");
     for (const auto& id : stalledJobs)
@@ -328,9 +385,12 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     }
 
     // Convert memory_buffer to std::string
-    return fmt::to_string(buffer);
+    return strAdminPortion + fmt::to_string(buffer);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobRequest::status filter, const dpp::snowflake& idGuild) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -368,6 +428,9 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
     return fmt::to_string(buffer);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueuePageByStatus(
     dpp::cluster& cluster, 
     const JobRequest::status filter, 
@@ -417,7 +480,9 @@ const std::string JobQueue::PrintQueuePageByStatus(
     return fmt::to_string(buffer);
 }
 
-// Method to print all job requests
+//---------------------------------------------------------------------------------------------------------------------
+// \brief Method to print all job requests
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::size_t filter, const dpp::snowflake& idGuild) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -455,6 +520,9 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
     return fmt::to_string(buffer);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueuePageByType(
     dpp::cluster& cluster, 
     const std::size_t filter, 
@@ -509,6 +577,9 @@ const std::string JobQueue::PrintQueuePageByType(
     return fmt::to_string(buffer);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByUser(const dpp::snowflake& userID,
                                                                         const std::size_t filter) const
 {
@@ -526,6 +597,9 @@ const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByUser(const dp
     return list;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster, 
     const dpp::snowflake& userID, 
     const std::size_t filter, const dpp::snowflake& idGuild) const
@@ -557,6 +631,9 @@ const std::string JobQueue::PrintQueueByUser(dpp::cluster& cluster,
     return fmt::to_string(buffer);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster, 
                                                  const dpp::snowflake& userID,
                                                  const std::size_t filter,
@@ -595,6 +672,9 @@ const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster,
     return ss.str();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -611,6 +691,9 @@ const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const 
     return list;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -628,6 +711,9 @@ const std::string JobQueue::PrintQueueByWorker(dpp::cluster& cluster, const dpp:
     return ss.str();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t page, const dpp::snowflake& idGuild) const
 {
     const auto list = GetQueueByWorker(userID);
@@ -664,6 +750,9 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
     return ss.str();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -679,6 +768,9 @@ const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dp
     return {};
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -694,6 +786,9 @@ std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& user
     return {};
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool JobQueue::IsInQueue(const std::string& strID) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -704,6 +799,9 @@ bool JobQueue::IsInQueue(const std::string& strID) const
 
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::size_t JobQueue::GetFilteredQueueSizeByType(const std::size_t filter) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -717,6 +815,10 @@ const std::size_t JobQueue::GetFilteredQueueSizeByType(const std::size_t filter)
         }
     );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::size_t JobQueue::GetFilteredQueueSizeByStatus(const JobRequest::status filter) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -728,7 +830,12 @@ const std::size_t JobQueue::GetFilteredQueueSizeByStatus(const JobRequest::statu
             return job->GetStatus() == filter;
         }
     );
+
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::size_t JobQueue::GetFilteredQueueSizeByWorker(const dpp::snowflake& worker) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -742,6 +849,10 @@ const std::size_t JobQueue::GetFilteredQueueSizeByWorker(const dpp::snowflake& w
         }
     );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::size_t JobQueue::GetFilteredQueueSizeByUser(const dpp::snowflake& user, const std::size_t filter) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);

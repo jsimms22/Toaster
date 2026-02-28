@@ -9,7 +9,9 @@ namespace xmlRequest
     constexpr const char* pszXMLRefineryLoc{ "Refinery" };
 }
 
-// Function to convert priority enum to string
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string RefineryJobRequest::StateToString(RefineryJobRequest::state e)
 {
     switch (e) {
@@ -20,7 +22,9 @@ std::string RefineryJobRequest::StateToString(RefineryJobRequest::state e)
     }
 }
 
-// Function to convert string to status enum
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 RefineryJobRequest::state RefineryJobRequest::StringToState(const std::string& str)
 {
     if (str == "refined_mineable")  return RefineryJobRequest::state::RefinedMineable;
@@ -29,6 +33,9 @@ RefineryJobRequest::state RefineryJobRequest::StringToState(const std::string& s
     throw std::invalid_argument("Invalid status string value");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -44,6 +51,9 @@ void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     xmlParent->InsertEndChild(xmlNode);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -69,6 +79,9 @@ void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string RefineryJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     std::string base = JobRequest::PrintJobDetails(cluster, idGuild);

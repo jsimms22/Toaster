@@ -1,3 +1,15 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief Implementation of CreateRequestCommand.
+///
+/// Handles creation of new job requests through slash commands, modal dialogs, and interactive button components.
+///
+/// Responsibilities:
+/// - Display appropriate modal dialogs based on request type
+/// - Process modal submissions and create job objects
+/// - Add jobs to the queue
+/// - Provide interactive buttons for editing, subscribing, and deleting jobs
+//---------------------------------------------------------------------------------------------------------------------
 #include "Commands.h"
 #include "JobQueue.h"
 #include "BotUtility.h"
@@ -11,10 +23,14 @@
 // fmt
 #include <fmt/format.h>
 
-void CreateRequestCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
-{
-}
-
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Handles slash command interaction to open the appropriate request dialog.
+///
+/// Validates the command name and displays the corresponding modal dialog based on the selected request type.
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Interaction create event.
+//---------------------------------------------------------------------------------------------------------------------
 void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event)
 {
     if (!ctx.queue || event.command.get_command_name() != this->name)
@@ -52,6 +68,15 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Processes modal form submissions and creates job requests.
+///
+/// Extracts user input from modal components, sanitizes parameters, constructs the corresponding JobRequest 
+/// object, and adds it to the queue. An ephemeral confirmation message with interactive controls is returned.
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Modal form submission event.
+//---------------------------------------------------------------------------------------------------------------------
 void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
 {
     if (!ctx.queue || 
@@ -81,6 +106,9 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
     std::string jobDetails;
     GUID jobID;
+    //-------------------------------------------------------------------------------------------------------------
+    // Construct job object based on modal type
+    //-------------------------------------------------------------------------------------------------------------
     if (event.custom_id == CraftRequestDlg::modalID)
     {
         std::shared_ptr<CraftingJobRequest> jobCraft = std::make_shared<CraftingJobRequest>();
@@ -150,6 +178,9 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestAddToQueue(std::move(jobRefine));
     }
 
+    //-------------------------------------------------------------------------------------------------------------
+    // Create interactive control buttons
+    //-------------------------------------------------------------------------------------------------------------
     dpp::component button1 = dpp::component()
         .set_type(dpp::cot_button)
         .set_label("Edit")
@@ -191,10 +222,30 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     event.reply(dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Handles button click interactions for created job requests.
+///
+/// Supports the following actions:
+/// - Edit job
+/// - Add note (reserved)
+/// - Subscribe / Unsubscribe
+/// - Delete job
+///
+/// Validates permissions before executing any action and responds with ephemeral feedback if access is denied.
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Button click interaction event.
+//---------------------------------------------------------------------------------------------------------------------
 void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
+    //-------------------------------------------------------------------------------------------------------------
+    // Parse custom component ID
+    //-------------------------------------------------------------------------------------------------------------
     const std::string id = event.custom_id; // "create_type:workerid:guid"
 
+    //-------------------------------------------------------------------------------------------------------------
+    // Edit job handler
+    //-------------------------------------------------------------------------------------------------------------
     if (id.starts_with("create_edit:"))
     {
         auto parts = utils::Split(id, ':');
@@ -219,6 +270,9 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Add note handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("create_note:"))
     {
         auto parts = utils::Split(id, ':');
@@ -246,6 +300,9 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Subscribe / Unsubscribe handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("create_subscribe:"))
     {
         auto parts = utils::Split(id, ':');
@@ -319,6 +376,9 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Delete job handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("create_delete:"))
     {
         auto parts = utils::Split(id, ':');

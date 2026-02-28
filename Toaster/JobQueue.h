@@ -1,3 +1,7 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief
+//---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "JobRequest.h"
 // d++
@@ -16,6 +20,10 @@
 
 class dpp::cluster;
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ToasterBot
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 class JobQueue : public std::enable_shared_from_this<JobQueue>
 {
 public:
@@ -31,7 +39,8 @@ public:
 
     // For Managers and Workers
     const std::string PrintQueue(dpp::cluster& cluster, 
-                                 const dpp::snowflake& idGuild) const;
+                                 const dpp::snowflake& idGuild) const; 
+    const std::string PrintQueueAdminSummary(dpp::cluster& cluster) const;
     const std::string PrintQueueSummary(dpp::cluster& cluster) const;
 
     // By Status

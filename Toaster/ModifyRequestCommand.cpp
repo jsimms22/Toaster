@@ -1,3 +1,11 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief Implementation of ModifyRequestCommand.
+///
+/// Handles modification workflows for existing job requests.
+/// 
+/// All operations enforce permission validation through the command manager before executing any state changes.
+//---------------------------------------------------------------------------------------------------------------------
 #include "BotUtility.h"
 #include "Commands.h"
 #include "JobQueue.h"
@@ -13,10 +21,15 @@
 // std library
 #include <future>
 
-void ModifyRequestCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
-{
-}
-
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Handles the initial slash command interaction for job modification.
+/// 
+/// Depending on the selected command option, displays the corresponding modal dialog (Edit, Assign, Status, 
+/// Priority, Delete).
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Interaction create event.
+//---------------------------------------------------------------------------------------------------------------------
 void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event)
 {
     if (!ctx.queue || event.command.get_command_name() != this->name)
@@ -39,6 +52,9 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         return;
     }
 
+    //-------------------------------------------------------------------------------------------------------------
+    // Route command option to appropriate modal dialog
+    //-------------------------------------------------------------------------------------------------------------
     if (strCmdID == Option_Edit && 
         ctx.manager->CanEditJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
     {
@@ -87,12 +103,22 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     }
     else
     {
+        // Permission denied
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.global_name, strJobID, strCmdID));
         return;
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Processes modal form submissions for job modifications. 
+/// 
+/// Applies changes through JobQueue::RequestModifyJob and generates ephemeral confirmation responses. Subscribed 
+/// users are notified when applicable.
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Modal form submission event.
+//---------------------------------------------------------------------------------------------------------------------
 void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
 {
     if (!ctx.queue)
@@ -100,6 +126,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         return;
     }
 
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle EditRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
     if (event.custom_id == EditRequestDlg::modalID)
     {
         const dpp::user author = event.command.get_issuing_user();
@@ -229,6 +258,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     utils::GuidToStringNoBrackets(job->GetID()), author.global_name, strNewJobDetails));
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle AssignRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
     else if (event.custom_id == AssignRequestDlg::modalID)
     {
         const dpp::user author = event.command.get_issuing_user();
@@ -267,6 +299,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 fmt::format("Your request has been assigned to {} by {}:\n\n{}", strWorker, author.global_name, embed.description));
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle StatusChangeRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
     else if (event.custom_id == StatusChangeRequestDlg::modalID)
     {
         const dpp::user author = event.command.get_issuing_user();
@@ -303,6 +338,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle PriorityChangeRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
     else if (event.custom_id == PriorityChangeRequestDlg::modalID)
     {
         const dpp::user author = event.command.get_issuing_user();
@@ -339,6 +377,9 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle DeleteRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
     else if (event.custom_id == DeleteRequestDlg::modalID)
     {
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
@@ -389,10 +430,19 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Handles interactive button clicks for modified job requests.
+///
+/// \param[in,out] ctx   Command execution context.
+/// \param[in] event     Button click interaction event.
+//---------------------------------------------------------------------------------------------------------------------
 void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
     const std::string id = event.custom_id; // "modify_type:workerid:guid"
 
+    //-------------------------------------------------------------------------------------------------------------
+    // Edit handler
+    //-------------------------------------------------------------------------------------------------------------
     if (id.starts_with("modify_edit:"))
     {
         auto parts = utils::Split(id, ':');
@@ -418,6 +468,9 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Add note handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("modify_note:"))
     {
         auto parts = utils::Split(id, ':');
@@ -445,6 +498,9 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Subscribe / Unsubscribe handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("modify_subscribe:"))
     {
         auto parts = utils::Split(id, ':');
@@ -518,6 +574,9 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             return;
         }
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Delete handler
+    //-------------------------------------------------------------------------------------------------------------
     else if (id.starts_with("modify_delete:"))
     {
         auto parts = utils::Split(id, ':');

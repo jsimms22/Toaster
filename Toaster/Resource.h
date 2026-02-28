@@ -1,3 +1,7 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief
+//---------------------------------------------------------------------------------------------------------------------
 #pragma once
 // std library
 #include <cstdlib>
@@ -34,18 +38,26 @@ constexpr const char* Component_DeleteJustification	{ "justification_id" };
 /*------------------------------COMPONENT IDS-----------------------------------*/
 
 /*-------------------------------COMMAND IDS------------------------------------*/
-constexpr const char* Command_Hello				{ "hello" };
+constexpr const char* Command_Help				{ "help" };
+constexpr const char* Command_Admin				{ "Admin_Portal" };
+constexpr const char* Command_Worker			{ "Worker_Portal" };
 constexpr const char* Command_JobRequest		{ "create_request" };
 constexpr const char* Command_ModifyRequest		{ "modify_request" };
 constexpr const char* Command_ShowRequest		{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue			{ "show_queue" };
 constexpr const char* Command_SummaryQueue		{ "show_summary" };
-constexpr const char* Command_MyAssignments		{ "my_assignments"};
-constexpr const char* Command_MyTopAssignment	{ "my_top_assignment" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
+// Command Options for Command_Admin
+constexpr const char* Option_Bot				{ "adminbot" };
+constexpr const char* Option_Queue				{ "adminqueue" };
+
+// Command Options for Command_Worker
+constexpr const char* Option_Overview			{ "workeroverview" };
+constexpr const char* Option_AllAssignments		{ "workerall" };
+
 // Command Options for Command_JobRequest
 constexpr const char* Option_All				{ "all" };
 constexpr const char* Option_ItemCrafting		{ "item" };

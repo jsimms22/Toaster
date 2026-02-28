@@ -1,3 +1,11 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief Defines the custom slash command framework and concrete bot commands.
+///
+/// This file declares the ICustomCommand interface and all concrete command implementations used by the bot. 
+/// Each command encapsulates its own slash command definition, interaction handling, form processing, and button
+/// click logic.
+//---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "CommandContext.h"
 #include "Resource.h"
@@ -10,6 +18,15 @@
 #include <string>
 #include <vector>
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ICustomCommand
+/// \brief Abstract base class for all custom slash commands.
+///
+/// Extends dpp::slashcommand and enforces a common execution interface for slash commands, interactions, modal 
+/// submissions, and button clicks.
+///
+/// All derived command classes must implement the execution handlers.
+//---------------------------------------------------------------------------------------------------------------------
 class ICustomCommand : public dpp::slashcommand
 {
 public:
@@ -30,6 +47,67 @@ public:
     static void UnregisterGuildAll(dpp::cluster* cluster, const dpp::snowflake idGuild);
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
+class AdminPanelCommand : public ICustomCommand
+{
+public:
+    AdminPanelCommand()
+        : ICustomCommand(Command_Admin, "Show the administration panels.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify Admin Control Panel.", true)
+            .add_choice(dpp::command_option_choice("Bot Panel", Option_Bot))
+            .add_choice(dpp::command_option_choice("Queue Panel", Option_Queue)));
+    }
+
+    virtual ~AdminPanelCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+private:
+    dpp::component CreateBotButtonRow(const dpp::snowflake& user) const;
+    dpp::embed CreateBotEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const;
+    dpp::message CreateBotPanel(CommandContext& ctx, const dpp::interaction_create_t& event) const;
+
+    dpp::component CreateQueueButtonRow(const dpp::snowflake& user) const;
+    dpp::embed CreateQueueEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const;
+    dpp::message CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event) const;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class WorkerPanelCommand
+/// \brief Displays assignment panels for workers.
+//---------------------------------------------------------------------------------------------------------------------
+class WorkerPanelCommand : public ICustomCommand
+{
+public:
+    WorkerPanelCommand()
+        : ICustomCommand(Command_Worker, "Show your assignment panels.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify a panel.", true)
+            .add_choice(dpp::command_option_choice("Assignment Overview", Option_Overview))
+            .add_choice(dpp::command_option_choice("All Assignments", Option_AllAssignments)));
+    }
+
+    virtual ~WorkerPanelCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class CreateRequestCommand
+/// \brief Creates a new job request and adds it to the queue.
+//---------------------------------------------------------------------------------------------------------------------
 class CreateRequestCommand : public ICustomCommand
 {
 public:
@@ -46,12 +124,16 @@ public:
 
     virtual ~CreateRequestCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class MyRequestsCommand
+/// \brief Retrieves and displays requests submitted by the current user.
+//---------------------------------------------------------------------------------------------------------------------
 class MyRequestsCommand : public ICustomCommand
 {
 public:
@@ -69,12 +151,23 @@ public:
 
     virtual ~MyRequestsCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+private:
+    dpp::message BuildUserQueuePage(CommandContext& ctx, 
+                                    dpp::snowflake user, 
+                                    std::size_t type, 
+                                    std::size_t page, 
+                                    dpp::snowflake guildID) const;
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ShowQueueCommand
+/// \brief Displays the request queue with optional filtering and pagination.
+//---------------------------------------------------------------------------------------------------------------------
 class ShowQueueCommand : public ICustomCommand
 {
 public:
@@ -92,47 +185,62 @@ public:
 
     virtual ~ShowQueueCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 
-    using PaginationState = std::pair<std::size_t, std::vector<std::string>>;
-    std::unordered_map<dpp::snowflake, PaginationState> sessions;
+private:
+    dpp::message BuildQueuePage(CommandContext& ctx, std::size_t type, std::size_t page, dpp::snowflake guildID) const;
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ShowQueueSummaryCommand
+/// \brief Displays a summarized overview of the request queue.
+//---------------------------------------------------------------------------------------------------------------------
 class ShowQueueSummaryCommand : public ICustomCommand
 {
 public:
     ShowQueueSummaryCommand()
-        : ICustomCommand(Command_SummaryQueue, "Retrieve a summary for the state of the request in queue.")
+        : ICustomCommand(Command_SummaryQueue, "Display a summary for the queue.")
     {}
 
     virtual ~ShowQueueSummaryCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ShowRequestCommand
+/// \brief Displays detailed information about a specific request.
+//---------------------------------------------------------------------------------------------------------------------
 class ShowRequestCommand : public ICustomCommand
 {
 public:
     ShowRequestCommand()
-        : ICustomCommand(Command_ShowRequest, "Display the information about the request.")
+        : ICustomCommand(Command_ShowRequest, "Display the information about a request by its id.")
     {
         add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Provide the request id you want to modify.", true));
     }
 
     virtual ~ShowRequestCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+private:
+    dpp::component CreateButtonRow(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job) const;
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ModifyRequestCommand
+/// \brief Modifies an existing job request (edit, assign, update status, etc.).
+//---------------------------------------------------------------------------------------------------------------------
 class ModifyRequestCommand : public ICustomCommand
 {
 public:
@@ -150,69 +258,53 @@ public:
 
     virtual ~ModifyRequestCommand() = default;
 
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 };
 
-class MyAssignmentsCommand : public ICustomCommand
+//---------------------------------------------------------------------------------------------------------------------
+/// \class HelpCommand
+/// \brief Lists all available bot commands.
+//---------------------------------------------------------------------------------------------------------------------
+class HelpCommand : public ICustomCommand
 {
 public:
-    MyAssignmentsCommand()
-        : ICustomCommand(Command_MyAssignments, "Show a list of my current assignments.") {
+    HelpCommand()
+        : ICustomCommand(Command_Help, "List all available commands for the bot.")
+    {
     }
 
-    virtual ~MyAssignmentsCommand() = default;
+    virtual ~HelpCommand() = default;
 
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
-    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
-};
-
-class MyTopAssignmentCommand : public ICustomCommand
-{
-public:
-    MyTopAssignmentCommand()
-        : ICustomCommand(Command_MyTopAssignment, "Show my highest priority job assignment.") {}
-
-    virtual ~MyTopAssignmentCommand() = default;
-
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
-    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
-};
-
-class HelloCommand : public ICustomCommand
-{
-public:
-    HelloCommand()
-        : ICustomCommand(Command_Hello, "Hello there!") {}
-    
-
-    virtual ~HelloCommand() = default;
-
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
-    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
+//---------------------------------------------------------------------------------------------------------------------
+/// \namespace Toaster
+/// \brief Contains global command registrations for the bot.
+///
+/// Holds the static list of instantiated bot commands used during command registration.
+//---------------------------------------------------------------------------------------------------------------------
 namespace Toaster
 {
     using CommandList = std::vector<ICustomCommand*>;
     static inline CommandList BotCommands
     {
-        new CreateRequestCommand(),
-        new MyRequestsCommand(),
+        new AdminPanelCommand(),
+        new WorkerPanelCommand(),
+        //new ShowQueueCommand(),
         new ShowQueueCommand(),
         new ShowQueueSummaryCommand(),
-        new ShowRequestCommand(),
+        //new HelpCommand(),
+        new CreateRequestCommand(),
         new ModifyRequestCommand(),
-        new MyAssignmentsCommand(),
-        new MyTopAssignmentCommand(),
-        new HelloCommand()
+        //new CustomerPanelCommand(),
+        new MyRequestsCommand(),
+        new ShowRequestCommand()
     };
 };

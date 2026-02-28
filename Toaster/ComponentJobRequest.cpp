@@ -7,6 +7,9 @@ namespace xmlRequest
     constexpr const char* pszXMLCompList{ "ComponentList" };
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -20,6 +23,9 @@ void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml
     xmlParent->InsertEndChild(xmlNode);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -36,6 +42,9 @@ void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string ComponentJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     std::string base = JobRequest::PrintJobDetails(cluster, idGuild);

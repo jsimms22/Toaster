@@ -5,10 +5,16 @@
 std::weak_ptr<PermissionsMgr> PermissionsMgr::s_applicationInstance{};
 std::mutex PermissionsMgr::mutex;
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 PermissionsMgr::PermissionsMgr(PermissionsMgr::Private /*p*/)
 {
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<PermissionsMgr> PermissionsMgr::GetInstance()
 {
     if (auto instance = s_applicationInstance.lock())
@@ -28,29 +34,44 @@ std::shared_ptr<PermissionsMgr> PermissionsMgr::GetInstance()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsBotOwner(const dpp::snowflake& user)
 {
     return user == 464542267395538944;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsRequestWorker(const dpp::snowflake& user, const std::shared_ptr<JobRequest> job)
 {
     if (!job) return false;
     return user == job->GetWorkerID();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsRequestOwner(const dpp::snowflake& user, const std::shared_ptr<JobRequest> job)
 {
     if (!job) return false;
     return user == job->GetCustomerID();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsWorkerOwner(const std::shared_ptr<JobRequest> job)
 {
     if (!job) return false;
     return job->GetCustomerID() == job->GetCustomerID();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::HasPermission(const dpp::snowflake& user, dpp::permissions perm, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -58,6 +79,9 @@ bool PermissionsMgr::HasPermission(const dpp::snowflake& user, dpp::permissions 
     return false;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::HasRole(const dpp::snowflake& user, const dpp::snowflake& role_id, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -65,12 +89,19 @@ bool PermissionsMgr::HasRole(const dpp::snowflake& user, const dpp::snowflake& r
     return false;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsGuildMember(const dpp::snowflake& user, const dpp::guild* guild)
 {
     if (!guild) return false;
     auto member_it = guild->members.find(user);
     return member_it != guild->members.end();
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsGuildMemberWithRole(const dpp::snowflake& user, const dpp::snowflake& role_id, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -86,6 +117,10 @@ bool PermissionsMgr::IsGuildMemberWithRole(const dpp::snowflake& user, const dpp
 
     return false;
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsMod(const dpp::snowflake& user, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -100,6 +135,10 @@ bool PermissionsMgr::IsMod(const dpp::snowflake& user, const dpp::guild* guild)
 
     return false;
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -115,6 +154,9 @@ bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::guild* 
     return false;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsActiveWorker(const dpp::snowflake& user, const dpp::guild* guild)
 {
     if (!guild) return false;
@@ -126,6 +168,10 @@ bool PermissionsMgr::IsActiveWorker(const dpp::snowflake& user, const dpp::guild
 
     return false;
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::IsActiveWorker(const dpp::snowflake& user, const std::vector<dpp::snowflake>& workers)
 {
     return workers.cend() != std::find_if(workers.cbegin(), 
@@ -133,6 +179,9 @@ bool PermissionsMgr::IsActiveWorker(const dpp::snowflake& user, const std::vecto
                                           [&user](const dpp::snowflake& worker) -> bool { return worker == user; });
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAssignJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const std::vector<dpp::snowflake> workers)
 {
     if (!job) return false;
@@ -141,6 +190,9 @@ bool PermissionsMgr::CanAssignJob(const dpp::snowflake& user, const std::shared_
            IsBotOwner(user);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAssignJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild)
 {
     if (!job || !guild) return false;
@@ -149,6 +201,9 @@ bool PermissionsMgr::CanAssignJob(const dpp::snowflake& user, const std::shared_
            IsBotOwner(user);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanEditJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild)
 {
     if (!job || !guild) return false;
@@ -159,6 +214,9 @@ bool PermissionsMgr::CanEditJob(const dpp::snowflake& user, const std::shared_pt
             IsBotOwner(user);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanDeleteJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild)
 {
     if (!job || !guild) return false;
@@ -169,6 +227,9 @@ bool PermissionsMgr::CanDeleteJob(const dpp::snowflake& user, const std::shared_
             IsBotOwner(user);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAddNote(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild)
 {
     if (!job || !guild) return false;
@@ -178,6 +239,9 @@ bool PermissionsMgr::CanAddNote(const dpp::snowflake& user, const std::shared_pt
            IsBotOwner(user);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAccessAdminPanel(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild)
 {
     if (!job || !guild) return false;

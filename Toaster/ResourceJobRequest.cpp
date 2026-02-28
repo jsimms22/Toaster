@@ -9,7 +9,9 @@ namespace xmlRequest
     constexpr const char* pszXMLResourceQuality{ "Quality" };
 }
 
-// Function to convert priority enum to string
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string ResourceJobRequest::StateToString(ResourceJobRequest::state e)
 {
     switch (e) {
@@ -23,7 +25,9 @@ std::string ResourceJobRequest::StateToString(ResourceJobRequest::state e)
     }
 }
 
-// Function to convert string to status enum
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 ResourceJobRequest::state ResourceJobRequest::StringToState(const std::string& str)
 {
     if (str == "mineable")          return ResourceJobRequest::state::UnrefinedMineable;
@@ -35,6 +39,9 @@ ResourceJobRequest::state ResourceJobRequest::StringToState(const std::string& s
     throw std::invalid_argument("Invalid status string value");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -50,6 +57,9 @@ void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
     xmlParent->InsertEndChild(xmlNode);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -75,6 +85,9 @@ void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     std::string base = JobRequest::PrintJobDetails(cluster, idGuild);

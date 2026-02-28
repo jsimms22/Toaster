@@ -54,6 +54,9 @@ const std::string EditRequestDlg::modalDesc = "Edit Active Job Request";
 const std::string DeleteRequestDlg::modalID = "DeleteRequestModal";
 const std::string DeleteRequestDlg::modalDesc = "Delete Job Request";
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void CraftRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -112,6 +115,9 @@ void CraftRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void CraftRequestDlg::AddChildrenComponents()
 {
     add_component(CitizenHandleEdit);
@@ -121,6 +127,9 @@ void CraftRequestDlg::AddChildrenComponents()
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void BuildRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -177,6 +186,9 @@ void BuildRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void BuildRequestDlg::AddChildrenComponents()
 {
     add_component(CitizenHandleEdit);
@@ -186,6 +198,9 @@ void BuildRequestDlg::AddChildrenComponents()
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ComponentRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -222,6 +237,9 @@ void ComponentRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ComponentRequestDlg::AddChildrenComponents()
 {
     add_component(CitizenHandleEdit);
@@ -229,6 +247,9 @@ void ComponentRequestDlg::AddChildrenComponents()
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ResourceRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -289,6 +310,9 @@ void ResourceRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ResourceRequestDlg::AddChildrenComponents()
 {
     add_component(CitizenHandleEdit);
@@ -298,6 +322,9 @@ void ResourceRequestDlg::AddChildrenComponents()
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void RefineryRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -353,6 +380,9 @@ void RefineryRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void RefineryRequestDlg::AddChildrenComponents()
 {
     add_component(CitizenHandleEdit);
@@ -362,6 +392,9 @@ void RefineryRequestDlg::AddChildrenComponents()
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void AssignRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -397,6 +430,9 @@ void AssignRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void AssignRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
@@ -404,6 +440,9 @@ void AssignRequestDlg::AddChildrenComponents()
     add_component(StatusUpdateSelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void StatusChangeRequestDlg::InitializeControls()
 {
 
@@ -429,12 +468,18 @@ void StatusChangeRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void StatusChangeRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
     add_component(StatusUpdateSelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void PriorityChangeRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -460,12 +505,18 @@ void PriorityChangeRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void PriorityChangeRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
     add_component(PrioritySelect);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void EditRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -478,7 +529,7 @@ void EditRequestDlg::InitializeControls()
         .set_id(Component_RequestID);
 
     // Create a text box component
-    CitizenHandleEdit.set_label("Requestee SC Handle (In Game)")
+    CitizenHandleEdit.set_label("Star Citizen Handle")
         .set_type(dpp::cot_text)
         .set_default_value(m_spJob->GetSCHandle())
         .set_min_length(1)
@@ -591,6 +642,9 @@ void EditRequestDlg::InitializeControls()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void EditRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
@@ -621,6 +675,9 @@ void EditRequestDlg::AddChildrenComponents()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void DeleteRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -653,6 +710,9 @@ void DeleteRequestDlg::InitializeControls()
         .set_id(Component_DeleteJustification);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void DeleteRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);

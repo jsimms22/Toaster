@@ -1,3 +1,9 @@
+//---------------------------------------------------------------------------------------------------------------------
+/// \file
+/// \brief Implementation of the ShowQueueSummaryCommand.
+///
+/// Contains the implementation of ShowQueueSummaryCommand declared in Commands.h.
+//---------------------------------------------------------------------------------------------------------------------
 #include "BotUtility.h"
 #include "Commands.h"
 #include "JobQueue.h"
@@ -6,10 +12,12 @@
 // std library
 #include <algorithm>
 
-void ShowQueueSummaryCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
-{
-}
-
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Event handler for create interaction processes.
+///
+/// \param[out] ctx     Command context needed to handle various tasks.
+/// \param[out] event   The event being processed for a response to the user.
+//---------------------------------------------------------------------------------------------------------------------
 void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event)
 {
     if (!ctx.queue || event.command.get_command_name() != this->name)
@@ -43,7 +51,7 @@ void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp:
     const std::string result = ctx.queue->PrintQueueSummary(ctx.cluster);
     dpp::embed embed;
     embed.set_title(header)
-        .set_description(!result.empty() ? result : "No requests of this type in queue.")
+        .set_description(result)
         .set_color(0x3498db);
 
     dpp::message msg;
@@ -73,10 +81,12 @@ void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp:
     event.reply(msg);
 }
 
-void ShowQueueSummaryCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
-{
-}
-
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief Event handler for button interactions.
+///
+/// \param[out] ctx     Command context needed to handle various tasks.
+/// \param[out] event   The event being processed for a response to the user.
+//---------------------------------------------------------------------------------------------------------------------
 void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
     if (!ctx.queue)

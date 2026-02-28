@@ -11,6 +11,9 @@
 
 namespace utils
 {
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     std::string LoadSecret(const std::string& filename, const std::string& find)
     {
         std::ifstream file(filename);
@@ -27,7 +30,9 @@ namespace utils
         throw std::runtime_error(fmt::format("[{}] not found in config file",find));
     }
 
-    // Helper function to convert string priority (e.g., "low", "med", "high") to numeric values
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief Helper function to convert string priority (e.g., "low", "med", "high") to numeric values
+    //---------------------------------------------------------------------------------------------------------------------
     int PriorityToString(const std::string& priority_str) 
     {
         if (priority_str == "critical") return 4;
@@ -37,6 +42,9 @@ namespace utils
         return -1;  // Default to -1 for unknown priorities
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     std::string GuidToString(const GUID& guid) 
     {
         char guidString[39]; // 36 characters + null terminator
@@ -51,6 +59,9 @@ namespace utils
         return std::string(guidString);
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     std::string GuidToStringNoBrackets(const GUID& guid)
     {
         char guidString[37]; // 36 characters + null terminator
@@ -65,6 +76,9 @@ namespace utils
         return std::string(guidString);
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const GUID StringToGuid(const std::string& guidStr)
     {
         GUID guid;
@@ -80,6 +94,9 @@ namespace utils
         return guid;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const GUID CreateGUID() 
     {
         GUID guid;
@@ -94,11 +111,17 @@ namespace utils
         return guid;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const std::size_t GetEpochTimestamp()
     {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const std::size_t CmdStringToJobType(const std::string& cmd)
     {
         if (cmd == Option_ItemCrafting) return JOB_TYPE_CRAFTING;
@@ -109,6 +132,9 @@ namespace utils
         else return JOB_TYPE_GENERAL;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const std::string JobTypeToString(const std::size_t& type)
     {
         switch (type) {
@@ -121,6 +147,9 @@ namespace utils
         }
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     void NotifyIssuerMsg(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg)
     {
         cluster.direct_message_create(idUser, dpp::message(msg), [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
@@ -135,6 +164,9 @@ namespace utils
             }});
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
         if (id == USERID_NULL)
@@ -178,6 +210,9 @@ namespace utils
         return future.get();
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
         if (id == USERID_NULL)
@@ -221,6 +256,9 @@ namespace utils
         return future.get();
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     const std::string FindPreferredNameByID(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::snowflake& idGuild)
     {
         dpp::user customer;
@@ -258,6 +296,9 @@ namespace utils
         return !nickname.empty() ? nickname : !global.empty() ? global : customer.username;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len)
     {
         std::vector<std::string> pages;
@@ -272,6 +313,9 @@ namespace utils
         return pages;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     std::vector<std::string> Split(const std::string& input, char delimiter)
     {
         std::vector<std::string> result;
@@ -290,16 +334,25 @@ namespace utils
         return result;
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     void RemoveChar(std::string& str, const char sym)
     {
         str.erase(std::remove(str.begin(), str.end(), sym), str.end());
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     void FilterWhiteSpace(std::string& str)
     {
         str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
     }
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     void FilterUserString(std::string& str)
     {
         const std::vector<char> filterList{

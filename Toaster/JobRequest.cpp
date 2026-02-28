@@ -27,7 +27,9 @@ namespace xmlRequest
     constexpr const char* pszXMLSubscribed{ "Subscribed" };
 }
 
-// Function to convert priority enum to string
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string JobRequest::PriorityToString(JobRequest::priority p)
 {
     switch (p) {
@@ -39,7 +41,9 @@ std::string JobRequest::PriorityToString(JobRequest::priority p)
     }
 }
 
-// Function to convert string to priority enum
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 JobRequest::priority JobRequest::StringToPriority(const std::string& str)
 {
     if (str == "low")       return JobRequest::priority::low;
@@ -49,6 +53,9 @@ JobRequest::priority JobRequest::StringToPriority(const std::string& str)
     throw std::invalid_argument("Unexpected priority string value");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 const char* JobRequest::PriorityToEmoji(JobRequest::priority p)
 {
     switch (p) {
@@ -60,7 +67,9 @@ const char* JobRequest::PriorityToEmoji(JobRequest::priority p)
     }
 }
 
-// Function to convert status enum to string
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string JobRequest::StatusToString(JobRequest::status s)
 {
     switch (s) {
@@ -74,7 +83,9 @@ std::string JobRequest::StatusToString(JobRequest::status s)
     }
 }
 
-// Function to convert string to status enum
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 JobRequest::status JobRequest::StringToStatus(const std::string& str)
 {
     if (str == "open")      return JobRequest::status::open;
@@ -86,6 +97,9 @@ JobRequest::status JobRequest::StringToStatus(const std::string& str)
     throw std::invalid_argument("Unexpected status string value");
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 const char* JobRequest::StatusToEmoji(JobRequest::status s)
 {
     switch (s) {
@@ -99,6 +113,9 @@ const char* JobRequest::StatusToEmoji(JobRequest::status s)
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 JobRequest::JobRequest() 
     : m_id(utils::CreateGUID()) 
 {
@@ -106,6 +123,9 @@ JobRequest::JobRequest()
     m_timeLastEdit = m_timeCreated;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     // Check if the xmlNode is valid.
@@ -128,6 +148,9 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlParent->InsertEndChild(xmlNode);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
     if (xmlNode == nullptr)
@@ -163,6 +186,9 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
     m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLSubscribed, false);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
@@ -184,16 +210,25 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         m_timeLastEdit);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobRequest::GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     return utils::FindPreferredNameByID(cluster, m_idCustomer, idGuild);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobRequest::GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     return utils::FindPreferredNameByID(cluster, m_idWorker, idGuild);
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobRequest::AddNote(const dpp::snowflake& id, const std::string& note)
 {
     const std::size_t timestamp = utils::GetEpochTimestamp();

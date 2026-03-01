@@ -8,6 +8,8 @@
 #include "JobQueue.h"
 #include "RequestDlg.h"
 #include "BotUtility.h"
+#include "PaginationPanel.h"
+#include "WorkerPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -31,6 +33,7 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 
     if (strCmdID == Option_AllAssignments)
     {
+        // Check Permissions
         if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
             ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
             ctx.manager->IsBotOwner(author.id)))
@@ -40,10 +43,11 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
             return;
         }
 
+        // Return early if queue is empty
         if (ctx.queue->GetQueueSize() == 0)
         {
             dpp::embed embed;
-            embed.set_title("Your Assignments:")
+            embed.set_title("Your Assignments")
                 .set_description("No requests or jobs currently assigned to you.")
                 .set_color(0x3498db);
 
@@ -52,45 +56,24 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
             return;
         }
 
-        // acknowledge immediately to avoid timing out
+        // Acknowledge immediately to avoid timing out
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
-        std::size_t page = 0;
+        // Construct the actual info panel
+        const std::size_t page = 0;
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, author.id, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(author.id);
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
+        const std::string header = "Your Assignments";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "You have no assigned jobs in queue.")
-            .set_color(0x3498db);
+        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, author.id);
+        panel.AddEmbed(header, size != 0 ? result : "No requests or jobs currently assigned to you.");
 
-        dpp::message msg;
-        if (page != lastPage)
-        {
-            dpp::component row;
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Prev")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("assignments:{}:{}", author.id, 0)));
-
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Next")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("assignments:{}:{}", author.id, page + 1)));
-            msg.add_component(row);
-        }
-
-        event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
+        // Edit the original message
+        event.edit_original_response(panel.set_flags(dpp::m_ephemeral));
     }
     else if (strCmdID == Option_Overview)
     {
-        const dpp::user author = event.command.get_issuing_user();
+        // Check Permissions
         if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
             ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
             ctx.manager->IsBotOwner(author.id)))
@@ -100,65 +83,11 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
             return;
         }
 
-        const std::string header = "Top Assigment (by priority):";
-        if (ctx.queue->GetQueueSize() == 0)
-        {
-            dpp::embed embed;
-            embed.set_title(header)
-                .set_description("No requests or jobs currently assigned to you.")
-                .set_color(0x3498db);
+        // Acknowledge immediately to avoid timing out
+        event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
-            event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-
-            return;
-        }
-
-        const auto& job = ctx.queue->FirstAssignment(author.id);
-        const std::string result = job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "";
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(!result.empty() ? result : "No requests or jobs currently assigned to you.")
-            .set_color(0x3498db);
-
-        dpp::message msg;
-        msg.add_embed(embed).set_flags(dpp::m_ephemeral);
-        if (!result.empty())
-        {
-            dpp::component button1 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Complete")
-                .set_style(dpp::cos_success)
-                .set_id(fmt::format("{}:{}:{}", Button_Complete, author.id, utils::GuidToStringNoBrackets(job->GetID())));
-
-            dpp::component button2 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Add Note")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("{}:{}:{}", Button_Note, author.id, utils::GuidToStringNoBrackets(job->GetID())));
-
-            dpp::component button3 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Unassign Me")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("{}:{}:{}", Button_Unassign, author.id, utils::GuidToStringNoBrackets(job->GetID())));
-
-            dpp::component button4 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Delete")
-                .set_style(dpp::cos_danger)
-                .set_id(fmt::format("{}:{}:{}", Button_Delete, author.id, utils::GuidToStringNoBrackets(job->GetID())));
-
-            dpp::component row = dpp::component()
-                .set_type(dpp::cot_action_row)
-                .add_component(button1)
-                .add_component(button2)
-                .add_component(button3)
-                .add_component(button4);
-
-            msg.add_component(row);
-        }
-
-        event.reply(msg);
+        // Edit the original message
+        event.edit_original_response(SendPanel(ctx, event, author.id).set_flags(dpp::m_ephemeral));
     }
 }
 
@@ -175,150 +104,117 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 {
     const std::string id = event.custom_id; 
 
-    // "assignments:workerid:page"
-    if (id.starts_with("assignments:"))
+    if (id.starts_with(fmt::format("{}:", Option_AllAssignments)))
     {
+        // Decompose custom id for state information
         auto parts = utils::Split(id, ':');
-        dpp::snowflake worker = parts[1];
-        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        const std::size_t type = std::stoul(parts[1]);
+        const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        const dpp::snowflake user = parts[3];
 
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, worker, page, event.command.guild_id);
-        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(worker);
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Your Assignments (Page {} of {}):", page + 1, lastPage + 1);
+        // Construct the actual info panel
+        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, user, page, event.command.guild_id);
+        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(user);
+        const std::string header = "Your Assignments";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "You have no assigned jobs in queue.")
-            .set_color(0x3498db);
-
-        const std::size_t prev_page = page > 0 ? page - 1 : 0;
-        const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
-
-        dpp::message msg;
-        if (prev_page != next_page)
-        {
-            dpp::component row;
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Prev")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("assignments:{}:{}", worker, prev_page)));
-
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Next")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("assignments:{}:{}", worker, next_page)));
-            msg.add_component(row);
-        }
+        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
+        panel.AddEmbed(header, size != 0 ? result : "No requests or jobs currently assigned to you.");
 
         // Edit the original message
-        event.reply(dpp::ir_update_message, msg.add_embed(embed));
+        event.reply(dpp::ir_update_message, panel.set_flags(dpp::m_ephemeral));
+        return;
     }
 
-    // "buttonType:workerid:guid"
-    if (id.starts_with(fmt::format("{}:", Button_Complete)))
+    if (id.starts_with(fmt::format("{}_complete:", Option_Overview)))
     {
+        WorkerPanel::CompleteButton(id, ctx, event);
+
+        Sleep(10);
+
         auto parts = utils::Split(id, ':');
-        const dpp::snowflake worker = parts[1];
-        const std::string guid = parts[2];
+        const dpp::snowflake user = parts[1];
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
-        {
-            ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
-                {
-                    job->SetStatus(JobRequest::status::complete);
-                });
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user).set_flags(dpp::m_ephemeral));
 
-            const dpp::snowflake customer = job->GetCustomerID();
-            if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
-            {
-                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been completed by {}.", guid, event.command.get_issuing_user().global_name));
-            }
-
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
-            event.reply(dpp::message(fmt::format("Request {} has been set to completed.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
-        }
-        else
-        {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
-        }
+        return;
     }
-    else if (id.starts_with(fmt::format("{}:", Button_Note)))
+    else if (id.starts_with(fmt::format("{}_edit:", Option_Overview)))
     {
-        auto parts = utils::Split(id, ':');
-        dpp::snowflake worker = parts[1];
-        const std::string guid = parts[2];
+        GeneralUserPanel::EditButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetWorkerID() == worker)
-        {
-            /* todo add note functionality to job class */
-            event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
-            return;
-
-            // todo note modal dlg
-        }
-        else
-        {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
-        }
+        Sleep(10);
+        return;
     }
-    else if (id.starts_with(fmt::format("{}:", Button_Unassign)))
+    else if (id.starts_with(fmt::format("{}_note:", Option_Overview)))
     {
-        auto parts = utils::Split(id, ':');
-        dpp::snowflake worker = parts[1];
-        const std::string guid = parts[2];
+        GeneralUserPanel::NoteButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
-        {
-            ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
-                {
-                    job->SetWorkerID(0);
-                    if (job->GetStatus() == JobRequest::status::active ||
-                        job->GetStatus() == JobRequest::status::assigned)
-                    {
-                        job->SetStatus(JobRequest::status::open);
-                    }
-                    job->SetStatus(JobRequest::status::complete);
-                });
-
-            const dpp::snowflake customer = job->GetCustomerID();
-            if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
-            {
-                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been unassigned by {}.", guid, event.command.get_issuing_user().global_name));
-            }
-
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
-            event.reply(dpp::message(fmt::format("Request {} has been unassigned.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
-        }
-        else
-        {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
-        }
+        Sleep(10);
+        return;
     }
-    else if (id.starts_with(fmt::format("{}:", Button_Delete)))
+    else if (id.starts_with(fmt::format("{}_unassign:", Option_Overview)))
     {
-        auto parts = utils::Split(id, ':');
-        dpp::snowflake worker = parts[1];
-        const std::string guid = parts[2];
+        WorkerPanel::UnassignButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
-        {
-            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
-            event.dialog(modal);
-        }
-        else
-        {
-            event.reply(dpp::message("Could not find perform this action.").set_flags(dpp::m_ephemeral));
-        }
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user).set_flags(dpp::m_ephemeral));
+
+        return;
     }
+    else if (id.starts_with(fmt::format("{}_delete:", Option_Overview)))
+    {
+        GeneralUserPanel::DeleteButton(id, ctx, event);
+
+        Sleep(10);
+        return;
+    }
+}
+
+dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const dpp::snowflake& user) const
+{
+    // Return early if queue is empty
+    const std::string header = "Worker Summary Report";
+    if (ctx.queue->GetQueueSize() == 0)
+    {
+        dpp::embed embed;
+        embed.set_title(header)
+            .set_description("No requests or jobs in queue.")
+            .set_color(0x3498db);
+
+        return dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral);
+    }
+
+    // Construct the actual info panel
+    const std::string summary = ctx.queue->PrintQueueWorkerSummary(ctx.cluster, user);
+
+    // Return early if no active job assignment
+    const auto& job = ctx.queue->FirstAssignment(user);
+    if (!job)
+    {
+        dpp::embed overview;
+        overview.set_title(header)
+                .set_description(!summary.empty() ? summary : "No job data in the active queue.")
+                .set_color(0x3498db);
+        dpp::embed top;
+        top.set_title("Top Assigment (by priority)")
+            .set_description("No active requests or jobs currently assigned to you.")
+            .set_color(0x3498db);
+
+        return dpp::message().add_embed(overview).add_embed(top).set_flags(dpp::m_ephemeral);
+    }
+
+    const std::string priority = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+    const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
+
+    WorkerPanel panel(ctx, Option_Overview, user, strJobID, job->GetWorkerID());
+    panel.AddEmbed(header, summary);
+    panel.AddEmbed("Top Assigment (by priority)", priority);
+
+    return panel;
 }

@@ -7,6 +7,7 @@
 #include "BotUtility.h"
 #include "Commands.h"
 #include "JobQueue.h"
+#include "PaginationPanel.h"
 // fmt
 #include <fmt/format.h>
 // std library
@@ -96,7 +97,7 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
 
     if (event.custom_id == Button_Stalled)
     {
-        const dpp::user author = event.command.get_issuing_user();
+        // Return early if queue is empty
         if (ctx.queue->GetQueueSize() == 0)
         {
             dpp::embed embed;
@@ -109,47 +110,25 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
             return;
         }
 
-        // acknowledge immediately to avoid timing out
+        // Acknowledge immediately to avoid timing out
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
-        std::size_t page = 0;
+        // Construct the actual info panel
+        const std::size_t page = 0;
         const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
+        const std::string header = "Stalled Job Report";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "No stalled jobs in queue.")
-            .set_color(0x3498db);
+        PaginationPanel panel(ctx, Button_Stalled, static_cast<int>(JobRequest::status::stalled), page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
+        panel.AddEmbed(header, size != 0 ? result : "No stalled jobs in queue.");
 
-        dpp::message msg;
-        if (page != lastPage)
-        {
-            dpp::component row;
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Prev")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), 0)));
-
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Next")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), page + 1)));
-            msg.add_component(row);
-        }
-
-        event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
-
+        // Edit the original message
+        event.edit_original_response(panel.set_flags(dpp::m_ephemeral));
         return;
     }
     else if (event.custom_id == Button_Unassigned)
     {
-        const dpp::user author = event.command.get_issuing_user();
+        // Return early if queue is empty
         if (ctx.queue->GetQueueSize() == 0)
         {
             dpp::embed embed;
@@ -162,140 +141,63 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
             return;
         }
 
-        // acknowledge immediately to avoid timing out
+        // Acknowledge immediately to avoid timing out
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
-        std::size_t page = 0;
+        // Construct the actual info panel
+        const std::size_t page = 0;
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
+        const std::string header = "Unassigned Job Report";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "No unassigned jobs in queue.")
-            .set_color(0x3498db);
+        PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
+        panel.AddEmbed(header, size != 0 ? result : "No unassigned jobs in queue.");
 
-
-        dpp::message msg;
-        if (page != lastPage)
-        {
-            dpp::component row;
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Prev")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("unassigned:{}:{}", 0, 0)));
-
-            row.add_component(
-                dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Next")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("unassigned:{}:{}", 0, page + 1)));
-            msg.add_component(row);
-        }
-
-        event.edit_original_response(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
-
+        // Edit the original message
+        event.edit_original_response(panel.set_flags(dpp::m_ephemeral));
         return;
     }
 
     const std::string id = event.custom_id; // "stalled:JobRequest::status:page"
 
-    if (id.starts_with("stalled:"))
+    if (id.starts_with(fmt::format("{}:", Button_Stalled)))
     {
+        // Deconstruct custom id for state information
         auto parts = utils::Split(id, ':');
         const JobRequest::status type = static_cast<JobRequest::status>(std::stoi(parts[1]));
-        if (type != JobRequest::status::stalled) return;
+        if (type != JobRequest::status::stalled) { return; }
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
+        // Construct the actual info panel
         const std::string result = ctx.queue->PrintQueuePageByStatus(ctx.cluster, JobRequest::status::stalled, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByStatus(JobRequest::status::stalled);
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Stalled Job Report (Page {} of {}):", page + 1, lastPage + 1);
+        const std::string header = "Stalled Job Report";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "No stalled jobs in queue.")
-            .set_color(0x3498db);
-
-        dpp::message msg;
-        if (size != 0)
-        {
-            const std::size_t prev_page = page > 0 ? page - 1 : 0;
-            const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
-            if (prev_page != next_page)
-            {
-                dpp::component row;
-                row.add_component(
-                    dpp::component()
-                    .set_type(dpp::cot_button)
-                    .set_label("Prev")
-                    .set_style(dpp::cos_primary)
-                    .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), prev_page)));
-
-                row.add_component(
-                    dpp::component()
-                    .set_type(dpp::cot_button)
-                    .set_label("Next")
-                    .set_style(dpp::cos_primary)
-                    .set_id(fmt::format("stalled:{}:{}", static_cast<int>(JobRequest::status::stalled), next_page)));
-                msg.add_component(row);
-            }
-        }
+        PaginationPanel panel(ctx, Button_Stalled, static_cast<int>(JobRequest::status::stalled), page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
+        panel.AddEmbed(header, size != 0 ? result : "No stalled jobs in queue.");
 
         // Edit the original message
-        event.reply(dpp::ir_update_message, msg.add_embed(embed));
-
+        event.reply(dpp::ir_update_message, panel.set_flags(dpp::m_ephemeral));
         return;
     }
-    else if (id.starts_with("unassigned:"))
+    else if (id.starts_with(fmt::format("{}:", Button_Unassigned)))
     {
+        // Deconstruct custom id for state information
         auto parts = utils::Split(id, ':');
         const dpp::snowflake worker = 0;
-        if (worker != 0) return;
+        if (worker != 0) { return; }
         std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
 
+        // Construct the actual info panel
         const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, 0, page, event.command.guild_id);
         const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(dpp::snowflake(0));
-        const std::size_t lastPage = size <= 1 ? 0 : (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
-        const std::string header = fmt::format("Unassigned Job Report (Page {} of {}):", page + 1, lastPage + 1);
+        const std::string header = "Unassigned Job Report";
 
-        dpp::embed embed;
-        embed.set_title(header)
-            .set_description(size != 0 ? result : "No unassigned jobs in queue.")
-            .set_color(0x3498db);
-
-        dpp::message msg;
-        if (size != 0)
-        {
-            const std::size_t prev_page = page > 0 ? page - 1 : 0;
-            const std::size_t next_page = page < lastPage ? page + 1 : lastPage;
-            if (prev_page != next_page)
-            {
-                dpp::component row;
-                row.add_component(
-                    dpp::component()
-                    .set_type(dpp::cot_button)
-                    .set_label("Prev")
-                    .set_style(dpp::cos_primary)
-                    .set_id(fmt::format("unassigned:{}:{}", 0, prev_page)));
-
-                row.add_component(
-                    dpp::component()
-                    .set_type(dpp::cot_button)
-                    .set_label("Next")
-                    .set_style(dpp::cos_primary)
-                    .set_id(fmt::format("unassigned:{}:{}", 0, next_page)));
-                msg.add_component(row);
-            }
-        }
+        PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
+        panel.AddEmbed(header, size != 0 ? result : "No unassigned jobs in queue.");
 
         // Edit the original message
-        event.reply(dpp::ir_update_message, msg.add_embed(embed));
-
+        event.reply(dpp::ir_update_message, panel.set_flags(dpp::m_ephemeral));
         return;
     }
 }

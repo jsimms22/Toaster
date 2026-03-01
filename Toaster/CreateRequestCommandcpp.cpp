@@ -20,6 +20,9 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 #include "RefineryJobRequest.h"
+
+#include "WorkerPanel.h"
+#include "CustomerPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -98,6 +101,9 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     std::string strParam3 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
     std::string strParam4 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
+    // Acknowledge immediately to avoid timing out
+    event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
+
     utils::FilterUserString(strSCHandle);
     utils::FilterUserString(strParam1);
     utils::FilterUserString(strParam2);
@@ -134,7 +140,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobBuild->SetBuildZone(strParam3);
         jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobBuild->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
         ctx.queue->RequestAddToQueue(std::move(jobBuild));
     }
     else if (event.custom_id == ComponentRequestDlg::modalID)
@@ -146,7 +152,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobComp->SetComponentList(strParam1);
         jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
         jobDetails = jobComp->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
         ctx.queue->RequestAddToQueue(std::move(jobComp));
     }
     else if (event.custom_id == ResourceRequestDlg::modalID)
@@ -160,7 +166,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRes->SetQualityThres(strParam3);
         jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRes->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
         ctx.queue->RequestAddToQueue(std::move(jobRes));
     }
     else if (event.custom_id == RefineryRequestDlg::modalID)
@@ -174,52 +180,20 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRefine->SetRefinery(strParam3);
         jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
         jobDetails = jobRefine->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
         ctx.queue->RequestAddToQueue(std::move(jobRefine));
     }
 
-    //-------------------------------------------------------------------------------------------------------------
-    // Create interactive control buttons
-    //-------------------------------------------------------------------------------------------------------------
-    dpp::component button1 = dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Edit")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("create_edit:{}:{}", author.id, utils::GuidToStringNoBrackets(jobID)));
+    std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(jobID);
+    while (!job)
+    {
+        job = ctx.queue->GetJobByGUID(jobID);
+    }
 
-    dpp::component button2 = dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Add Note")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("create_note:{}:{}", author.id, utils::GuidToStringNoBrackets(jobID)));
-
-    dpp::component button3 = dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Unsubscribed")
-        .set_style(dpp::cos_secondary)
-        .set_id(fmt::format("create_subscribe:{}:{}", author.id, utils::GuidToStringNoBrackets(jobID)));
-
-    dpp::component button4 = dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Delete")
-        .set_style(dpp::cos_danger)
-        .set_id(fmt::format("create_delete:{}:{}", author.id, utils::GuidToStringNoBrackets(jobID)));
-
-    dpp::component row = dpp::component()
-        .set_type(dpp::cot_action_row)
-        .add_component(button1)
-        .add_component(button2)
-        .add_component(button3)
-        .add_component(button4);
-
-    dpp::embed embed;
-    embed.set_title("Submitted job request:")
-        .set_description(jobDetails)
-        .set_color(0x3498db);
+    // Edit the original message
+    event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
     // todo announce in a specific channel
-
-    event.reply(dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -238,169 +212,88 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 //---------------------------------------------------------------------------------------------------------------------
 void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    //-------------------------------------------------------------------------------------------------------------
-    // Parse custom component ID
-    //-------------------------------------------------------------------------------------------------------------
-    const std::string id = event.custom_id; // "create_type:workerid:guid"
+    const std::string id = event.custom_id;
 
-    //-------------------------------------------------------------------------------------------------------------
-    // Edit job handler
-    //-------------------------------------------------------------------------------------------------------------
-    if (id.starts_with("create_edit:"))
+    if (id.starts_with(fmt::format("{}_complete:", this->name)))
     {
-        auto parts = utils::Split(id, ':');
-        const dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
+        WorkerPanel::CompleteButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && ctx.manager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
-        {
-            EditRequestDlg modal(job);
-            event.dialog(modal);
-        }
-        else if (!job)
-        {
-            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-            return;
-        }
-        else
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
-            return;
-        }
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
     }
-    //-------------------------------------------------------------------------------------------------------------
-    // Add note handler
-    //-------------------------------------------------------------------------------------------------------------
-    else if (id.starts_with("create_note:"))
+    else if (id.starts_with(fmt::format("{}_edit:", this->name)))
     {
-        auto parts = utils::Split(id, ':');
-        const dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
+        GeneralUserPanel::EditButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && ctx.manager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
-        {
-            /* todo add note functionality to job class */
-            event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
-            return;
-
-            // todo note modal dlg
-        }
-        else if (!job)
-        {
-            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-            return;
-        }
-        else
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
-            return;
-        }
+        Sleep(10);
+        return;
     }
-    //-------------------------------------------------------------------------------------------------------------
-    // Subscribe / Unsubscribe handler
-    //-------------------------------------------------------------------------------------------------------------
-    else if (id.starts_with("create_subscribe:"))
+    else if (id.starts_with(fmt::format("{}_note:", this->name)))
     {
-        auto parts = utils::Split(id, ':');
-        const dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
+        GeneralUserPanel::NoteButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && ctx.manager->IsRequestOwner(user, job))
-        {
-            const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
-            const dpp::user author = event.command.get_issuing_user();
-
-            const std::size_t timestamp = utils::GetEpochTimestamp();
-            ctx.queue->RequestModifyJob(job->GetID(), [timestamp](std::shared_ptr<JobRequest> job)
-            {
-                job->SubscribeCustomer(!job->IsCustomerSubscribed());
-                job->SetLastEditTime(timestamp);
-            });
-
-            dpp::component button1 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Edit")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("create_edit:{}:{}", author.id, strJobID));
-
-            dpp::component button2 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Add Note")
-                .set_style(dpp::cos_primary)
-                .set_id(fmt::format("create_note:{}:{}", author.id, strJobID));
-
-            dpp::component button3 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label(job->IsCustomerSubscribed() ? "Subscribed" : "Unsubscribed")
-                .set_style(job->IsCustomerSubscribed() ? dpp::cos_primary : dpp::cos_secondary)
-                .set_id(fmt::format("create_subscribe:{}:{}", author.id, strJobID));
-
-            dpp::component button4 = dpp::component()
-                .set_type(dpp::cot_button)
-                .set_label("Delete")
-                .set_style(dpp::cos_danger)
-                .set_id(fmt::format("create_delete:{}:{}", author.id, strJobID));
-
-            dpp::component row = dpp::component()
-                .set_type(dpp::cot_action_row)
-                .add_component(button1)
-                .add_component(button2)
-                .add_component(button3)
-                .add_component(button4);
-
-            dpp::embed embed;
-            embed.set_title("Submitted job request:")
-                .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
-                .set_color(0x3498db);
-
-            event.reply(dpp::ir_update_message, 
-                dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral));
-
-            ctx.cluster.log(dpp::ll_info,fmt::format("User changed subscribed status for {} to {}", strJobID,
-                !job->IsCustomerSubscribed() ? "Unsubscribe" : "Subscribe"));
-        }
-        else if (!job)
-        {
-            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-            return;
-        }
-        else
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
-            return;
-        }
+        Sleep(10);
+        return;
     }
-    //-------------------------------------------------------------------------------------------------------------
-    // Delete job handler
-    //-------------------------------------------------------------------------------------------------------------
-    else if (id.starts_with("create_delete:"))
+    else if (id.starts_with(fmt::format("{}_unassign:", this->name)))
     {
-        auto parts = utils::Split(id, ':');
-        const dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
+        WorkerPanel::UnassignButton(id, ctx, event);
 
-        auto job = ctx.queue->GetJobByGUID(guid);
-        if (job && ctx.manager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
-        {
-            DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
-            event.dialog(modal);
-        }
-        else if (!job)
-        {
-            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-            return;
-        }
-        else
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
-            return;
-        }
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_subscribe:", this->name)))
+    {
+        CustomerPanel::SubscribeButton(id, ctx, event);
+
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_delete:", this->name)))
+    {
+        GeneralUserPanel::DeleteButton(id, ctx, event);
+
+        Sleep(10);
+        return;
+    }
+}
+
+dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const
+{
+    if (user == job->GetCustomerID() && user != job->GetWorkerID())
+    {
+        CustomerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        panel.AddEmbed("You Submitted a New Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        return panel;
+    }
+    else
+    {
+        WorkerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        panel.AddEmbed("You Submitted a New Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        return panel;
     }
 }

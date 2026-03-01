@@ -40,7 +40,8 @@ public:
     // For Managers and Workers
     const std::string PrintQueue(dpp::cluster& cluster, 
                                  const dpp::snowflake& idGuild) const; 
-    const std::string PrintQueueAdminSummary(dpp::cluster& cluster) const;
+    const std::string PrintQueueAdminSummary(dpp::cluster& cluster) const; 
+    const std::string PrintQueueWorkerSummary(dpp::cluster& cluster, const dpp::snowflake& worker) const;
     const std::string PrintQueueSummary(dpp::cluster& cluster) const;
 
     // By Status

@@ -7,6 +7,10 @@
 #include "Commands.h"
 #include "JobQueue.h"
 #include "BotUtility.h"
+#include "RequestDlg.h"
+#include "PermissionsMgr.h"
+#include "WorkerPanel.h"
+#include "CustomerPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -26,17 +30,16 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
         return;
     }
 
-    const dpp::user author = event.command.get_issuing_user();
-
     std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     utils::FilterWhiteSpace(strJobID);
-
     const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
         return;
     }
+
+    const dpp::user author = event.command.get_issuing_user();
 
     if (!(ctx.manager->IsRequestOwner(author.id, job) ||
           ctx.manager->IsRequestWorker(author.id, job) ||
@@ -49,19 +52,11 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
         return;
     }
 
-    dpp::embed embed;
-    embed.set_title("Here is the request:")
-        .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
-        .set_color(0x3498db);
+    // Acknowledge immediately to avoid timing out
+    event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
-    dpp::message msg;
-    if (author.id == job->GetCustomerID() || author.id == job->GetWorkerID())
-    {
-        dpp::component row = CreateButtonRow(author.id, job);
-        msg.add_component(row);
-    }
-
-    event.reply(msg.add_embed(embed).set_flags(dpp::m_ephemeral));
+    // Edit the original message
+    event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -72,74 +67,88 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 //---------------------------------------------------------------------------------------------------------------------
 void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    const std::string id = event.custom_id; // "show_request:type:workerid:guid"
+    const std::string id = event.custom_id; // "showrequest_type:workerid:guid"
 
-    if (id.starts_with("show_request:"))
+    if (id.starts_with(fmt::format("{}_complete:", this->name)))
     {
-        event.reply(dpp::message("These buttons are not functioning rn, but hello there!").set_flags(dpp::m_ephemeral));
+        WorkerPanel::CompleteButton(id, ctx, event);
+
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_edit:", this->name)))
+    {
+        GeneralUserPanel::EditButton(id, ctx, event);
+
+        Sleep(10);
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_note:", this->name)))
+    {
+        GeneralUserPanel::NoteButton(id, ctx, event);
+
+        Sleep(10);
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_unassign:", this->name)))
+    {
+        WorkerPanel::UnassignButton(id, ctx, event);
+
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_subscribe:", this->name)))
+    {
+        CustomerPanel::SubscribeButton(id, ctx, event);
+
+        Sleep(10);
+
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_delete:", this->name)))
+    {
+        GeneralUserPanel::DeleteButton(id, ctx, event);
+
+        Sleep(10);
+        return;
     }
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-/// \brief Helper function to create a row of buttons for a job request.
-///
-/// Generates buttons like Complete, Edit, Add Note, Unassign, Subscribe, or Delete depending on whether the user 
-/// is the worker or customer.
-///
-/// \param[out] user  The unique user ID for whom the buttons are generated.
-/// \param[out] job   The job request object for which buttons are being created.
-/// 
-/// \return Returns a component object containing a row of buttons.
-//---------------------------------------------------------------------------------------------------------------------
-dpp::component ShowRequestCommand::CreateButtonRow(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job) const
+dpp::message ShowRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const
 {
-    dpp::component row;
-
-    const GUID jobID = job->GetID();
-
-    if (user == job->GetWorkerID())
-    {
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_label("Complete")
-            .set_style(dpp::cos_success)
-            .set_id(fmt::format("show_request:complete:{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
-    }
-
-    row.add_component(dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Edit")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("show_request:edit:{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
-
-    row.add_component(dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Add Note")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("show_request:note{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
-
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_label("Unsubscribed")
-            .set_style(dpp::cos_secondary)
-            .set_id(fmt::format("show_request:subscribe:{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
+        CustomerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        return panel;
     }
-    else if (user == job->GetWorkerID())
+    else
     {
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_label("Unassign Me")
-            .set_style(dpp::cos_primary)
-            .set_id(fmt::format("show_request:unassign:{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
+        WorkerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        return panel;
     }
-
-    row.add_component(dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Delete")
-        .set_style(dpp::cos_danger)
-        .set_id(fmt::format("show_request:delete:{}:{}", user, utils::GuidToStringNoBrackets(jobID))));
-
-    return row;
 }

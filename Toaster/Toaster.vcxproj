@@ -195,12 +195,16 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AdminBotConfigCommand.cpp" />
+    <ClCompile Include="AdminConfigDialog.cpp" />
     <ClCompile Include="AdminPanelCommand.cpp" />
     <ClCompile Include="BuildingJobRequest.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="ComponentJobRequest.cpp" />
     <ClCompile Include="CraftingJobRequest.cpp" />
     <ClCompile Include="CreateRequestCommandcpp.cpp" />
+    <ClCompile Include="CustomerPanel.cpp" />
+    <ClCompile Include="GeneralUserPanel.cpp" />
     <ClCompile Include="HelpCommand.cpp" />
     <ClCompile Include="JobQueue.cpp" />
     <ClCompile Include="JobRequest.cpp" />
@@ -208,6 +212,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModifyRequestCommand.cpp" />
     <ClCompile Include="MyRequestsCommands.cpp" />
+    <ClCompile Include="PaginationPanel.cpp" />
     <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
@@ -218,17 +223,22 @@
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />
     <ClCompile Include="Toaster.cpp" />
+    <ClCompile Include="WorkerPanel.cpp" />
     <ClCompile Include="WorkerPanelCommand.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdminConfigDialog.h" />
     <ClInclude Include="BuildingJobRequest.h" />
     <ClInclude Include="CommandContext.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
+    <ClInclude Include="CustomerPanel.h" />
+    <ClInclude Include="GeneralUserPanel.h" />
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="JobRequestFactory.h" />
+    <ClInclude Include="PaginationPanel.h" />
     <ClInclude Include="PermissionsMgr.h" />
     <ClInclude Include="RefineryJobRequest.h" />
     <ClInclude Include="RequestDlg.h" />
@@ -237,6 +247,7 @@
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="BotUtility.h" />
     <ClInclude Include="Toaster.h" />
+    <ClInclude Include="WorkerPanel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

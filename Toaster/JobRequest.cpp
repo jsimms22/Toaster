@@ -196,6 +196,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
     return fmt::format(
         "**ID**: {}\n"
         "**Customer**: {}\n"
+        "**Assigned**: {}\n"
         "**Type**: {}\n"
         "**Status**: {}\n"
         "**Priority**: {}\n"
@@ -203,6 +204,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         "**Last Edit**: <t:{}:F>\n",
         utils::GuidToStringNoBrackets(m_id),
         GetCustomerName(cluster, idGuild),
+        GetWorkerName(cluster, idGuild),
         JobTypeToString(),
         StatusToString(m_eJobStatus),
         PriorityToString(m_eJobPriority),

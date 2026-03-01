@@ -289,12 +289,14 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
             "***Position: {}***\n"
             "ID (**{}**): {}\n"
             "**Status**: {}\n"
+            "**Customer**: {}\n"
             "**Assigned**: {}\n"
             "**Type**: {}\n\n",
             position,
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
+            job->GetCustomerName(cluster, idGuild),
             job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
@@ -361,6 +363,66 @@ const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
+const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const dpp::snowflake& worker) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+
+    std::map<std::size_t, std::size_t> typeCounts;
+    std::map<JobRequest::status, std::size_t> statusCounts;
+    std::map<JobRequest::priority, std::size_t> priorityCounts;
+    std::vector<GUID> assignedActiveIDs;
+
+    // Collect counts
+    for (const auto& job : m_vQueue)
+    {
+        if ((job->GetWorkerID() != worker))
+            continue;
+
+        typeCounts[job->JobType()]++;
+        statusCounts[job->GetStatus()]++;
+        priorityCounts[job->GetPriority()]++;
+
+        if (job->GetStatus() < JobRequest::status::hold && assignedActiveIDs.size() < 5)
+            assignedActiveIDs.push_back(job->GetID());
+    }
+
+    fmt::memory_buffer buffer;
+
+    // Type summary
+    fmt::format_to(std::back_inserter(buffer), "**Jobs in Queue (By Type)**:\n");
+    for (const auto& [type, count] : typeCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", utils::JobTypeToString(type), count);
+    }
+
+    // Status summary
+    fmt::format_to(std::back_inserter(buffer), "\n**Jobs in Queue (By Status)**:\n");
+    for (const auto& [status, count] : statusCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", JobRequest::StatusToString(status), count);
+    }
+
+    // Priority summary
+    fmt::format_to(std::back_inserter(buffer), "\n**Jobs in Queue (By Priority)**:\n");
+    for (const auto& [priority, count] : priorityCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}: {}\n", JobRequest::PriorityToString(priority), count);
+    }
+
+    // Stalled job IDs
+    fmt::format_to(std::back_inserter(buffer), "\n**Top 5 Active Job IDs**:\n");
+    for (const auto& id : assignedActiveIDs)
+    {
+        fmt::format_to(std::back_inserter(buffer), "  {}\n", utils::GuidToStringNoBrackets(id));
+    }
+
+    // Convert memory_buffer to std::string
+    return fmt::to_string(buffer);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 {
     const std::string strAdminPortion = PrintQueueAdminSummary(cluster);
@@ -407,18 +469,20 @@ const std::string JobQueue::PrintQueueByStatus(dpp::cluster& cluster, const JobR
 
         if (job->GetStatus() != filter)
             continue;
-
+        
         fmt::format_to(
             std::back_inserter(buffer),
             "***Position: {}***\n"
             "ID (**{}**): {}\n"
             "**Status**: {}\n"
+            "**Customer**: {}\n"
             "**Assigned**: {}\n"
             "**Type**: {}\n\n",
             position,
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
+            job->GetCustomerName(cluster, idGuild),
             job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
@@ -505,12 +569,14 @@ const std::string JobQueue::PrintQueueByType(dpp::cluster& cluster, const std::s
             "***Position: {}***\n"
             "ID (**{}**): {}\n"
             "**Status**: {}\n"
+            "**Customer**: {}\n"
             "**Assigned**: {}\n"
             "**Type**: {}\n\n",
             position,
             JobRequest::PriorityToString(job->GetPriority()),
             utils::GuidToStringNoBrackets(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
+            job->GetCustomerName(cluster, idGuild),
             job->GetWorkerName(cluster, idGuild),
             job->JobTypeToString()
         );
@@ -560,12 +626,14 @@ const std::string JobQueue::PrintQueuePageByType(
                 "***Position: {}***\n"
                 "ID (**{}**): {}\n"
                 "**Status**: {}\n"
+                "**Customer**: {}\n"
                 "**Assigned**: {}\n"
                 "**Type**: {}\n\n",
                 start_index + display_pos,
                 JobRequest::PriorityToString(job->GetPriority()),
                 utils::GuidToStringNoBrackets(job->GetID()),
                 JobRequest::StatusToString(job->GetStatus()),
+                job->GetCustomerName(cluster, idGuild),
                 job->GetWorkerName(cluster, idGuild),
                 job->JobTypeToString()
             );
@@ -682,7 +750,7 @@ const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const 
     std::vector<std::shared_ptr<JobRequest>> list;
     for (const auto& job : m_vQueue)
     {
-        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+        if (job->GetWorkerID() != userID)
             continue;
 
         list.push_back(job);
@@ -730,7 +798,7 @@ const std::string JobQueue::PrintQueuePageByWorker(dpp::cluster& cluster, const 
     std::stringstream ss;
     for (const auto& job : list)
     {
-        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+        if (job->GetWorkerID() != userID)
             continue;
 
         // Only count filtered jobs
@@ -844,8 +912,7 @@ const std::size_t JobQueue::GetFilteredQueueSizeByWorker(const dpp::snowflake& w
         m_vQueue.begin(),
         m_vQueue.end(),
         [&worker](const auto& job) {
-            return (job->GetWorkerID() == worker &&
-                job->GetStatus() != JobRequest::status::complete);
+            return (job->GetWorkerID() == worker);
         }
     );
 }

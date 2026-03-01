@@ -29,7 +29,7 @@ namespace bson = bsoncxx::v_noabi;
 
 auto main() -> int
 {
-    const std::string log_name{ "mybot.log" };
+    const std::string log_name{ "../toaster_logfile.log" };
 
     // Initialize and setup spdlog
     std::shared_ptr<spdlog::logger> log;

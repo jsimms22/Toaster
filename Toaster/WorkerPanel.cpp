@@ -57,7 +57,7 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
     }
 
     const auto pManager = PermissionsMgr::GetInstance();
-    if ((pManager->CanAssignJob(worker,job,utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && 
+    if ((pManager->CanAssignJob(event, worker,job,utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && 
          job->GetStatus() < JobRequest::status::complete) || ctx.debug)
     {
         ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
@@ -101,7 +101,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
     }
 
     const auto pManager = PermissionsMgr::GetInstance();
-    if (!pManager->CanAssignJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
+    if (!pManager->CanAssignJob(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
     {
         // Permission denied
         event.reply(dpp::message("You do not have permissions to change assignments for this job.").set_flags(dpp::m_ephemeral));

@@ -195,9 +195,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AdminBotConfigCommand.cpp" />
+    <ClCompile Include="AdminConfigChannelsCommand.cpp" />
     <ClCompile Include="AdminConfigDialog.cpp" />
     <ClCompile Include="AdminPanelCommand.cpp" />
+    <ClCompile Include="AdminConfigPingCommand.cpp" />
+    <ClCompile Include="AdminConfigRolesCommand.cpp" />
     <ClCompile Include="BuildingJobRequest.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="ComponentJobRequest.cpp" />

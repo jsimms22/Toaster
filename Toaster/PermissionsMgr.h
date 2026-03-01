@@ -42,16 +42,16 @@ public:
     bool HasRole(const dpp::guild_member& member, const std::optional<dpp::snowflake>& role_id);
     bool IsWorker(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
     bool IsManager(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
-    bool IsMod(const dpp::snowflake& user, const dpp::guild* guild);
-    bool IsGuildAdmin(const dpp::snowflake& user, const dpp::guild* guild);
+    bool IsMod(const dpp::snowflake& user, const dpp::interaction_create_t& event);
+    bool IsGuildAdmin(const dpp::snowflake& user, const dpp::interaction_create_t& event);
     
     // Actions perms based on the above methods
-    bool CanCreateJob(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
-    bool CanAssignJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
-    bool CanEditJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
-    bool CanDeleteJob(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
-    bool CanAddNote(const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
-    bool CanAccessAdminPanel(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanCreateJob(const dpp::interaction_create_t& event, const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanAssignJob(const dpp::interaction_create_t& event, const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanEditJob(const dpp::interaction_create_t& event, const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanDeleteJob(const dpp::interaction_create_t& event, const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanAddNote(const dpp::interaction_create_t& event, const dpp::snowflake& user, const std::shared_ptr<JobRequest>& job, const dpp::guild* guild, const GuildSettings& settings);
+    bool CanAccessAdminPanel(const dpp::interaction_create_t& event, const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings);
 
 private: // Members
     PermissionsMgr() = delete;  // Prevent instantiation

@@ -38,10 +38,31 @@ constexpr const char* Component_JobDescription	{ "description_id" };
 constexpr const char* Component_DeleteJustification	{ "justification_id" };
 /*------------------------------COMPONENT IDS-----------------------------------*/
 
+/*---------------------------ADMIN COMPONENT IDS--------------------------------*/
+// Components for Command_ConfigChannels Dialog
+constexpr const char* Component_NewChannel		{ "newchannel" };
+constexpr const char* Component_EditChannel		{ "editchannel" };
+constexpr const char* Component_DeletedChannel	{ "deletechannel" };
+constexpr const char* Component_CompletedChannel{ "completechannel" };
+
+// Components for Command_ConfigPing Dialog
+constexpr const char* Component_PingRole		{ "pingrole" };
+constexpr const char* Component_PingOnNew		{ "pingnew" };
+constexpr const char* Component_PingOnUpdate	{ "pingupdate" };
+constexpr const char* Component_PingOnDelete	{ "pingdelete" };
+constexpr const char* Component_PingOnComplete	{ "pingcomplete" };
+/*---------------------------ADMIN COMPONENT IDS--------------------------------*/
+
+/*----------------------------ADMIN COMMAND IDS---------------------------------*/
+constexpr const char* Command_ConfigChannels	{ "admin_configchannels" };
+constexpr const char* Command_ConfigPing		{ "admin_configping" };
+constexpr const char* Command_ConfigRoles		{ "admin_configroles" };
+/*----------------------------ADMIN COMMAND IDS---------------------------------*/
+
 /*-------------------------------COMMAND IDS------------------------------------*/
 constexpr const char* Command_Help				{ "help" };
-constexpr const char* Command_Admin				{ "Admin_Portal" };
-constexpr const char* Command_Worker			{ "Worker_Portal" };
+constexpr const char* Command_Admin				{ "manager_portal" };
+constexpr const char* Command_Worker			{ "worker_portal" };
 constexpr const char* Command_JobRequest		{ "create_request" };
 constexpr const char* Command_ModifyRequest		{ "modify_request" };
 constexpr const char* Command_ShowRequest		{ "show_request" };
@@ -51,6 +72,15 @@ constexpr const char* Command_SummaryQueue		{ "show_summary" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
+// Command Options for Command_ConfigRoles
+constexpr const char* Option_CraftingRole		{ "craftingrole" };
+constexpr const char* Option_BuildingRole		{ "buildingrole" };
+constexpr const char* Option_CompDealerRole		{ "comprole" };
+constexpr const char* Option_ResourceRole		{ "resourcerole" };
+constexpr const char* Option_RefiningRole		{ "refiningrole" };
+constexpr const char* Option_HazmatRole			{ "hazmatrole" };
+constexpr const char* Option_ManagerRole		{ "managerrole" };
+
 // Command Options for Command_Admin
 constexpr const char* Option_Bot				{ "adminbot" };
 constexpr const char* Option_Queue				{ "adminqueue" };

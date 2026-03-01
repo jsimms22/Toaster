@@ -12,6 +12,8 @@
 // fmt
 #include <fmt/base.h>
 #include <fmt/format.h>
+// tinyxml
+#include "tinyxml2.h"
 // microsoft
 #include <guiddef.h>
 // std library
@@ -21,7 +23,10 @@
 // \brief Constructor
 //---------------------------------------------------------------------------------------------------------------------
 ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<JobQueue>& spQueue, const bool bDebug)
-    : m_cluster(cluster), m_clusterId(clusterId), m_spQueue(spQueue), m_debug(bDebug), m_iShardCount{ 0 } { }
+    : m_cluster(cluster), m_clusterId(clusterId), m_spQueue(spQueue), m_debug(bDebug), m_iShardCount{ 0 } 
+{
+    LoadGuildSettings();
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
@@ -216,4 +221,81 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
     }
 
     m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed BUTTON_CLICK '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
+}
+
+void ToasterBot::LoadGuildSettings()
+{
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+    tinyxml2::XMLDocument doc;
+    const char* path = "../guilds.xml";
+
+    tinyxml2::XMLError result = doc.LoadFile(path);
+
+    if (result == tinyxml2::XML_ERROR_FILE_NOT_FOUND)
+    {
+        // Create new file with root
+        auto* root = doc.NewElement("GuildList");
+        doc.InsertEndChild(root);
+
+        doc.SaveFile(path);
+        return; // No guilds yet
+    }
+
+    if (result != tinyxml2::XML_SUCCESS)
+    {
+        // Handle corrupted file if desired
+        return;
+    }
+
+    tinyxml2::XMLElement* root = doc.RootElement();
+    if (!root)
+    {
+        root = doc.NewElement("GuildList");
+        doc.InsertEndChild(root);
+        doc.SaveFile(path);
+        return;
+    }
+
+    // Iterate over all <Request> elements within each <User>
+    for (tinyxml2::XMLElement* xmlNode = root->FirstChildElement("Guild"); xmlNode != nullptr; xmlNode = xmlNode->NextSiblingElement("Guild"))
+    {
+        const dpp::snowflake id = xmlNode->Unsigned64Attribute("ID", 0);
+
+        if (id)
+        {
+            GuildSettings guild;
+            guild.ReadAttributes(xmlNode, root);
+            g_settings.insert({ id, std::move(guild) });
+        }
+    }
+}
+
+void ToasterBot::SaveGuildSettings()
+{
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+    tinyxml2::XMLDocument doc;
+    doc.LoadFile("../guilds.xml");
+    doc.Clear();
+
+    // Get the root element (<RequestQueue>)
+    tinyxml2::XMLElement* root = doc.RootElement();
+    if (!root)
+    {
+        root = doc.NewElement("GuildList");
+        doc.InsertEndChild(root);
+    }
+
+    for (const auto& [id, settings] : g_settings)
+    {
+        tinyxml2::XMLElement* xmlNode = root->InsertNewChildElement("Guild");
+        root->SetAttribute("ID", id);
+
+        settings.WriteAttributes(xmlNode, root);
+        root->InsertEndChild(xmlNode);
+    }
+
+    // Save the updated XML to a file
+    doc.SaveFile("../guilds.xml");
 }

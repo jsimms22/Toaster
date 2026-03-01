@@ -1,8 +1,7 @@
 /.vs
 build/
-Toaster/*.xml
-Toaster/*.log
-Toaster/crafting_requests.xml
+*.xml
+*.log
 Toaster/Debug
 Toaster/Release
 *.exe

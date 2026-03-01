@@ -96,45 +96,23 @@ bool PermissionsMgr::HasRole(const dpp::guild_member& member, const std::optiona
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsMod(const dpp::snowflake& user, const dpp::guild* guild)
+bool PermissionsMgr::IsMod(const dpp::snowflake& user, const dpp::interaction_create_t& event)
 {
-    if (!guild) return false;
-    auto member_it = guild->members.find(user);
-    if (member_it == guild->members.end())
-        return false;
-
-    const auto& member = member_it->second;
-    /*
-    if (member.get_permissions() & dpp::p_administrator)
+    dpp::permission perms = event.command.get_resolved_permission(user);
+    if (perms.has(dpp::p_administrator) || perms.has(dpp::p_manage_guild))
         return true;
 
-    if (member.get_permissions() & dpp::p_manage_guild)
-        return true;
-
-    // Custom manager role
-    return MemberHasRole(
-        member,
-        settings.roles[static_cast<size_t>(Roles::Manager)]
-    );
-    */
     return false;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::guild* guild)
+bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::interaction_create_t& event)
 {
-    if (!guild) return false;
-    auto member_it = guild->members.find(user);
-    if (member_it == guild->members.end())
-        return false;
-
-    const auto& member = member_it->second;
-
-    //return (member.get_permissions() & dpp::p_administrator) != 0;
-
-    return false;
+    dpp::permission perms = event.command.get_resolved_permission(user);
+    if (perms.has(dpp::p_administrator))
+        return true;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -181,10 +159,7 @@ bool PermissionsMgr::IsManager(const dpp::snowflake& user, const dpp::guild* gui
         return false;
 
     const auto& member = member_it->second;
-    /*
-    if (member.get_permissions() & dpp::p_administrator)
-        return true;
-    */
+
     return HasRole( member, settings.roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)]);
 }
 
@@ -192,6 +167,7 @@ bool PermissionsMgr::IsManager(const dpp::snowflake& user, const dpp::guild* gui
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanCreateJob(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user,
     const dpp::guild* guild,
     const GuildSettings& settings)
@@ -200,7 +176,8 @@ bool PermissionsMgr::CanCreateJob(
     return IsGuildMember(user, guild) ||
            IsWorker(user, guild, settings) ||
            IsManager(user, guild, settings) ||
-           IsGuildAdmin(user, guild) ||
+           IsGuildAdmin(user, event) ||
+           IsMod(user, event) ||
            IsBotOwner(user);
 }
 
@@ -208,6 +185,7 @@ bool PermissionsMgr::CanCreateJob(
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAssignJob(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
     const std::shared_ptr<JobRequest>& job, 
     const dpp::guild* guild, 
@@ -217,7 +195,8 @@ bool PermissionsMgr::CanAssignJob(
     return IsRequestWorker(user, job) ||
            IsWorker(user, guild, settings) ||
            IsManager(user, guild, settings) ||
-           IsGuildAdmin(user, guild) ||
+           IsGuildAdmin(user, event) ||
+           IsMod(user, event) ||
            IsBotOwner(user);
 }
 
@@ -225,6 +204,7 @@ bool PermissionsMgr::CanAssignJob(
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanEditJob(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
     const std::shared_ptr<JobRequest>& job, 
     const dpp::guild* guild, 
@@ -236,7 +216,8 @@ bool PermissionsMgr::CanEditJob(
              IsRequestWorker(user, job) ||
              IsWorker(user, guild, settings) ||
              IsManager(user, guild, settings) ||
-             IsGuildAdmin(user, guild) ||
+             IsGuildAdmin(user, event) ||
+             IsMod(user, event) ||
              IsBotOwner(user);
 }
 
@@ -244,6 +225,7 @@ bool PermissionsMgr::CanEditJob(
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanDeleteJob(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
     const std::shared_ptr<JobRequest>& job, 
     const dpp::guild* guild, 
@@ -255,7 +237,8 @@ bool PermissionsMgr::CanDeleteJob(
              IsRequestWorker(user, job) ||
              IsWorker(user, guild, settings) ||
              IsManager(user, guild, settings) ||
-             IsGuildAdmin(user, guild) ||
+             IsGuildAdmin(user, event) ||
+             IsMod(user, event) ||
              IsBotOwner(user);
 }
 
@@ -263,6 +246,7 @@ bool PermissionsMgr::CanDeleteJob(
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAddNote(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
     const std::shared_ptr<JobRequest>& job, 
     const dpp::guild* guild, 
@@ -273,7 +257,8 @@ bool PermissionsMgr::CanAddNote(
            IsRequestWorker(user, job) ||
            IsWorker(user, guild, settings) ||
            IsManager(user, guild, settings) ||
-           IsGuildAdmin(user, guild) ||
+           IsGuildAdmin(user, event) ||
+           IsMod(user, event) ||
            IsBotOwner(user);
 }
 
@@ -281,12 +266,14 @@ bool PermissionsMgr::CanAddNote(
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
 bool PermissionsMgr::CanAccessAdminPanel(
+    const dpp::interaction_create_t& event,
     const dpp::snowflake& user,
     const dpp::guild* guild,
     const GuildSettings& settings)
 {
     if (!guild) return false;
-    return IsGuildAdmin(user, guild) ||
+    return IsGuildAdmin(user, event) ||
+           IsMod(user, event) ||
            IsManager(user, guild, settings) ||
            IsBotOwner(user);
 }

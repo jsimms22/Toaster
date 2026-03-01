@@ -215,9 +215,50 @@ namespace utils
 
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
-    // 
-    /*
-    void FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback)
+    //---------------------------------------------------------------------------------------------------------------------
+    dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id)
+    {
+        if (id == USERID_NULL)
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for guild id '{}'.", id));
+            return {};
+        }
+        else
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Retrieving guild data for id '{}'.", id));
+        }
+
+        std::promise<dpp::guild*> promise;
+        std::future<dpp::guild*> future = promise.get_future();
+        dpp::guild* guild = dpp::find_guild(id);
+        if (guild)
+        {
+            cluster.log(dpp::ll_debug, fmt::format("Found cached guild data '{}'.", guild->name));
+            promise.set_value(guild);
+            return future.get();
+        }
+
+        cluster.guild_get(id, [&promise, id](const dpp::confirmation_callback_t& callback)
+            {
+                if (!callback.is_error())
+                {
+                    dpp::guild response = std::get<dpp::guild>(callback.value);
+                    callback.bot->log(dpp::ll_debug, fmt::format("Found guild data '{}'.", response.name));
+                    promise.set_value(dpp::find_guild(id));
+                }
+                else
+                {
+                    promise.set_value({});  // Handle error case
+                }
+            });
+
+        return future.get();
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
+    void FindGuildCallback(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback)
     {
         if (id == USERID_NULL)
         {
@@ -247,50 +288,6 @@ namespace utils
                 }
             });
     }
-    */
-    //---------------------------------------------------------------------------------------------------------------------
-    dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id)
-    {
-        if (id == USERID_NULL)
-        {
-            cluster.log(dpp::ll_debug, fmt::format("Skipped look up for guild id '{}'.", id));
-            return {};
-        }
-        else
-        {
-            cluster.log(dpp::ll_debug, fmt::format("Retrieving guild data for id '{}'.", id));
-        }
-
-        std::promise<dpp::guild*> promise;
-        std::future<dpp::guild*> future = promise.get_future();
-        dpp::guild* guild = dpp::find_guild(id);
-        if (guild)
-        {
-            cluster.log(dpp::ll_debug, fmt::format("Found cached guild data '{}'.", guild->name));
-            promise.set_value(guild);
-            return future.get();
-        }
-
-        cluster.guild_get(id, [&promise](const dpp::confirmation_callback_t& callback)
-            {
-                if (!callback.is_error())
-                {
-                    dpp::guild guild = std::get<dpp::guild>(callback.value);
-                    callback.bot->log(dpp::ll_debug, fmt::format("Found guild data '{}'.", guild.name));
-
-                    // Manually cache the user
-                    dpp::guild* cache_guild = new dpp::guild(guild);
-                    dpp::get_guild_cache()->store(cache_guild);
-                    promise.set_value(cache_guild);
-                }
-                else
-                {
-                    promise.set_value({});  // Handle error case
-                }
-            });
-
-        return future.get();
-    }
 
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
@@ -302,9 +299,11 @@ namespace utils
 
         std::vector<std::pair<dpp::snowflake, std::string>> vWorkerList;
 
-        GuildSettings::Roles roleForType = settings.JobTypeToRole(job->JobType());
+        auto roleForType = settings.JobTypeToRole(job->JobType());
+        if (!roleForType.has_value())
+            return {};
 
-        auto role_id = settings.roles[static_cast<std::size_t>(roleForType)];
+        auto role_id = settings.roles[static_cast<std::size_t>(roleForType.value())];
 
         const auto pManager = PermissionsMgr::GetInstance();
         if (!role_id || !pManager)

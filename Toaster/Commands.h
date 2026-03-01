@@ -53,6 +53,81 @@ public:
 ///
 /// Provides bot and queue management panels for administrators.
 //---------------------------------------------------------------------------------------------------------------------
+class AdminConfigChannelsCommand : public ICustomCommand
+{
+public:
+    AdminConfigChannelsCommand()
+        : ICustomCommand(Command_ConfigChannels, "Set channel ids for various request announcements.")
+    {
+    }
+
+    virtual ~AdminConfigChannelsCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
+class AdminConfigPingCommand : public ICustomCommand
+{
+public:
+    AdminConfigPingCommand()
+        : ICustomCommand(Command_ConfigPing, "Set ping role and rules.")
+    {
+    }
+
+    virtual ~AdminConfigPingCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
+class AdminConfigRolesCommand : public ICustomCommand
+{
+public:
+    AdminConfigRolesCommand()
+        : ICustomCommand(Command_ConfigRoles, "Set roles for various worker archetypes.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the role to set for worker archetypes.", true)
+            .add_choice(dpp::command_option_choice("Item Crafter", Option_CraftingRole))
+            .add_choice(dpp::command_option_choice("Base Builder", Option_BuildingRole))
+            .add_choice(dpp::command_option_choice("Component Dealer", Option_CompDealerRole))
+            .add_choice(dpp::command_option_choice("Resource Gatherer", Option_ResourceRole))
+            .add_choice(dpp::command_option_choice("Refinery Worker", Option_RefiningRole))
+            .add_choice(dpp::command_option_choice("Hazardous Materials Collector", Option_HazmatRole))
+            .add_choice(dpp::command_option_choice("Manager", Option_ManagerRole)));
+        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Role ID.", true));
+    }
+
+    virtual ~AdminConfigRolesCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
 class AdminBotConfigCommand : public ICustomCommand
 {
 public:
@@ -318,6 +393,9 @@ namespace Toaster
     using CommandList = std::vector<ICustomCommand*>;
     static inline CommandList BotCommands
     {
+        new AdminConfigChannelsCommand(),
+        new AdminConfigPingCommand(),
+        new AdminConfigRolesCommand(),
         new AdminPanelCommand(),
         new WorkerPanelCommand(),
         //new ShowQueueCommand(),

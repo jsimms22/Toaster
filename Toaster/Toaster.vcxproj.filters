@@ -85,7 +85,7 @@
     <ClCompile Include="GeneralUserPanel.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="AdminBotConfigCommand.cpp">
+    <ClCompile Include="AdminConfigChannelsCommand.cpp">
       <Filter>Source Files\Commands</Filter>
     </ClCompile>
     <ClCompile Include="AdminConfigDialog.cpp">
@@ -93,6 +93,12 @@
     </ClCompile>
     <ClCompile Include="GuildSettings.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AdminConfigRolesCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="AdminConfigPingCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

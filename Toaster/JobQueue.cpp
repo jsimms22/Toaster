@@ -29,14 +29,33 @@ JobQueue::JobQueue()
     m_worker = std::jthread(&JobQueue::MutationWorker, this);
 
     tinyxml2::XMLDocument doc;
-    doc.LoadFile("queue.xml");
+    const char* path = "../queue.xml";
 
-    // Get the root element (<RequestQueue>)
+    tinyxml2::XMLError result = doc.LoadFile(path);
+
+    if (result == tinyxml2::XML_ERROR_FILE_NOT_FOUND)
+    {
+        // Create new file with root
+        auto* root = doc.NewElement("RequestList");
+        doc.InsertEndChild(root);
+
+        doc.SaveFile(path);
+        return; // No jobs
+    }
+
+    if (result != tinyxml2::XML_SUCCESS)
+    {
+        // Handle corrupted file if desired
+        return;
+    }
+
     tinyxml2::XMLElement* root = doc.RootElement();
     if (!root)
     {
         root = doc.NewElement("RequestList");
         doc.InsertEndChild(root);
+        doc.SaveFile(path);
+        return;
     }
 
     // Iterate over all <Request> elements within each <User>
@@ -199,7 +218,7 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 void JobQueue::SaveQueueToFile()
 {
     tinyxml2::XMLDocument doc;
-    doc.LoadFile("queue.xml");
+    doc.LoadFile("../queue.xml");
     doc.Clear();
 
     // Get the root element (<RequestQueue>)
@@ -223,7 +242,7 @@ void JobQueue::SaveQueueToFile()
     }
 
     // Save the updated XML to a file
-    doc.SaveFile("queue.xml");
+    doc.SaveFile("../queue.xml");
 }
 
 //---------------------------------------------------------------------------------------------------------------------

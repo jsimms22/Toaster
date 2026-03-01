@@ -30,7 +30,7 @@ void ShowQueueSummaryCommand::ExecuteInteraction(CommandContext& ctx, const dpp:
     const auto pManager = PermissionsMgr::GetInstance();
     if (!(pManager->IsWorker(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
           pManager->IsManager(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
-          pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          pManager->IsGuildAdmin(author.id, event) ||
           pManager->IsBotOwner(author.id)) && !ctx.debug)
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));

@@ -27,8 +27,7 @@ void AdminPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inter
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
 
     const auto pManager = PermissionsMgr::GetInstance();
-    if (!(pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-          pManager->IsBotOwner(author.id)) && !ctx.debug)
+    if (!pManager->CanAccessAdminPanel(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
@@ -125,11 +124,71 @@ dpp::message AdminPanelCommand::CreateBotPanel(CommandContext& ctx, const dpp::i
 //---------------------------------------------------------------------------------------------------------------------
 dpp::embed AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const
 {
-    // todo stats on bot
+    auto FormatChannel = [](const std::optional<dpp::snowflake>& id)
+        {
+            return id.has_value()
+                ? fmt::format("<#{}>", *id)
+                : std::string("*Not Set*");
+        };
+
+    auto FormatRole = [](const std::optional<dpp::snowflake>& id)
+        {
+            return id.has_value()
+                ? fmt::format("<@&{}>", *id)
+                : std::string("*Not Set*");
+        };
+
+    const std::string settings = fmt::format(
+        "## Channel Announcements\n"
+        "**New Job:** {}\n"
+        "**Update Job:** {}\n"
+        "**Delete Job:** {}\n"
+        "**Complete Job:** {}\n\n"
+
+        "## Cooldown\n"
+        "**Announcement Cooldown:** {} seconds\n\n"
+
+        "## Ping Rules\n"
+        "**On New:** {}\n"
+        "**On Update:** {}\n"
+        "**On Delete:** {}\n"
+        "**On Complete:** {}\n\n"
+
+        "## Roles\n"
+        "**General Ping Role:** {}\n"
+        "**Crafter:** {}\n"
+        "**Builder:** {}\n"
+        "**Component:** {}\n"
+        "**Gatherer:** {}\n"
+        "**Refiner:** {}\n"
+        "**Hazmat:** {}\n"
+        "**Manager:** {}\n",
+
+        FormatChannel(ctx.guild.idNewJobChannel),
+        FormatChannel(ctx.guild.idUpdateJobChannel),
+        FormatChannel(ctx.guild.idDeleteJobChannel),
+        FormatChannel(ctx.guild.idCompleteJobChannel),
+
+        ctx.guild.announcement_cooldown.count(),
+
+        ctx.guild.bPingOnNew ? "Enabled" : "Disabled",
+        ctx.guild.bPingOnUpdate ? "Enabled" : "Disabled",
+        ctx.guild.bPingOnDelete ? "Enabled" : "Disabled",
+        ctx.guild.bPingOnComplete ? "Enabled" : "Disabled",
+
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Crafter)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Builder)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Comp)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Gatherer)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Refiner)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Hazmat)]),
+        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)])
+    );
 
     dpp::embed embed;
     embed.set_title("Bot Admin Panel:")
-        .set_description(fmt::format("Beep..."))
+        .set_description(settings)
         .set_color(0x3498db);
 
     return embed;

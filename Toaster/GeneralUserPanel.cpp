@@ -64,7 +64,7 @@ void GeneralUserPanel::EditButton(const std::string& id, CommandContext& ctx, co
 	}
 
 	const auto pManager = PermissionsMgr::GetInstance();
-	if (pManager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
+	if (pManager->CanEditJob(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		EditRequestDlg modal(job);
 		event.dialog(modal);
@@ -98,7 +98,7 @@ void GeneralUserPanel::NoteButton(const std::string& id, CommandContext& ctx, co
 	}
 
 	const auto pManager = PermissionsMgr::GetInstance();
-	if (pManager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
+	if (pManager->CanAddNote(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		/* todo add note functionality to job class */
 		event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
@@ -135,7 +135,7 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 	}
 
 	const auto pManager = PermissionsMgr::GetInstance();
-	if (pManager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
+	if (pManager->CanDeleteJob(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
 		event.dialog(modal);

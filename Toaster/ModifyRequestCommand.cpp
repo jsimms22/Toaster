@@ -57,13 +57,13 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     const auto pManager = PermissionsMgr::GetInstance();
     dpp::guild* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
 
-    if (strCmdID == Option_Edit && pGuild && (pManager->CanEditJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    if (strCmdID == Option_Edit && pGuild && (pManager->CanEditJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         EditRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         const auto vWorkerList = utils::BuildWorkerList(pGuild, job, ctx.guild);
         const std::string strCurrentWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
@@ -71,19 +71,19 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Status && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Status && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         StatusChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Priority && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Priority && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         PriorityChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         event.dialog(modal);
@@ -214,13 +214,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     utils::GuidToStringNoBrackets(job->GetID()), author.global_name, jobDetails));
         }
 
-        // todo announce in a specific channel
-        dpp::embed announce;
-        announce.set_title("Job Request Edited")
-            .set_description(jobDetails)
-            .set_color(0x00b0f4);
-
-        ctx.cluster.message_create(dpp::message(ctx.guild.idUpdateJobChannel, "This is a test.").add_embed(announce));
+        GuildSettings::AnnounceOnUpdate(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle AssignRequestDlg
@@ -305,6 +299,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
         }
+
+        GuildSettings::AnnounceOnComplete(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle PriorityChangeRequestDlg
@@ -365,7 +361,10 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         const dpp::user author = event.command.get_issuing_user();
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+        const std::size_t jobType = job->JobType();
         const dpp::snowflake customerID = job->GetCustomerID();
+        const bool bNotifyCustomer = job->IsCustomerSubscribed();
+
         const bool result = ctx.queue->RequestDeleteJobByGUID(utils::StringToGuid("{" + strID + "}")).get();
         if (!result)
         {
@@ -383,7 +382,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_warning,fmt::format("{} deleted {}. Reason: {}",author.global_name,strID,strJustification));
 
         // Notify original customer if needed
-        if ((job->IsCustomerSubscribed() && event.command.usr.id != customerID) || ctx.debug)
+        if ((bNotifyCustomer && event.command.usr.id != customerID) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster,
                                    customerID,
@@ -395,13 +394,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                                         jobDetails));
         }
 
-        // todo announce in a specific channel
-        dpp::embed announce;
-        announce.set_title("Job Request Deleted")
-            .set_description(jobDetails)
-            .set_color(0x00b0f4);
-
-        ctx.cluster.message_create(dpp::message(ctx.guild.idUpdateJobChannel, "This is a test.").add_embed(announce));
+        GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails);
     }
 }
 

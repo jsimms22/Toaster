@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -27,7 +28,7 @@ public:
 	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, 
 			   const std::shared_ptr<JobQueue>& spQueue, 
 		       const bool bDebug = false);
-	~ToasterBot() = default;
+	~ToasterBot() { SaveGuildSettings(); }
 
 	// Bot event handlers
 	void onReady(const dpp::ready_t& event);
@@ -38,6 +39,11 @@ public:
 	void onFormSubmit(const dpp::form_submit_t& event);
 	
 private:
+	mutable std::shared_mutex m_mtxShared;
+
+	void LoadGuildSettings();
+	void SaveGuildSettings();
+
 	bool m_debug = false;
 
 	std::shared_ptr<JobQueue> m_spQueue;

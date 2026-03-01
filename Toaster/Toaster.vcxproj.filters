@@ -91,6 +91,9 @@
     <ClCompile Include="AdminConfigDialog.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="GuildSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -155,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="AdminConfigDialog.h">
       <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="GuildSettings.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

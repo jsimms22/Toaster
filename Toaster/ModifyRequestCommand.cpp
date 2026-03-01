@@ -40,7 +40,6 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         return;
     }
 
-    const dpp::snowflake guild = event.command.guild_id;
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Cmd));
 
@@ -55,47 +54,36 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         return;
     }
 
-    //-------------------------------------------------------------------------------------------------------------
-    // Route command option to appropriate modal dialog
-    //-------------------------------------------------------------------------------------------------------------
-    if (strCmdID == Option_Edit && 
-        ctx.manager->CanEditJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    const auto pManager = PermissionsMgr::GetInstance();
+    dpp::guild* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+
+    if (strCmdID == Option_Edit && pGuild && (pManager->CanEditJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         EditRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Assign && 
-            ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
-        const std::string current = job->GetWorkerName(ctx.cluster,event.command.guild_id);
-
-        std::unordered_map<dpp::snowflake, std::string> mapWorkerNames;
-        for (const auto& id : ctx.workers)
-        {
-            mapWorkerNames[id] = utils::FindPreferredNameByID(ctx.cluster, id, event.command.guild_id);
-        }
-
-        AssignRequestDlg modal(job, mapWorkerNames, current);
+        const auto vWorkerList = utils::BuildWorkerList(pGuild, job, ctx.guild);
+        const std::string strCurrentWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
+        AssignRequestDlg modal(job, vWorkerList, strCurrentWorker);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Status &&
-            ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    else if (strCmdID == Option_Status && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         StatusChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Priority &&
-            ctx.manager->CanAssignJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    else if (strCmdID == Option_Priority && pGuild && (pManager->CanAssignJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         PriorityChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Delete &&
-        ctx.manager->CanDeleteJob(author.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+    else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         event.dialog(modal);
@@ -218,15 +206,21 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
-        const std::string strNewJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldJobDetails != strNewJobDetails) || ctx.debug)
+        const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldJobDetails != jobDetails) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
-                    utils::GuidToStringNoBrackets(job->GetID()), author.global_name, strNewJobDetails));
+                    utils::GuidToStringNoBrackets(job->GetID()), author.global_name, jobDetails));
         }
 
         // todo announce in a specific channel
+        dpp::embed announce;
+        announce.set_title("Job Request Edited")
+            .set_description(jobDetails)
+            .set_color(0x00b0f4);
+
+        ctx.cluster.message_create(dpp::message(ctx.guild.idUpdateJobChannel, "This is a test.").add_embed(announce));
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle AssignRequestDlg
@@ -402,6 +396,12 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
 
         // todo announce in a specific channel
+        dpp::embed announce;
+        announce.set_title("Job Request Deleted")
+            .set_description(jobDetails)
+            .set_color(0x00b0f4);
+
+        ctx.cluster.message_create(dpp::message(ctx.guild.idUpdateJobChannel, "This is a test.").add_embed(announce));
     }
 }
 

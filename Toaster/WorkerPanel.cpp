@@ -50,7 +50,15 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
     const std::string guid = parts[2];
 
     auto job = ctx.queue->GetJobByGUID(guid);
-    if (job && job->GetWorkerID() == worker && job->GetStatus() < JobRequest::status::complete)
+    if (!job)
+    {
+        event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
+    const auto pManager = PermissionsMgr::GetInstance();
+    if ((pManager->CanAssignJob(worker,job,utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && 
+         job->GetStatus() < JobRequest::status::complete) || ctx.debug)
     {
         ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
             {
@@ -89,6 +97,16 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
     if (!job)
     {
         event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!pManager->CanAssignJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
+    {
+        // Permission denied
+        event.reply(dpp::message("You do not have permissions to change assignments for this job.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to reassign a job with a button.", user));
+        return;
     }
 
     if (job->GetStatus() < JobRequest::status::complete)

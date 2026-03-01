@@ -1,4 +1,7 @@
 #include "BotUtility.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
+#include "JobRequest.h"
 // microsoft
 #include <objbase.h>
 // fmt
@@ -212,6 +215,39 @@ namespace utils
 
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
+    // 
+    /*
+    void FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback)
+    {
+        if (id == USERID_NULL)
+        {
+            callback(nullptr);
+            return;
+        }
+
+        if (auto* guild = dpp::find_guild(id))
+        {
+            callback(guild);
+            return;
+        }
+
+        cluster.guild_get(id,
+            [callback](const dpp::confirmation_callback_t& cc)
+            {
+                if (!cc.is_error())
+                {
+                    auto guild = std::get<dpp::guild>(cc.value);
+
+                    // Now properly in DPP cache
+                    callback(dpp::find_guild(guild.id));
+                }
+                else
+                {
+                    callback(nullptr);
+                }
+            });
+    }
+    */
     //---------------------------------------------------------------------------------------------------------------------
     dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
@@ -254,6 +290,48 @@ namespace utils
             });
 
         return future.get();
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
+    std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<JobRequest>& job, const GuildSettings& settings)
+    {
+        if (!guild)
+            return {};
+
+        std::vector<std::pair<dpp::snowflake, std::string>> vWorkerList;
+
+        GuildSettings::Roles roleForType = settings.JobTypeToRole(job->JobType());
+
+        auto role_id = settings.roles[static_cast<std::size_t>(roleForType)];
+
+        const auto pManager = PermissionsMgr::GetInstance();
+        if (!role_id || !pManager)
+            return {};
+
+        for (const auto& member_pair : guild->members)
+        {
+            const auto& member = member_pair.second;
+
+            if (pManager->HasRole(member, role_id))
+            {
+                vWorkerList.push_back({
+                    member.user_id,
+                    member.get_nickname().empty()
+                        ? member.get_user()->username
+                        : member.get_nickname()
+                    });
+            }
+        }
+
+        std::sort(vWorkerList.begin(), vWorkerList.end(),
+            [](const std::pair<dpp::snowflake, std::string>& a, const std::pair<dpp::snowflake, std::string>& b)
+            {
+                return a.second < b.second;
+            });
+
+        return vWorkerList;
     }
 
     //---------------------------------------------------------------------------------------------------------------------

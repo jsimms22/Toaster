@@ -93,7 +93,7 @@ auto main() -> int
          * Channel caching:  none
          * Guild caching:    none
          */
-        dpp::cache_policy_t cp = { dpp::cp_aggressive, dpp::cp_none, dpp::cp_aggressive, dpp::cp_aggressive, dpp::cp_none };
+        dpp::cache_policy_t cp = { dpp::cp_aggressive, dpp::cp_none, dpp::cp_aggressive, dpp::cp_aggressive, dpp::cp_aggressive };
 
         // Reinitialize our bot to reestablish connection to discord
         dpp::cluster bot{ BOT_TOKEN };

@@ -1,6 +1,8 @@
 #include "RequestDlg.h"
 
 #include "BotUtility.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
@@ -410,11 +412,25 @@ void AssignRequestDlg::InitializeControls()
     WorkerAssignSelect.set_label("Assign Task")
         .set_type(dpp::cot_selectmenu)
         .set_default_value(m_svWorker)
-        .set_id(Component_Assignment);
+        .set_id(Component_Assignment)
+        .set_min_values(1)
+        .set_max_values(1);
 
-    for (const auto& worker : m_mapWorkersList)
+    for (const auto& [id, name] : m_workers)
     {
-        WorkerAssignSelect.add_select_option(dpp::select_option(worker.second, std::to_string(worker.first), ""));
+        dpp::select_option option{name, std::to_string(id), ""};
+
+        if (std::to_string(id) == m_svWorker)
+        {
+            option.set_default(true);
+        }
+
+        WorkerAssignSelect.add_select_option(option);
+    }
+
+    if (m_workers.empty())
+    {
+        WorkerAssignSelect.add_select_option(dpp::select_option("No Workers Available", "0", ""));
     }
 
     StatusUpdateSelect.set_label("Update Status")

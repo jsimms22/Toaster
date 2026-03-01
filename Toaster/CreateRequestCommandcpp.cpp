@@ -44,6 +44,15 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
 
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!pManager->CanCreateJob(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
+    {
+        // Permission denied
+        event.reply(dpp::message("You do not have permissions to create requests.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to create a request with command {}.", author.global_name, strCmdID));
+        return;
+    }
+
     if (strCmdID == Option_ItemCrafting)
     {
         CraftRequestDlg modal;
@@ -192,8 +201,28 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
     // Edit the original message
     event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
+    /*
+    // Determine role to ping
+    std::string roleMention;
 
+    if (auto roleOpt = ConvertJobTypeToRole(job->GetType()); roleOpt.has_value())
+    {
+        auto roleEnum = *roleOpt;
+        auto roleSnowflake = ctx.settings.roles[static_cast<size_t>(roleEnum)];
+
+        if (roleSnowflake.has_value())
+        {
+            roleMention = "<@&" + std::to_string(*roleSnowflake) + ">";
+        }
+    }
+    */
     // todo announce in a specific channel
+    dpp::embed announce;
+    announce.set_title("New Job Request")
+        .set_description(jobDetails)
+        .set_color(0x00b0f4);
+
+    ctx.cluster.message_create(dpp::message(ctx.guild.idNewJobChannel, "This is a test.").add_embed(announce));
 }
 
 //---------------------------------------------------------------------------------------------------------------------

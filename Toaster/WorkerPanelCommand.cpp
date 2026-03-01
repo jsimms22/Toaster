@@ -31,18 +31,19 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
 
+    // Check Permissions
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!(pManager->IsWorker(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
+        pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+        pManager->IsBotOwner(author.id)) && !ctx.debug)
+    {
+        event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
+        return;
+    }
+
     if (strCmdID == Option_AllAssignments)
     {
-        // Check Permissions
-        if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
-            ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-            ctx.manager->IsBotOwner(author.id)))
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
-            return;
-        }
-
         // Return early if queue is empty
         if (ctx.queue->GetQueueSize() == 0)
         {
@@ -73,16 +74,6 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     }
     else if (strCmdID == Option_Overview)
     {
-        // Check Permissions
-        if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
-            ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-            ctx.manager->IsBotOwner(author.id)))
-        {
-            event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
-            return;
-        }
-
         // Acknowledge immediately to avoid timing out
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 

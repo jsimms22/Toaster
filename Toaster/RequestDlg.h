@@ -13,6 +13,8 @@
 #include <string_view>
 #include <string>
 
+class GuildSettings;
+
 //---------------------------------------------------------------------------------------------------------------------
 /// \class CraftRequestDlg
 /// \brief 
@@ -174,9 +176,9 @@ class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
 	AssignRequestDlg(const std::shared_ptr<JobRequest>& job,
-					 const std::unordered_map<dpp::snowflake, std::string>& mapWorkerList,
+				     const std::vector<std::pair<dpp::snowflake, std::string>>& workers,
 					 const std::string& worker = "")
-		: dpp::interaction_modal_response(), m_spJob(job), m_mapWorkersList(mapWorkerList), m_svWorker(worker)
+		: dpp::interaction_modal_response(), m_spJob(job), m_workers(workers), m_svWorker(worker)
 	{
 		set_custom_id(modalID);
 		set_title(modalDesc);
@@ -188,6 +190,7 @@ public:
 	static const std::string modalID;
 	static const std::string modalDesc;
 
+	void BuildWorkerList();
 	void InitializeControls();
 	void AddChildrenComponents();
 
@@ -197,7 +200,7 @@ private:
 	dpp::component StatusUpdateSelect;
 
 	std::shared_ptr<JobRequest> m_spJob;
-	std::unordered_map<dpp::snowflake, std::string> m_mapWorkersList;
+	std::vector<std::pair<dpp::snowflake, std::string>> m_workers;
 	std::string m_svWorker;
 };
 

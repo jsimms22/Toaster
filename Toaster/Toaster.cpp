@@ -16,7 +16,6 @@
 #include <guiddef.h>
 // std library
 #include <chrono>
-#include <unordered_map>
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor
@@ -37,7 +36,7 @@ void ToasterBot::onReady(const dpp::ready_t& event)
     if (dpp::run_once<struct register_bot_commands>())
     {
         //ICustomCommand::RegisterAll(&m_cluster, Toaster::BotCommands);
-        //ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
+        ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
     }
 }
 
@@ -82,7 +81,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance()};
+    CommandContext ctx{ m_cluster, m_spQueue, g_settings[event.command.guild_id], m_debug };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteCommand(ctx, event);
@@ -119,7 +118,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
+    CommandContext ctx{ m_cluster, m_spQueue, g_settings[event.command.guild_id], m_debug };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteInteraction(ctx, event);
@@ -156,7 +155,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
+    CommandContext ctx{ m_cluster, m_spQueue, g_settings[event.command.guild_id], m_debug };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteFormSubmit(ctx, event);
@@ -193,7 +192,7 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
         start = std::chrono::steady_clock::now();
     }
 
-    CommandContext ctx{ m_cluster, m_spQueue, m_debug, m_vWorkers, PermissionsMgr::GetInstance() };
+    CommandContext ctx{ m_cluster, m_spQueue, g_settings[event.command.guild_id], m_debug };
     for (auto cmd : Toaster::BotCommands)
     {
         cmd->ExecuteButtonClick(ctx, event);

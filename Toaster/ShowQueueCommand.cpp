@@ -26,9 +26,11 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
 
     // Check Permissions
     const dpp::user author = event.command.get_issuing_user();
-    if (!(ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
-          ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-          ctx.manager->IsBotOwner(author.id)))
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!(pManager->IsWorker(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
+          pManager->IsManager(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
+          pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          pManager->IsBotOwner(author.id)) && !ctx.debug)
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));

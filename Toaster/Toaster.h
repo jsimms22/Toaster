@@ -3,12 +3,17 @@
 /// \brief
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
+#include "GuildSettings.h"
 // d++
-#include <dpp/dispatcher.h>
 #include <dpp/cluster.h>
+#include <dpp/dispatcher.h>
 // std library
+#include <cstdlib>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 class JobQueue;
 
@@ -18,45 +23,6 @@ class JobQueue;
 //---------------------------------------------------------------------------------------------------------------------
 class ToasterBot final
 {
-	using JobType = std::size_t;
-	using WorkerList = std::vector<dpp::snowflake>;
-
-	struct GuildJobSettings
-	{
-		std::unordered_map<JobType, WorkerList> mapWorkers;
-		dpp::snowflake idNewJobChannel;
-		dpp::snowflake idUpdateJobChannel;
-		dpp::snowflake idCompleteJobChannel;
-		std::chrono::seconds announcement_cooldown{ 0 };
-		bool bPingOnNew{ true };
-		bool bPingOnUpdates{ false };
-		bool bPingOnCompleted{ false };
-
-		std::optional<dpp::snowflake> ping_role_id;
-
-		const WorkerList& GetWorkers(JobType type) const
-		{
-			const auto it = mapWorkers.find(type);
-			if (it != mapWorkers.cend())
-				return it->second;
-			else
-				return WorkerList{};
-		}
-
-		void RemoveWorker(const JobType type, const dpp::snowflake& user)
-		{
-			auto it = mapWorkers.find(type);
-			if (it == mapWorkers.end())
-				return;
-
-			auto& workers = it->second;
-			std::erase_if(workers, [&user](const dpp::snowflake& worker) { return worker == user; });
-		}
-		void SetWorker(const JobType type, const dpp::snowflake& user) { mapWorkers[type].push_back(user); }
-		bool HasAnnouncementChannel() const { return (idNewJobChannel || idUpdateJobChannel || idCompleteJobChannel); };
-		bool HasPingRole() const { return ping_role_id.has_value(); }
-	};
-
 public:
 	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, 
 			   const std::shared_ptr<JobQueue>& spQueue, 
@@ -88,7 +54,7 @@ private:
 		195997205864120320 
 	};
 
-	std::unordered_map<dpp::snowflake, GuildJobSettings> g_settings;
+	std::unordered_map<dpp::snowflake, GuildSettings> g_settings;
 
 };
 

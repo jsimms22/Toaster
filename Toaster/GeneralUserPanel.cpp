@@ -57,15 +57,17 @@ void GeneralUserPanel::EditButton(const std::string& id, CommandContext& ctx, co
 	const std::string guid = parts[2];
 
 	auto job = ctx.queue->GetJobByGUID(guid);
-	if (job && ctx.manager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	if (pManager->CanEditJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		EditRequestDlg modal(job);
 		event.dialog(modal);
-	}
-	else if (!job)
-	{
-		event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-		return;
 	}
 	else
 	{
@@ -89,18 +91,20 @@ void GeneralUserPanel::NoteButton(const std::string& id, CommandContext& ctx, co
 	const std::string guid = parts[2];
 
 	auto job = ctx.queue->GetJobByGUID(guid);
-	if (job && ctx.manager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	if (pManager->CanAddNote(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		/* todo add note functionality to job class */
 		event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
 		return;
 
 		// todo note modal dlg
-	}
-	else if (!job)
-	{
-		event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-		return;
 	}
 	else
 	{
@@ -124,15 +128,17 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 	const std::string guid = parts[2];
 
 	auto job = ctx.queue->GetJobByGUID(guid);
-	if (job && ctx.manager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id)))
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	if (pManager->CanDeleteJob(user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
 		DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
 		event.dialog(modal);
-	}
-	else if (!job)
-	{
-		event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-		return;
 	}
 	else
 	{

@@ -44,7 +44,14 @@ void CustomerPanel::SubscribeButton(const std::string& id, CommandContext& ctx, 
     const std::string guid = parts[2];
 
     auto job = ctx.queue->GetJobByGUID(guid);
-    if (job && ctx.manager->IsRequestOwner(user, job))
+    if (!job)
+    {
+        event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (pManager->IsRequestOwner(user, job))
     {
         // Grab job details now before we send an edit request
         const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());

@@ -40,12 +40,13 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
     }
 
     const dpp::user author = event.command.get_issuing_user();
-
-    if (!(ctx.manager->IsRequestOwner(author.id, job) ||
-          ctx.manager->IsRequestWorker(author.id, job) ||
-          ctx.manager->IsActiveWorker(author.id, ctx.workers) ||
-          ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-          ctx.manager->IsBotOwner(author.id)))
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!(pManager->IsRequestOwner(author.id, job) ||
+          pManager->IsRequestWorker(author.id, job) ||
+          pManager->IsWorker(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
+          pManager->IsManager(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) ||
+          pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          pManager->IsBotOwner(author.id)) && !ctx.debug)
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));
@@ -67,7 +68,7 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 //---------------------------------------------------------------------------------------------------------------------
 void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    const std::string id = event.custom_id; // "showrequest_type:workerid:guid"
+    const std::string id = event.custom_id;
 
     if (id.starts_with(fmt::format("{}_complete:", this->name)))
     {
@@ -137,7 +138,14 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
     }
 }
 
-dpp::message ShowRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const
+//---------------------------------------------------------------------------------------------------------------------
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+dpp::message ShowRequestCommand::SendPanel(
+    CommandContext& ctx, 
+    const dpp::interaction_create_t& event, 
+    const std::shared_ptr<JobRequest>& job, 
+    const dpp::snowflake& user) const
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {

@@ -26,8 +26,9 @@ void AdminPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inter
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
 
-    if (!(ctx.manager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
-         ctx.manager->IsBotOwner(author.id)))
+    const auto pManager = PermissionsMgr::GetInstance();
+    if (!(pManager->IsGuildAdmin(author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id)) ||
+          pManager->IsBotOwner(author.id)) && !ctx.debug)
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' was DENIED access to use '{}' command", author.id, event.command.get_command_name()));

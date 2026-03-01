@@ -15,6 +15,7 @@ constexpr std::size_t JOB_TYPE_BUILDING	{ 30 };
 constexpr std::size_t JOB_TYPE_RESOURCE	{ 40 };
 constexpr std::size_t JOB_TYPE_REFINERY	{ 50 };
 constexpr std::size_t JOB_TYPE_COMPONENT{ 60 };
+constexpr std::size_t JOB_TYPE_HAZARD	{ 70 };
 
 /*------------------------------COMPONENT IDS-----------------------------------*/
 constexpr const char* Component_RequestID		{ "request_id" };

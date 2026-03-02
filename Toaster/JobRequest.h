@@ -66,15 +66,15 @@ public:
 
     const priority GetPriority() const { return m_eJobPriority; }
     void SetPriority(const priority p) { m_eJobPriority = p; }
-    static std::string PriorityToString(priority p);
+    static std::string PriorityToString(const priority p);
     static priority StringToPriority(const std::string& str);
-    static const char* PriorityToEmoji(priority p);
+    static const char* PriorityToEmoji(const priority p);
 
     const status GetStatus() const { return m_eJobStatus; }
     void SetStatus(const status s) { m_eJobStatus = s; }
-    static std::string StatusToString(status s);
+    static std::string StatusToString(const status s);
     static status StringToStatus(const std::string& str);
-    static const char* StatusToEmoji(status s);
+    static const char* StatusToEmoji(const status s);
 
     const GUID& GetID() const { return m_id; }
 
@@ -88,7 +88,7 @@ public:
     virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
-    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
+    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const;
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 

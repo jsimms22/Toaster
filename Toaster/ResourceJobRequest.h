@@ -26,7 +26,7 @@ public:
     ResourceJobRequest() = default;
     ~ResourceJobRequest() = default;
 
-    static std::string StateToString(ResourceJobRequest::state s);
+    static std::string StateToString(const ResourceJobRequest::state s);
     static ResourceJobRequest::state StringToState(const std::string& str);
 
     const ResourceJobRequest::state GetResourceState() const { return m_eResourceState; }
@@ -41,7 +41,7 @@ public:
     virtual std::size_t JobType() const override { return JOB_TYPE_RESOURCE; }
     virtual std::string JobTypeToString() const override { return "Resource"; }
     virtual bool SupportsType(const std::size_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
-    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) override;
+    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const override;
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) override;
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const override;
 

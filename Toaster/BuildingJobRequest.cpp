@@ -12,9 +12,9 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode || !xmlParent)
     {
         return;
     }
@@ -32,7 +32,7 @@ void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode)
     {
         return;
     }

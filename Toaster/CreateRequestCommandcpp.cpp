@@ -20,6 +20,7 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 #include "RefineryJobRequest.h"
+#include "HazardousRequest.h"
 
 #include "WorkerPanel.h"
 #include "CustomerPanel.h"
@@ -78,6 +79,11 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         RefineryRequestDlg modal;
         event.dialog(modal);
     }
+    else if (strCmdID == Option_HazardousJob)
+    {
+        HazardousRequestDlg modal;
+        event.dialog(modal);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -93,10 +99,11 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 {
     if (!ctx.queue || 
         !(event.custom_id == CraftRequestDlg::modalID ||
-        event.custom_id == BuildRequestDlg::modalID ||
-        event.custom_id == ComponentRequestDlg::modalID ||
-        event.custom_id == ResourceRequestDlg::modalID ||
-        event.custom_id == RefineryRequestDlg::modalID))
+          event.custom_id == BuildRequestDlg::modalID ||
+          event.custom_id == ComponentRequestDlg::modalID ||
+          event.custom_id == ResourceRequestDlg::modalID ||
+          event.custom_id == RefineryRequestDlg::modalID ||
+          event.custom_id == HazardousRequestDlg::modalID))
     {
         return;
     }
@@ -191,6 +198,20 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobDetails = jobRefine->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
         ctx.queue->RequestAddToQueue(std::move(jobRefine));
+    }
+    else if (event.custom_id == HazardousRequestDlg::modalID)
+    {
+        std::shared_ptr<HazardousRequest> jobHazard = std::make_shared<HazardousRequest>();
+        jobID = jobHazard->GetID();
+        jobHazard->SetCustomerID(author.id);
+        jobHazard->SetSCHandle(strSCHandle);
+        jobHazard->SetThreatLevel(HazardousRequest::StringToThreat(strParam1));
+        jobHazard->SetItemLocation(strParam2);
+        jobHazard->SetItemList(strParam3);
+        jobHazard->SetPriority(JobRequest::StringToPriority(strParam4));
+        jobDetails = jobHazard->PrintJobDetails(ctx.cluster, event.command.guild_id);
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, utils::GuidToStringNoBrackets(jobID)));
+        ctx.queue->RequestAddToQueue(std::move(jobHazard));
     }
 
     std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(jobID);

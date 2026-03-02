@@ -127,8 +127,9 @@ bool PermissionsMgr::IsWorker(const dpp::snowflake& user, const dpp::guild* guil
 
     const auto& member = member_it->second;
 
-    const std::array<GuildSettings::Roles, 6> worker_roles =
+    const std::array<GuildSettings::Roles, 7> worker_roles =
     {
+        GuildSettings::Roles::Ping,
         GuildSettings::Roles::Crafter,
         GuildSettings::Roles::Builder,
         GuildSettings::Roles::Comp,

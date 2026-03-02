@@ -60,7 +60,6 @@ void CustomerPanel::SubscribeButton(const std::string& id, CommandContext& ctx, 
         ctx.queue->RequestModifyJob(job->GetID(), [bSubscribe](std::shared_ptr<JobRequest> job)
             {
                 job->SubscribeCustomer(bSubscribe);
-                job->SetLastEditTime(utils::GetEpochTimestamp());
             });
 
         ctx.cluster.log(dpp::ll_info, fmt::format("User changed subscribed status for '{}' to '{}'.", strJobID, bSubscribe ? "Subscribe" : "Unsubscribe"));

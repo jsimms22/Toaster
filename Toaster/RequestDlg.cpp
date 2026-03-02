@@ -9,6 +9,7 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 #include "RefineryJobRequest.h"
+#include "HazardousRequest.h"
 // d++
 #include <dpp/unicode_emoji.h>
 
@@ -26,6 +27,9 @@ const std::string ResourceRequestDlg::modalDesc = "Submit Resource Collection Re
 
 const std::string RefineryRequestDlg::modalID = "RefineryRequestModal";
 const std::string RefineryRequestDlg::modalDesc = "Submit Refinery Job";
+
+const std::string HazardousRequestDlg::modalID = "HazardousRequestModal";
+const std::string HazardousRequestDlg::modalDesc = "Submit Hazardous Item Retrieval Request";
 
 const std::string AssignRequestDlg::modalID = "AssignRequestModal";
 const std::string AssignRequestDlg::modalDesc = "Assign Job Request To Worker";
@@ -397,6 +401,77 @@ void RefineryRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+void HazardousRequestDlg::InitializeControls()
+{
+    // Create a text box component
+    CitizenHandleEdit.set_label("Star Citizen Handle")
+        .set_type(dpp::cot_text)
+        .set_placeholder("")
+        .set_min_length(1)
+        .set_max_length(128)
+        .set_required(true)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_CitizenID);
+
+    // Create a combo box component
+    ThreatLevelSelect.set_label("Expected Threat Level")
+        .set_type(dpp::cot_selectmenu)
+        .set_placeholder("Select Threat Level")
+        .add_select_option(dpp::select_option("Permissive", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Permissive), "No threats expected.").set_emoji(dpp::unicode_emoji::green_circle))
+        .add_select_option(dpp::select_option("Minimal", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Minimal), "Minimal to low threat expected.").set_emoji(dpp::unicode_emoji::orange_circle))
+        .add_select_option(dpp::select_option("Uncertain", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Uncertain), "Unknown hostility level.").set_emoji(dpp::unicode_emoji::black_circle))
+        .add_select_option(dpp::select_option("Hostile", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Hostile), "High likelihood of combat").set_emoji(dpp::unicode_emoji::red_circle))
+        .set_id(Component_ThreatLevel);
+
+    // Create a text box component
+    HazResourceZoneEdit.set_label("Hazardous Item Location")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Zone or Region")
+        .set_min_length(1)
+        .set_max_length(256)
+        .set_required(true)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_hazItemZone);
+
+    // Create a text box component
+    HazResourceListEdit.set_label("Hazardous Item List")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Item descriptions, quantities, and expected quality levels.")
+        .set_min_length(1)
+        .set_max_length(256)
+        .set_required(true)
+        .set_text_style(dpp::text_paragraph)
+        .set_id(Component_HazItemList);
+
+    // Create the combo box component
+    PrioritySelect.set_label("Select Priority")
+        .set_type(dpp::cot_selectmenu)
+        .set_placeholder("Select Priority")
+        .set_id(Component_Priority);
+
+    // Add all priority options dynamically
+    for (const auto& p : PriorityChangeRequestDlg::PriorityList) {
+        PrioritySelect.add_select_option(
+            dpp::select_option(p.label, p.value, p.description).set_emoji(p.emoji)
+        );
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void HazardousRequestDlg::AddChildrenComponents()
+{
+    add_component(CitizenHandleEdit);
+    add_component(ThreatLevelSelect);
+    add_component(HazResourceZoneEdit);
+    add_component(HazResourceListEdit);
+    add_component(PrioritySelect);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void AssignRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -656,6 +731,38 @@ void EditRequestDlg::InitializeControls()
             .set_text_style(dpp::text_short)
             .set_id(Component_RefinerySite);
     }
+    else if (m_spJob->SupportsType(JOB_TYPE_HAZARD))
+    {
+        // Create a combo box component
+        ThreatLevelSelect.set_label("Expected Threat Level")
+            .set_type(dpp::cot_selectmenu)
+            .set_placeholder("Select Threat Level")
+            .add_select_option(dpp::select_option("Permissive", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Permissive), "No threats expected.").set_emoji(dpp::unicode_emoji::green_circle))
+            .add_select_option(dpp::select_option("Minimal", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Minimal), "Minimal to low threat expected.").set_emoji(dpp::unicode_emoji::orange_circle))
+            .add_select_option(dpp::select_option("Uncertain", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Uncertain), "Unknown hostility level.").set_emoji(dpp::unicode_emoji::black_circle))
+            .add_select_option(dpp::select_option("Hostile", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Hostile), "High likelihood of combat").set_emoji(dpp::unicode_emoji::red_circle))
+            .set_id(Component_ThreatLevel);
+
+        // Create a text box component
+        HazResourceZoneEdit.set_label("Hazardous Item Location")
+            .set_type(dpp::cot_text)
+            .set_placeholder("Zone or Region")
+            .set_min_length(1)
+            .set_max_length(256)
+            .set_required(true)
+            .set_text_style(dpp::text_short)
+            .set_id(Component_hazItemZone);
+
+        // Create a text box component
+        HazResourceListEdit.set_label("Hazardous Item List")
+            .set_type(dpp::cot_text)
+            .set_placeholder("Item descriptions, quantities, and expected quality levels.")
+            .set_min_length(1)
+            .set_max_length(256)
+            .set_required(true)
+            .set_text_style(dpp::text_paragraph)
+            .set_id(Component_HazItemList);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -689,6 +796,12 @@ void EditRequestDlg::AddChildrenComponents()
         add_component(ResourceListEdit);
         add_component(RefinerySiteEdit);
     }
+    if (m_spJob->SupportsType(JOB_TYPE_HAZARD))
+    {
+        add_component(ThreatLevelSelect);
+        add_component(HazResourceZoneEdit);
+        add_component(HazResourceListEdit);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -718,7 +831,7 @@ void DeleteRequestDlg::InitializeControls()
     // Create the combo box component
     DeleteJustificationEdit.set_label("Reason")
         .set_type(dpp::cot_text)
-        .set_placeholder("Enter justification here...")
+        .set_placeholder("Enter reason here...")
         .set_min_length(2)
         .set_max_length(256)
         .set_required(true)

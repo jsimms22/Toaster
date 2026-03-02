@@ -12,7 +12,7 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string ResourceJobRequest::StateToString(ResourceJobRequest::state e)
+std::string ResourceJobRequest::StateToString(const ResourceJobRequest::state e)
 {
     switch (e) {
     case ResourceJobRequest::state::UnrefinedMineable:  return "mineable";
@@ -42,9 +42,9 @@ ResourceJobRequest::state ResourceJobRequest::StringToState(const std::string& s
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode || !xmlParent)
     {
         return;
     }
@@ -62,7 +62,7 @@ void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode)
     {
         return;
     }
@@ -70,7 +70,6 @@ void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2:
     JobRequest::ReadAttributes(xmlNode, xmlParent);
 
     m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLResourceState, state::UnrefinedMineable));
-
 
     const char* pszResourceList = xmlNode->Attribute(xmlRequest::pszXMLResourceList);
     if (pszResourceList)

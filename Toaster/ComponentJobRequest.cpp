@@ -10,9 +10,9 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode || !xmlParent)
     {
         return;
     }
@@ -28,7 +28,7 @@ void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml
 //---------------------------------------------------------------------------------------------------------------------
 void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode)
     {
         return;
     }

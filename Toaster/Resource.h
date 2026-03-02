@@ -31,6 +31,9 @@ constexpr const char* Component_ResourceType	{ "resourcetype_id" };
 constexpr const char* Component_ResourceList	{ "resourcelist_id" };
 constexpr const char* Component_ResourceQuality	{ "resourcequality_id" };
 constexpr const char* Component_RefinerySite	{ "refinerysite_id" };
+constexpr const char* Component_HazItemList		{ "hazitemlist_id" };
+constexpr const char* Component_hazItemZone		{ "hazitemloc_id" };
+constexpr const char* Component_ThreatLevel		{ "threatlevel_id" };
 constexpr const char* Component_Priority		{ "priority_id" };
 constexpr const char* Component_Assignment		{ "assign_id" };
 constexpr const char* Component_Status			{ "status_id" };
@@ -96,6 +99,7 @@ constexpr const char* Option_BaseBuidling		{ "building" };
 constexpr const char* Option_ComponentRequest	{ "component" };
 constexpr const char* Option_ResourceCollect	{ "resource" };
 constexpr const char* Option_RefineryJob		{ "refinery" };
+constexpr const char* Option_HazardousJob		{ "hazardous" };
 
 // Command Options for Command_ModifyRequest
 constexpr const char* Option_Edit				{ "edit" };

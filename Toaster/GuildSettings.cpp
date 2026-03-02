@@ -4,6 +4,8 @@
 #include "Resource.h"
 // d++
 #include <dpp/message.h>
+// fmt
+#include <fmt/format.h>
 
 // ================================
 // Helper Utilities
@@ -81,7 +83,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
         if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
-            roleMention += "<@ & " + std::to_string(roleOpt.value()) + ">";
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 
@@ -92,7 +94,31 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
             .set_description(jobDetails)
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild.idNewJobChannel.value_or(0), roleMention).add_embed(announce));
+        auto ExtractJobID = [](const std::string& text) -> std::optional<std::string>
+            {
+                constexpr std::string_view key = "**ID**: ";
+
+                const std::size_t pos = text.find(key);
+                if (pos == std::string::npos)
+                    return std::nullopt;
+
+                const std::size_t start = pos + key.size();
+                const std::size_t end = text.find('\n', start);
+
+                if (end == std::string::npos)
+                    return std::nullopt;
+
+                return text.substr(start, end - start);
+            };
+
+        dpp::component row;
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Assign Me")
+            .set_style(dpp::cos_success)
+            .set_id(fmt::format("global_assign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
+
+        ctx.cluster.message_create(dpp::message(ctx.guild.idNewJobChannel.value_or(0), roleMention).add_embed(announce).add_component(row));
     }
 }
 
@@ -118,7 +144,7 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobT
         if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
-            roleMention += "<@ & " + std::to_string(roleOpt.value()) + ">";
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
     
@@ -155,7 +181,7 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
         if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
-            roleMention += "<@ & " + std::to_string(roleOpt.value()) + ">";
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 
@@ -192,7 +218,7 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jo
         if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
-            roleMention += "<@ & " + std::to_string(roleOpt.value()) + ">";
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 

@@ -41,7 +41,7 @@ void ToasterBot::onReady(const dpp::ready_t& event)
     if (dpp::run_once<struct register_bot_commands>())
     {
         //ICustomCommand::RegisterAll(&m_cluster, Toaster::BotCommands);
-        ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
+        //ICustomCommand::RegisterGuildAll(&m_cluster, 1472034166869852287, Toaster::BotCommands);
     }
 }
 

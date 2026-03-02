@@ -169,6 +169,37 @@ private:
 };
 
 //---------------------------------------------------------------------------------------------------------------------
+/// \class HazardousRequestDlg
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+class HazardousRequestDlg : public dpp::interaction_modal_response
+{
+public:
+	HazardousRequestDlg()
+		: dpp::interaction_modal_response()
+	{
+		set_custom_id(modalID);
+		set_title(modalDesc);
+		InitializeControls();
+		AddChildrenComponents();
+	}
+	~HazardousRequestDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component CitizenHandleEdit;
+	dpp::component ThreatLevelSelect;
+	dpp::component HazResourceZoneEdit;
+	dpp::component HazResourceListEdit;
+	dpp::component PrioritySelect;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
 /// \class AssignRequestDlg
 /// \brief 
 //---------------------------------------------------------------------------------------------------------------------
@@ -320,6 +351,10 @@ private:
 	dpp::component ResourceListEdit;
 	// For refining jobs
 	dpp::component RefinerySiteEdit;
+	// For hazard jobs
+	dpp::component ThreatLevelSelect;
+	dpp::component HazResourceZoneEdit;
+	dpp::component HazResourceListEdit;
 
 	std::shared_ptr<JobRequest> m_spJob;
 };

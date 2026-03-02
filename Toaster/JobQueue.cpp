@@ -7,6 +7,7 @@
 #include "BuildingJobRequest.h"
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
+#include "HazardousRequest.h"
 // d++
 #include <dpp/cluster.h>
 // fmt
@@ -207,6 +208,7 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
             auto job = queue->GetJobByGUID_NoLock(guid);
             if (!job) { return; }
             mutator(job);
+            job->SetLastEditTime(utils::GetEpochTimestamp());
             queue->SaveQueueToFile();
         }
     );

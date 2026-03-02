@@ -12,7 +12,7 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string RefineryJobRequest::StateToString(RefineryJobRequest::state e)
+std::string RefineryJobRequest::StateToString(const RefineryJobRequest::state e)
 {
     switch (e) {
     case RefineryJobRequest::state::RefinedMineable:    return "refined_mineable";
@@ -36,9 +36,9 @@ RefineryJobRequest::state RefineryJobRequest::StringToState(const std::string& s
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode || !xmlParent)
     {
         return;
     }
@@ -56,7 +56,7 @@ void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode)
     {
         return;
     }

@@ -89,5 +89,8 @@ public:
 	void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
 
 	void SaveGuildSettings(dpp::snowflake guildID);
+
+private:
+	mutable std::shared_mutex m_mtxShared;
 };
 

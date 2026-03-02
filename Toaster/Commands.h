@@ -219,7 +219,8 @@ public:
             .add_choice(dpp::command_option_choice("Base Building", Option_BaseBuidling))
             .add_choice(dpp::command_option_choice("Component Request", Option_ComponentRequest))
             .add_choice(dpp::command_option_choice("Resource Collection", Option_ResourceCollect))
-            .add_choice(dpp::command_option_choice("Refinery Job", Option_RefineryJob)));
+            .add_choice(dpp::command_option_choice("Refinery Job", Option_RefineryJob))
+            .add_choice(dpp::command_option_choice("Hazardous Items Collection", Option_HazardousJob)));
     }
 
     virtual ~CreateRequestCommand() = default;

@@ -30,7 +30,7 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string JobRequest::PriorityToString(JobRequest::priority p)
+std::string JobRequest::PriorityToString(const JobRequest::priority p)
 {
     switch (p) {
     case JobRequest::priority::low:         return "low";
@@ -56,7 +56,7 @@ JobRequest::priority JobRequest::StringToPriority(const std::string& str)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-const char* JobRequest::PriorityToEmoji(JobRequest::priority p)
+const char* JobRequest::PriorityToEmoji(const JobRequest::priority p)
 {
     switch (p) {
     case JobRequest::priority::low:         return dpp::unicode_emoji::green_circle;
@@ -70,7 +70,7 @@ const char* JobRequest::PriorityToEmoji(JobRequest::priority p)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string JobRequest::StatusToString(JobRequest::status s)
+std::string JobRequest::StatusToString(const JobRequest::status s)
 {
     switch (s) {
     case JobRequest::status::open:      return "open";
@@ -100,7 +100,7 @@ JobRequest::status JobRequest::StringToStatus(const std::string& str)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-const char* JobRequest::StatusToEmoji(JobRequest::status s)
+const char* JobRequest::StatusToEmoji(const JobRequest::status s)
 {
     switch (s) {
     case JobRequest::status::open:      return dpp::unicode_emoji::white_circle;
@@ -126,10 +126,9 @@ JobRequest::JobRequest()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
 {
-    // Check if the xmlNode is valid.
-    if (xmlNode == nullptr)
+    if (!xmlNode || !xmlParent)
     {
         return;
     }
@@ -153,7 +152,7 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
 //---------------------------------------------------------------------------------------------------------------------
 void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
 {
-    if (xmlNode == nullptr)
+    if (!xmlNode)
     {
         return;
     }

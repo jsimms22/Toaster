@@ -1,4 +1,10 @@
 #include "JobRequestFactory.h"
+#include "CraftingJobRequest.h"
+#include "BuildingJobRequest.h"
+#include "ComponentJobRequest.h"
+#include "ResourceJobRequest.h"
+#include "RefineryJobRequest.h"
+#include "HazardousRequest.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
@@ -21,6 +27,9 @@ std::shared_ptr<JobRequest> JobRequestFactory::Create(const std::size_t type)
 
     case JOB_TYPE_REFINERY:
         return std::make_shared<RefineryJobRequest>();
+
+    case JOB_TYPE_HAZARD:
+        return std::make_shared<HazardousRequest>();
 
     default:
         return std::make_shared<JobRequest>();

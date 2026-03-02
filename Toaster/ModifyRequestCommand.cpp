@@ -16,6 +16,7 @@
 #include "ComponentJobRequest.h"
 #include "ResourceJobRequest.h"
 #include "RefineryJobRequest.h"
+#include "HazardousRequest.h"
 
 #include "CustomerPanel.h"
 #include "WorkerPanel.h"
@@ -199,6 +200,18 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     jobRefine->SetRefinery(strParam2);
                 });
         }
+        else if (job->SupportsType(JOB_TYPE_HAZARD))
+        {
+            ctx.queue->RequestModifyJob(job->GetID(),
+                [strSCHandle, strParam1, strParam2, strParam3](std::shared_ptr<JobRequest> job)
+                {
+                    std::shared_ptr<HazardousRequest> jobHazard = std::dynamic_pointer_cast<HazardousRequest>(job);
+                    jobHazard->SetSCHandle(strSCHandle);
+                    jobHazard->SetThreatLevel(HazardousRequest::StringToThreat(strParam1));
+                    jobHazard->SetItemLocation(strParam2);
+                    jobHazard->SetItemList(strParam3);
+                });
+        }
 
         Sleep(10);
 
@@ -238,7 +251,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestModifyJob(job->GetID(),
             [workerID, strStatus](std::shared_ptr<JobRequest> job)
             {
-                job->SetLastEditTime(utils::GetEpochTimestamp());
                 job->SetWorkerID(workerID);
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
             });
@@ -280,7 +292,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestModifyJob(job->GetID(),
             [strStatus](std::shared_ptr<JobRequest> job)
             {
-                job->SetLastEditTime(utils::GetEpochTimestamp());
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
             });
 
@@ -323,7 +334,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestModifyJob(job->GetID(),
             [strPriority](std::shared_ptr<JobRequest> job)
             {
-                job->SetLastEditTime(utils::GetEpochTimestamp());
                 job->SetPriority(JobRequest::StringToPriority(strPriority));
             });
 
@@ -387,11 +397,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             utils::NotifyIssuerMsg(ctx.cluster,
                                    customerID,
                                    event,
-                                   fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
-                                        strID,
-                                        author.global_name,
-                                        strJustification,
-                                        jobDetails));
+                                       fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
+                                           strID,
+                                           author.global_name,
+                                           strJustification,
+                                           jobDetails));
         }
 
         GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails);
@@ -482,6 +492,55 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
         Sleep(10);
         return;
+    }
+    else if (id.starts_with("global_assign:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const std::string guid = parts[2];
+        const auto job = ctx.queue->GetJobByGUID(guid);
+        if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", guid));
+            return;
+        }
+
+        const auto pManager = PermissionsMgr::GetInstance();
+        const dpp::user user = event.command.get_issuing_user();
+        if (!pManager || (!pManager->CanAssignJob(event, user.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug))
+        {
+            // Permission denied
+            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, utils::GuidToStringNoBrackets(job->GetID())));
+            return;
+        }
+
+        ctx.queue->RequestModifyJob(job->GetID(), 
+            [id = user.id](std::shared_ptr<JobRequest> job)
+            {
+                if (job->GetWorkerID() != 0)
+                    return;
+
+                job->SetWorkerID(id);
+            });
+
+        Sleep(10);
+
+        dpp::component row;
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Assigned")
+            .set_style(dpp::cos_success)
+            .set_disabled(true)
+            .set_id("dead_button"));
+
+        dpp::embed announce;
+        announce.set_title("New Job Request")
+            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+            .set_color(0x3498db);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message,dpp::message().add_component(row).add_embed(announce));
     }
 }
 

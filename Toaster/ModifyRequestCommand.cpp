@@ -448,6 +448,29 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         // Acknowledge immediately
         event.reply(dpp::message("Your note has been added to this request.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_info, fmt::format("{} added a note to {}.", author.global_name, strID));
+
+        // Notify original customer if needed
+        if ((job->IsCustomerSubscribed() && event.command.usr.id != job->GetCustomerID()) || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster,
+                job->GetCustomerID(),
+                event,
+                fmt::format("A note has been added by {} to job request {}.\n\n **Note:**\n{}",
+                    utils::FindPreferredNameByID(ctx.cluster, author.id, event.command.guild_id),
+                    strID,
+                    strNote));
+        }
+        else if (event.command.usr.id != job->GetWorkerID() || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster,
+                job->GetWorkerID(),
+                event,
+                fmt::format("A note has been added by {} to job request {}.\n\n **Note:**\n{}",
+                    utils::FindPreferredNameByID(ctx.cluster, author.id, event.command.guild_id),
+                    strID,
+                    strNote));
+        }
+        // todo: notify worker and customer
     }
 }
 

@@ -33,7 +33,7 @@ GeneralUserPanel::GeneralUserPanel(
 		.set_id(fmt::format("{}_delete:{}:{}", OwnerName, m_userID, m_jobID));
 
 	m_btnShowNotes.set_type(dpp::cot_button)
-		.set_label("Show All Notes")
+		.set_label("Show Job Notes")
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_allnotes:{}:{}", OwnerName, m_userID, m_jobID));
 }

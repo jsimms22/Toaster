@@ -10,6 +10,7 @@
 #include "Commands.h"
 #include "JobQueue.h"
 #include "RequestDlg.h"
+#include "NoteDialog.h"
 
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
@@ -87,6 +88,12 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
     {
         DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        event.dialog(modal);
+        return;
+    }
+    else if (strCmdID == Option_Note && pGuild && (pManager->CanAddNote(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    {
+        NoteDialog modal(ctx, job);
         event.dialog(modal);
         return;
     }
@@ -212,8 +219,15 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 });
         }
 
+        dpp::component row;
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_id("placeholder")
+            .set_label("placeholder - show all notes")
+            .set_style(dpp::cos_danger));
+
         // Edit the original message
-        event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
+        event.edit_original_response(SendPanel(ctx, event, job, author.id).add_component(row).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
@@ -397,6 +411,44 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails);
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle NoteDlg
+    //-------------------------------------------------------------------------------------------------------------
+    else if (event.custom_id == NoteDialog::modalID)
+    {
+        const dpp::user author = event.command.get_issuing_user();
+
+        // Grab the job ID and note from the modal components
+        const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+        std::string strNote = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+
+        const auto job = ctx.queue->GetJobByGUID(strID);
+        if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.")
+                .set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        // Filter the note string for safety
+        utils::FilterUserString(strNote);
+
+        // Record the note with timestamp
+        JobRequest::NoteMetaData noteEntry;
+        noteEntry.guildID = event.command.guild_id;
+        noteEntry.timestamp = utils::GetEpochTimestamp();
+        noteEntry.note = strNote;
+
+        ctx.queue->RequestModifyJob(job->GetID(),
+            [authorID = author.id, noteEntry](std::shared_ptr<JobRequest> job)
+            {
+                job->AddNote(authorID, std::move(noteEntry));
+            });
+
+        // Acknowledge immediately
+        event.reply(dpp::message("Your note has been added to this request.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} added a note to {}.", author.global_name, strID));
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -470,6 +522,11 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else  if (id.starts_with(fmt::format("{}_delete:", this->name)))
     {
         GeneralUserPanel::DeleteButton(id, ctx, event);
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_allnotes:", this->name)))
+    {
+        GeneralUserPanel::ShowNotesButton(id, ctx, event);
         return;
     }
     else if (id.starts_with("global_assign:"))

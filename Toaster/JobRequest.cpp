@@ -8,8 +8,7 @@
 // fmt
 #include <fmt/format.h>
 // std library
-#include <future>
-#include <iostream>
+#include <chrono>
 #include <stdexcept>
 #include <string>
 
@@ -126,7 +125,7 @@ JobRequest::JobRequest()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
     if (!xmlNode || !xmlParent)
     {
@@ -144,13 +143,45 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_idCustomer);
     xmlNode->SetAttribute(xmlRequest::pszXMLRequestSCHandle, m_strSCHandle.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLSubscribed, m_bNotifyCustomer);
+
+    // Write notes as child elements
+    WriteChildren(xmlNode, xmlNode->GetDocument());
+
     xmlParent->InsertEndChild(xmlNode);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void JobRequest::WriteChildren(tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
+{
+    if (!xmlParent) return;
+
+    // Create a <Notes> container element
+    tinyxml2::XMLElement* xmlNotes = doc->NewElement("Notes");
+
+    for (const auto& [userID, notes] : m_notes)
+    {
+        for (const auto& note : notes)
+        {
+            // <Note> element for each note
+            tinyxml2::XMLElement* xmlNote = doc->NewElement("Note");
+            xmlNote->SetAttribute("UserID", static_cast<uint64_t>(userID));  // store as uint64
+            xmlNote->SetAttribute("GuildID", static_cast<uint64_t>(note.guildID));
+            xmlNote->SetAttribute("Timestamp", note.timestamp);
+            xmlNote->SetText(note.note.c_str());  // store the note text as element content
+
+            xmlNotes->InsertEndChild(xmlNote);
+        }
+    }
+
+    xmlParent->InsertEndChild(xmlNotes);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
@@ -183,6 +214,35 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElem
     }
 
     m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLSubscribed, false);
+
+    // Read notes
+    ReadChildren(xmlNode);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void JobRequest::ReadChildren(tinyxml2::XMLElement* xmlNode)
+{
+    if (!xmlNode) return;
+
+    tinyxml2::XMLElement* xmlNotes = xmlNode->FirstChildElement("Notes");
+    if (!xmlNotes) return;
+
+    for (tinyxml2::XMLElement* xmlNote = xmlNotes->FirstChildElement("Note");
+        xmlNote != nullptr;
+        xmlNote = xmlNote->NextSiblingElement("Note"))
+    {
+        NoteMetaData note;
+        uint64_t userID = xmlNote->Unsigned64Attribute("UserID", 0);
+        note.guildID = xmlNote->Unsigned64Attribute("GuildID", 0);
+        note.timestamp = xmlNote->Unsigned64Attribute("Timestamp", 0);
+
+        const char* text = xmlNote->GetText();
+        note.note = text ? text : "";
+
+        m_notes[dpp::snowflake{ userID }].push_back(note);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -230,9 +290,112 @@ const std::string JobRequest::GetWorkerName(dpp::cluster& cluster, const dpp::sn
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void JobRequest::AddNote(const dpp::snowflake& id, const std::string& note)
+void JobRequest::AddNote(const dpp::snowflake& id, const JobRequest::NoteMetaData& meta)
 {
     const std::size_t timestamp = utils::GetEpochTimestamp();
-    m_notes[id].push_back(std::pair{ timestamp,note });
-    m_timeLastEdit = timestamp;
+    m_notes[id].emplace_back(std::move(meta));
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+const std::string JobRequest::PrintNoteHistory(dpp::cluster& cluster) const
+{
+    fmt::memory_buffer buffer;
+
+    // Flatten all notes into a single vector
+    std::vector<std::pair<dpp::snowflake, NoteMetaData>> allNotes;
+    for (const auto& [userID, notes] : m_notes)
+    {
+        for (const auto& note : notes)
+        {
+            allNotes.push_back(std::pair{ userID, note });
+        }
+    }
+
+    // Sort by timestamp ascending
+    std::sort(allNotes.begin(), allNotes.end(),
+        [](const std::pair<dpp::snowflake, NoteMetaData> a, const std::pair<dpp::snowflake, NoteMetaData> b)
+        {
+            return a.second.timestamp < b.second.timestamp;
+        });
+
+    // Format each note in UTC
+    for (const auto& [userID, meta] : allNotes)
+    {
+        std::time_t tt = static_cast<std::time_t>(meta.timestamp);
+        std::tm tm{};
+
+        // Thread-safe UTC conversion
+#if defined(_MSC_VER)
+        gmtime_s(&tm, &tt);   // MSVC-safe
+#else
+        tm = *std::gmtime(&tt); // POSIX
+#endif
+
+        char timeBuf[64];
+        std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M UTC", &tm);
+
+        // Lookup username
+        std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
+
+        // Append to fmt buffer
+        fmt::format_to(std::back_inserter(buffer), "{} | {}:\n{}\n", timeBuf, username, meta.note);
+    }
+
+    return fmt::to_string(buffer);
+}
+
+const std::string JobRequest::PrintLastTwoNotes(dpp::cluster& cluster) const
+{
+    fmt::memory_buffer buffer;
+
+    // Flatten all notes into a single vector
+    std::vector<std::pair<dpp::snowflake, NoteMetaData>> allNotes;
+    for (const auto& [userID, notes] : m_notes)
+    {
+        for (const auto& note : notes)
+        {
+            allNotes.emplace_back(userID, note);
+        }
+    }
+
+    if (allNotes.empty())
+        return ""; // nothing to print
+
+    // Sort by timestamp ascending
+    std::sort(allNotes.begin(), allNotes.end(),
+        [](const auto& a, const auto& b)
+        {
+            return a.second.timestamp < b.second.timestamp;
+        });
+
+    // Only take the last 2 notes
+    const std::size_t startIndex = allNotes.size() > 2 ? allNotes.size() - 2 : 0;
+
+    for (std::size_t i = startIndex; i < allNotes.size(); ++i)
+    {
+        const auto& [userID, meta] = allNotes[i];
+
+        std::time_t tt = static_cast<std::time_t>(meta.timestamp);
+        std::tm tm{};
+
+        // Thread-safe UTC conversion
+#if defined(_MSC_VER)
+        gmtime_s(&tm, &tt);   // MSVC-safe
+#else
+        tm = *std::gmtime(&tt); // POSIX
+#endif
+
+        char timeBuf[64];
+        std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M UTC", &tm);
+
+        // Lookup username
+        std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
+
+        // Append to fmt buffer
+        fmt::format_to(std::back_inserter(buffer), "{} | {}:\n{}\n", timeBuf, username, meta.note);
+    }
+
+    return fmt::to_string(buffer);
 }

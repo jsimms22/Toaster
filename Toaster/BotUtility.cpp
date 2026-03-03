@@ -141,8 +141,8 @@ namespace utils
     const std::string JobTypeToString(const std::size_t& type)
     {
         switch (type) {
-            case (JOB_TYPE_CRAFTING):       return "Crafting";
-            case (JOB_TYPE_BUILDING):   return "Basse Building";
+            case (JOB_TYPE_CRAFTING):   return "Crafting";
+            case (JOB_TYPE_BUILDING):   return "Base Building";
             case (JOB_TYPE_COMPONENT):  return "Component Request";
             case (JOB_TYPE_RESOURCE):   return "Resource Collection";
             case (JOB_TYPE_REFINERY):   return "Refinery Job";

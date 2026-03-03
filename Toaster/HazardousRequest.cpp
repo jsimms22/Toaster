@@ -38,14 +38,14 @@ HazardousRequest::ThreatLevel HazardousRequest::StringToThreat(const std::string
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void HazardousRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void HazardousRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
-    if (!xmlNode || !xmlParent)
+    if (!xmlNode || !xmlParent || !doc)
     {
         return;
     }
 
-    JobRequest::WriteAttributes(xmlNode, xmlParent);
+    JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLHazItemList, m_strHazItemList.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLHazItemLoc, m_strHazItemZone.c_str());
@@ -56,14 +56,14 @@ void HazardousRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void HazardousRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void HazardousRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
         return;
     }
 
-    JobRequest::ReadAttributes(xmlNode, xmlParent);
+    JobRequest::ReadAttributes(xmlNode);
 
     const char* pszItemList = xmlNode->Attribute(xmlRequest::pszXMLHazItemList);
     if (pszItemList)

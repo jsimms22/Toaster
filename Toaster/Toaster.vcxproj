@@ -216,6 +216,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModifyRequestCommand.cpp" />
     <ClCompile Include="MyRequestsCommands.cpp" />
+    <ClCompile Include="NoteDialog.cpp" />
     <ClCompile Include="PaginationPanel.cpp" />
     <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="JobRequestFactory.h" />
+    <ClInclude Include="NoteDialog.h" />
     <ClInclude Include="PaginationPanel.h" />
     <ClInclude Include="PermissionsMgr.h" />
     <ClInclude Include="RefineryJobRequest.h" />

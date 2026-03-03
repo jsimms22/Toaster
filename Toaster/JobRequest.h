@@ -43,7 +43,15 @@ public:
         high,
         critical
     };
-    using UserNotes = std::vector<std::pair< std::size_t /* timestamp */, std::string /* message */>>;
+
+    struct NoteMetaData
+    {
+        dpp::snowflake guildID;
+        std::size_t timestamp;
+        std::string note;
+    };
+
+    using UserNotes = std::vector<NoteMetaData>;
     using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
 
     JobRequest();
@@ -80,7 +88,9 @@ public:
 
     const NoteHistory GetNoteHistory() const { return m_notes; }
     const UserNotes GetNoteHistory(const dpp::snowflake user) const { return m_notes.at(user); }
-    void AddNote(const dpp::snowflake& id, const std::string& note);
+    void AddNote(const dpp::snowflake& id, const JobRequest::NoteMetaData& meta);
+    const std::string PrintNoteHistory(dpp::cluster& cluster) const;
+    const std::string PrintLastTwoNotes(dpp::cluster& cluster) const;
 
     bool IsCustomerSubscribed() const { return m_bNotifyCustomer; }
     void SubscribeCustomer(const bool bUpdate) { m_bNotifyCustomer = bUpdate; }
@@ -88,8 +98,10 @@ public:
     virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
-    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const;
-    virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
+    virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const;
+    virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode);
+    virtual void WriteChildren(tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const;
+    virtual void ReadChildren(tinyxml2::XMLElement* xmlNode);
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;

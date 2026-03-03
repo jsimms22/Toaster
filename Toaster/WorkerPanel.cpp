@@ -29,11 +29,14 @@ WorkerPanel::WorkerPanel(
 
 	m_row.add_component(m_btnComplete)
 		.add_component(m_btnEdit)
-		.add_component(m_btnNote)
 		.add_component(m_btnAssign)
 		.add_component(m_btnDelete);
 
-	add_component(m_row);
+    m_row2.add_component(m_btnNote)
+        .add_component(m_btnShowNotes);
+
+    add_component(m_row);
+    add_component(m_row2);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

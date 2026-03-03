@@ -79,7 +79,7 @@ JobQueue::JobQueue()
                 continue;
             }
 
-            job->ReadAttributes(xmlNode, root);
+            job->ReadAttributes(xmlNode);
             m_vQueue.emplace_back(std::move(job));
         }
     }
@@ -226,7 +226,7 @@ void JobQueue::SaveQueueToFile()
     for (const auto& job : snapshot)
     {
         tinyxml2::XMLElement* xmlNode = root->InsertNewChildElement("Request");
-        job->WriteAttributes(xmlNode, root);
+        job->WriteAttributes(xmlNode, root, &doc);
         root->InsertEndChild(xmlNode);
     }
 

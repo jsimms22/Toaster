@@ -103,6 +103,9 @@
     <ClCompile Include="HazardousRequest.cpp">
       <Filter>Source Files\Requests</Filter>
     </ClCompile>
+    <ClCompile Include="NoteDialog.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -173,6 +176,9 @@
     </ClInclude>
     <ClInclude Include="HazardousRequest.h">
       <Filter>Header Files\Requests</Filter>
+    </ClInclude>
+    <ClInclude Include="NoteDialog.h">
+      <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

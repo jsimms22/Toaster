@@ -155,6 +155,11 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         GeneralUserPanel::DeleteButton(id, ctx, event);
         return;
     }
+    else if (id.starts_with(fmt::format("{}_allnotes:", Option_Overview)))
+    {
+        GeneralUserPanel::ShowNotesButton(id, ctx, event);
+        return;
+    }
 }
 
 dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const dpp::snowflake& user) const

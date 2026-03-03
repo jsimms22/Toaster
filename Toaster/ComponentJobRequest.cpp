@@ -10,14 +10,14 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
-    if (!xmlNode || !xmlParent)
+    if (!xmlNode || !xmlParent || !doc)
     {
         return;
     }
 
-    JobRequest::WriteAttributes(xmlNode, xmlParent);
+    JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLCompList, m_strComponentList.c_str());
     xmlParent->InsertEndChild(xmlNode);
@@ -26,14 +26,14 @@ void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
         return;
     }
 
-    JobRequest::ReadAttributes(xmlNode, xmlParent);
+    JobRequest::ReadAttributes(xmlNode);
 
     const char* pszCompList = xmlNode->Attribute(xmlRequest::pszXMLCompList);
     if (pszCompList)

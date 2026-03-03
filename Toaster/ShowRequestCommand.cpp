@@ -124,6 +124,11 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         GeneralUserPanel::DeleteButton(id, ctx, event);
         return;
     }
+    else if (id.starts_with(fmt::format("{}_allnotes:", this->name)))
+    {
+        GeneralUserPanel::ShowNotesButton(id, ctx, event);
+        return;
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

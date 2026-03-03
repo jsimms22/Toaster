@@ -23,11 +23,14 @@ CustomerPanel::CustomerPanel(
         .set_id(fmt::format("{}_subscribe:{}:{}", OwnerName, userID, jobID));
 
     m_row.add_component(m_btnEdit)
-        .add_component(m_btnNote)
         .add_component(m_btnSubscribe)
         .add_component(m_btnDelete);
 
+    m_row2.add_component(m_btnNote)
+        .add_component(m_btnShowNotes);
+
     add_component(m_row);
+    add_component(m_row2);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

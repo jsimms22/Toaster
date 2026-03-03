@@ -295,6 +295,11 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         GeneralUserPanel::DeleteButton(id, ctx, event);
         return;
     }
+    else if (id.starts_with(fmt::format("{}_allnotes:", this->name)))
+    {
+        GeneralUserPanel::ShowNotesButton(id, ctx, event);
+        return;
+    }
 }
 
 dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const

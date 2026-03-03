@@ -12,14 +12,14 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
-    if (!xmlNode || !xmlParent)
+    if (!xmlNode || !xmlParent || !doc)
     {
         return;
     }
 
-    JobRequest::WriteAttributes(xmlNode, xmlParent);
+    JobRequest::WriteAttributes(xmlNode, xmlParent ,doc);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLBuildDesignation, m_strBldgDesignation.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLBuildRequirements, m_strBldgRequires.c_str());
@@ -30,14 +30,14 @@ void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
         return;
     }
 
-    JobRequest::ReadAttributes(xmlNode, xmlParent);
+    JobRequest::ReadAttributes(xmlNode);
 
     const char* pszDesignation = xmlNode->Attribute(xmlRequest::pszXMLBuildDesignation);
     if (pszDesignation)
@@ -68,10 +68,10 @@ std::string BuildingJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp
     return fmt::format(
         "{}"
         "**Building Designation**: {}\n"
-        "**Building Requirements**: \n{}\n"
-        "**Building Zone**: {}\n",
+        "**Building Zone**: {}\n"
+        "**Building Requirements**: \n{}\n",
         base,
         m_strBldgDesignation,
-        m_strBldgRequires,
-        m_strBldgZone);
+        m_strBldgZone,
+        m_strBldgRequires);
 }

@@ -5,6 +5,7 @@
 #include "JobRequest.h"
 #include "JobQueue.h"
 #include "RequestDlg.h"
+#include "NoteDialog.h"
 // fmt
 #include <fmt/format.h>
 
@@ -30,6 +31,11 @@ GeneralUserPanel::GeneralUserPanel(
 		.set_label("Delete")
 		.set_style(dpp::cos_danger)
 		.set_id(fmt::format("{}_delete:{}:{}", OwnerName, m_userID, m_jobID));
+
+	m_btnShowNotes.set_type(dpp::cot_button)
+		.set_label("Show All Notes")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_allnotes:{}:{}", OwnerName, m_userID, m_jobID));
 }
 
 void GeneralUserPanel::AddEmbed(const std::string& header, const std::string& description)
@@ -100,11 +106,8 @@ void GeneralUserPanel::NoteButton(const std::string& id, CommandContext& ctx, co
 	const auto pManager = PermissionsMgr::GetInstance();
 	if (pManager->CanAddNote(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
-		/* todo add note functionality to job class */
-		event.reply(dpp::message("Functionality currently not supported.").set_flags(dpp::m_ephemeral));
-		return;
-
-		// todo note modal dlg
+		NoteDialog modal(ctx, job);
+		event.dialog(modal);
 	}
 	else
 	{
@@ -144,6 +147,52 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 	{
 		event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
 		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+		return;
+	}
+}
+
+void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	auto parts = utils::Split(id, ':');
+	const dpp::snowflake user = parts[1];
+	const std::string guid = parts[2];
+
+	// Retrieve the job by GUID
+	const auto job = ctx.queue->GetJobByGUID(guid);
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	// Check if the user has permission to view notes for the job
+	if (pManager->CanAddNote(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
+	{
+		// Format the note history
+		const std::string noteHistory = job->PrintNoteHistory(ctx.cluster);
+
+		// Check if there are any notes to show
+		if (noteHistory.empty())
+		{
+			event.reply(dpp::message("There are no notes for this job.").set_flags(dpp::m_ephemeral));
+		}
+		else
+		{
+			// Send the note history in an embed message
+			dpp::embed embed;
+			embed.set_title(fmt::format("Notes for Job: {}", guid))
+				.set_description(noteHistory)
+				.set_color(0x3498db); // You can adjust this color as needed
+
+			event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+		}
+	}
+	else
+	{
+		// If user doesn't have permission to view notes
+		event.reply(dpp::message("You do not have sufficient permissions to view the notes for this job.").set_flags(dpp::m_ephemeral));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", user, guid));
 		return;
 	}
 }

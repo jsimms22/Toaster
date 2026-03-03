@@ -12,14 +12,14 @@ namespace xmlRequest
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void CraftingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void CraftingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
-    if (!xmlNode || !xmlParent)
+    if (!xmlNode || !xmlParent || !doc)
     {
         return;
     }
 
-    JobRequest::WriteAttributes(xmlNode, xmlParent);
+    JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLItemDesc, m_strItemDesc.c_str());
     xmlNode->SetAttribute(xmlRequest::pszXMLItemQuantity, m_strQuantity.c_str());
@@ -30,14 +30,14 @@ void CraftingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void CraftingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void CraftingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
         return;
     }
 
-    JobRequest::ReadAttributes(xmlNode, xmlParent);
+    JobRequest::ReadAttributes(xmlNode);
 
     const char* pszItemDesc = xmlNode->Attribute(xmlRequest::pszXMLItemDesc);
     if (pszItemDesc)

@@ -36,14 +36,14 @@ RefineryJobRequest::state RefineryJobRequest::StringToState(const std::string& s
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const
+void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const
 {
-    if (!xmlNode || !xmlParent)
+    if (!xmlNode || !xmlParent || !doc)
     {
         return;
     }
 
-    JobRequest::WriteAttributes(xmlNode, xmlParent);
+    JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
     xmlNode->SetAttribute(xmlRequest::pszXMLRefineState, static_cast<int>(m_eResourceState));
     xmlNode->SetAttribute(xmlRequest::pszXMLRefineList, m_strResourceList.c_str());
@@ -54,14 +54,14 @@ void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent)
+void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 {
     if (!xmlNode)
     {
         return;
     }
 
-    JobRequest::ReadAttributes(xmlNode, xmlParent);
+    JobRequest::ReadAttributes(xmlNode);
 
     m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLRefineState, state::RefinedMineable));
 

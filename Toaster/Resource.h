@@ -39,6 +39,8 @@ constexpr const char* Component_Assignment		{ "assign_id" };
 constexpr const char* Component_Status			{ "status_id" };
 constexpr const char* Component_JobDescription	{ "description_id" };
 constexpr const char* Component_DeleteJustification	{ "justification_id" };
+constexpr const char* Component_NoteHistory		{ "notehistory_id" };
+constexpr const char* Component_AddNewNote		{ "addnewnote_id" };
 /*------------------------------COMPONENT IDS-----------------------------------*/
 
 /*---------------------------ADMIN COMPONENT IDS--------------------------------*/
@@ -107,6 +109,7 @@ constexpr const char* Option_Assign				{ "assign" };
 constexpr const char* Option_Status				{ "status" };
 constexpr const char* Option_Priority			{ "priority" };
 constexpr const char* Option_Delete				{ "delete" };
+constexpr const char* Option_Note				{ "note" };
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
 
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/

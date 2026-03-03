@@ -22,6 +22,14 @@
 const std::size_t JobQueue::JOBS_PER_QUEUE_PAGE{ 8 };
 const std::size_t JobQueue::JOBS_PER_DETAIL_PAGE{ 4 };
 
+namespace
+{
+    bool ComparePriority(const std::shared_ptr<const JobRequest>& a, const std::shared_ptr<const JobRequest>& b)
+    {
+        return a->GetPriority() > b->GetPriority();  // Higher priority comes first
+    }
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor: Reads the XML and loads the job requests into the container
 //---------------------------------------------------------------------------------------------------------------------
@@ -65,7 +73,7 @@ JobQueue::JobQueue()
         const char* type = xmlNode->Attribute("Type");
         if (type)
         {
-            std::shared_ptr<JobRequest> job = JobRequestFactory::Create(std::stoul(type));
+            auto job = JobRequestFactory::Create(std::stoul(type));
             if (!job)
             {
                 continue;
@@ -82,13 +90,8 @@ JobQueue::JobQueue()
 //---------------------------------------------------------------------------------------------------------------------
 JobQueue::~JobQueue()
 {
-    {
-        std::lock_guard<std::mutex> lock(m_mtxMutQueue);
-        m_bRunning = false;
-    }
-
+    m_bRunning = false;
     m_cv.notify_all();
-
     SaveQueueToFile();
 }
 
@@ -100,25 +103,6 @@ void JobQueue::EnqueueMutation(QueueMutation mutation)
     }
 
     m_cv.notify_one();
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-// \brief 
-//---------------------------------------------------------------------------------------------------------------------
-template<typename T>
-std::future<T> JobQueue::EnqueueTaskWithResult(std::function<T(std::shared_ptr<JobQueue>)> task)
-{
-    auto promise = std::make_shared<std::promise<T>>();
-    auto future = promise->get_future();
-
-    EnqueueMutation(
-        [task = std::move(task), promise](std::shared_ptr<JobQueue> queue)
-        {
-            promise->set_value(task(queue));
-        }
-    );
-
-    return future;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -141,7 +125,7 @@ void JobQueue::MutationWorker()
         m_mutations.pop();
         lock.unlock();
 
-        mutation(shared_from_this());   // Worker owns execution context
+        mutation(shared_from_this());
     }
 }
 
@@ -150,11 +134,15 @@ void JobQueue::MutationWorker()
 //---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
 {
-    EnqueueMutation(
-        [job = std::move(job)](std::shared_ptr<JobQueue> queue) mutable
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+    if (!job) { return; }
+    m_vQueue.emplace_back(std::move(job));
+
+    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+
+    EnqueueMutation([](std::shared_ptr<JobQueue> queue) mutable
         {
-            std::unique_lock<std::shared_mutex> lock(queue->m_mtxShared);
-            queue->m_vQueue.emplace_back(std::move(job));
             queue->SaveQueueToFile();
         }
     );
@@ -163,52 +151,50 @@ void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::future<bool> JobQueue::RequestDeleteJobByGUID(const GUID& guid)
+const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
 {
-    return EnqueueTaskWithResult<bool>(
-        [guid](std::shared_ptr<JobQueue> queue)
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+    bool bResult{ false };
+    auto job = GetJobByGUID_NoLock(guid);
+
+    if (!job) { return bResult; }
+
+    for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
+    {
+        if ((*itr)->GetID() == guid)
         {
-            std::unique_lock<std::shared_mutex> lock(queue->m_mtxShared);
+            itr->reset();
+            m_vQueue.erase(itr);
+            bResult = true;
+            break;
+        }
+    }
 
-            for (auto itr = queue->m_vQueue.begin();
-                itr != queue->m_vQueue.end();
-                ++itr)
-            {
-                if ((*itr)->GetID() == guid)
-                {
-                    itr->reset();
-                    queue->m_vQueue.erase(itr);
-                    queue->SaveQueueToFile();
-                    return true;
-                }
-            }
+    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
 
-            return false;
+    EnqueueMutation([](std::shared_ptr<JobQueue> queue)
+        {
+            queue->SaveQueueToFile();
         }
     );
+
+    return bResult;
 }
 
-
-//---------------------------------------------------------------------------------------------------------------------
-// \brief 
-/* Example usage:
-    jobQueue.ModifyJob(guid, [](JobRequest& job)
-    {
-        job.SetWorkerID(12345);
-        job.SetStatus(JobRequest::status::in_progress);
-    });
-*/
-//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 {
-    EnqueueMutation(
-        [guid, mutator = std::move(mutator)](std::shared_ptr<JobQueue> queue) mutable
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+    auto job = GetJobByGUID_NoLock(guid);
+
+    if (!job) { return; }
+
+    mutator(job);
+    job->SetLastEditTime(utils::GetEpochTimestamp());
+
+    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+
+    EnqueueMutation([](std::shared_ptr<JobQueue> queue) mutable
         {
-            std::unique_lock<std::shared_mutex> lock(queue->m_mtxShared);
-            auto job = queue->GetJobByGUID_NoLock(guid);
-            if (!job) { return; }
-            mutator(job);
-            job->SetLastEditTime(utils::GetEpochTimestamp());
             queue->SaveQueueToFile();
         }
     );
@@ -219,6 +205,12 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 //---------------------------------------------------------------------------------------------------------------------
 void JobQueue::SaveQueueToFile()
 {
+    std::vector<std::shared_ptr<JobRequest>> snapshot;
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        snapshot = m_vQueue;  // copy under shared lock
+    }
+
     tinyxml2::XMLDocument doc;
     doc.LoadFile("../queue.xml");
     doc.Clear();
@@ -231,12 +223,7 @@ void JobQueue::SaveQueueToFile()
         doc.InsertEndChild(root);
     }
 
-    std::sort(m_vQueue.begin(), m_vQueue.end(), [](const std::shared_ptr<JobRequest>& a, const std::shared_ptr<JobRequest>& b)
-        {
-            return a->GetPriority() > b->GetPriority();  // Higher priority comes first
-        });
-
-    for (const auto& job : m_vQueue)
+    for (const auto& job : snapshot)
     {
         tinyxml2::XMLElement* xmlNode = root->InsertNewChildElement("Request");
         job->WriteAttributes(xmlNode, root);
@@ -270,7 +257,7 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID_NoLock(const GUID& guid) cons
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const GUID& guid) const
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByGUID(const GUID& guid) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
     return GetJobByGUID_NoLock(guid);
@@ -279,7 +266,7 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const GUID& guid) const
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::GetJobByGUID(const std::string& guid) const
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByGUID(const std::string& guid) const
 {
     GUID search;
     if (guid.at(0) != '{')
@@ -669,12 +656,11 @@ const std::string JobQueue::PrintQueuePageByType(
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByUser(const dpp::snowflake& userID,
-                                                                        const std::size_t filter) const
+const std::vector<std::shared_ptr<const JobRequest>> JobQueue::GetQueueByUser(const dpp::snowflake& userID, const std::size_t filter) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
-    std::vector<std::shared_ptr<JobRequest>> list;
+    std::vector<std::shared_ptr<const JobRequest>> list;
     for (const auto& job : m_vQueue)
     {
         if (job->GetCustomerID() != userID || !job->SupportsType(filter))
@@ -764,11 +750,11 @@ const std::string JobQueue::PrintQueuePageByUser(dpp::cluster& cluster,
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::vector<std::shared_ptr<JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
+const std::vector<std::shared_ptr<const JobRequest>> JobQueue::GetQueueByWorker(const dpp::snowflake& userID) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
-    std::vector<std::shared_ptr<JobRequest>> list;
+    std::vector<std::shared_ptr<const JobRequest>> list;
     for (const auto& job : m_vQueue)
     {
         if (job->GetWorkerID() != userID)
@@ -860,7 +846,7 @@ const std::string JobQueue::PrintFirstAssignment(dpp::cluster& cluster, const dp
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
+std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
@@ -878,7 +864,7 @@ std::shared_ptr<JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& user
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool JobQueue::IsInQueue(const std::string& strID) const
+const bool JobQueue::IsInQueue(const std::string& strID) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 

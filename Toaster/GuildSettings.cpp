@@ -297,7 +297,7 @@ void GuildSettings::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLE
     roles[static_cast<std::size_t>(Roles::Manager)] = ReadOptionalId(xmlNode, "ManagerRole");
 }
 
-void GuildSettings::SaveGuildSettings(dpp::snowflake guildID)
+void GuildSettings::SaveGuildSettings(const dpp::snowflake guildID)
 {
     tinyxml2::XMLDocument doc;
     doc.LoadFile("../guilds.xml");

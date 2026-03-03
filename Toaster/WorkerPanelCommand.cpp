@@ -120,8 +120,6 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
     {
         WorkerPanel::CompleteButton(id, ctx, event);
 
-        Sleep(10);
-
         auto parts = utils::Split(id, ':');
         const dpp::snowflake user = parts[1];
 
@@ -133,22 +131,16 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
     else if (id.starts_with(fmt::format("{}_edit:", Option_Overview)))
     {
         GeneralUserPanel::EditButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with(fmt::format("{}_note:", Option_Overview)))
     {
         GeneralUserPanel::NoteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with(fmt::format("{}_unassign:", Option_Overview)))
     {
         WorkerPanel::UnassignButton(id, ctx, event);
-
-        Sleep(10);
 
         auto parts = utils::Split(id, ':');
         const dpp::snowflake user = parts[1];
@@ -161,8 +153,6 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
     else if (id.starts_with(fmt::format("{}_delete:", Option_Overview)))
     {
         GeneralUserPanel::DeleteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
 }

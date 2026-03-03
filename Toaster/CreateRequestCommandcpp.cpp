@@ -214,11 +214,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestAddToQueue(std::move(jobHazard));
     }
 
-    std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(jobID);
-    while (!job)
-    {
-        job = ctx.queue->GetJobByGUID(jobID);
-    }
+    const auto job = ctx.queue->GetJobByGUID(jobID);
 
     // Edit the original message
     event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
@@ -249,8 +245,6 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     {
         WorkerPanel::CompleteButton(id, ctx, event);
 
-        Sleep(10);
-
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
         const std::string guid = parts[2];
@@ -263,22 +257,16 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else if (id.starts_with(fmt::format("{}_edit:", this->name)))
     {
         GeneralUserPanel::EditButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with(fmt::format("{}_note:", this->name)))
     {
         GeneralUserPanel::NoteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with(fmt::format("{}_unassign:", this->name)))
     {
         WorkerPanel::UnassignButton(id, ctx, event);
-
-        Sleep(10);
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
@@ -293,8 +281,6 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     {
         CustomerPanel::SubscribeButton(id, ctx, event);
 
-        Sleep(10);
-
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
         const std::string guid = parts[2];
@@ -307,13 +293,11 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else if (id.starts_with(fmt::format("{}_delete:", this->name)))
     {
         GeneralUserPanel::DeleteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
 }
 
-dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const
+dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {

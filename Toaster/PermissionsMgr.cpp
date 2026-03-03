@@ -47,7 +47,7 @@ bool PermissionsMgr::IsBotOwner(const dpp::snowflake& user)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsRequestWorker(const dpp::snowflake& user, const std::shared_ptr<JobRequest> job)
+bool PermissionsMgr::IsRequestWorker(const dpp::snowflake& user, const std::shared_ptr<const JobRequest>& job)
 {
     if (!job) return false;
     return user == job->GetWorkerID();
@@ -56,7 +56,7 @@ bool PermissionsMgr::IsRequestWorker(const dpp::snowflake& user, const std::shar
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsRequestOwner(const dpp::snowflake& user, const std::shared_ptr<JobRequest> job)
+bool PermissionsMgr::IsRequestOwner(const dpp::snowflake& user, const std::shared_ptr<const JobRequest>& job)
 {
     if (!job) return false;
     return user == job->GetCustomerID();
@@ -65,7 +65,7 @@ bool PermissionsMgr::IsRequestOwner(const dpp::snowflake& user, const std::share
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsWorkerOwner(const std::shared_ptr<JobRequest> job)
+bool PermissionsMgr::IsWorkerOwner(const std::shared_ptr<const JobRequest>& job)
 {
     if (!job) return false;
     return job->GetCustomerID() == job->GetCustomerID();
@@ -188,7 +188,7 @@ bool PermissionsMgr::CanCreateJob(
 bool PermissionsMgr::CanAssignJob(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
-    const std::shared_ptr<JobRequest>& job, 
+    const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
     const GuildSettings& settings)
 {
@@ -207,7 +207,7 @@ bool PermissionsMgr::CanAssignJob(
 bool PermissionsMgr::CanEditJob(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
-    const std::shared_ptr<JobRequest>& job, 
+    const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
     const GuildSettings& settings)
 {
@@ -228,7 +228,7 @@ bool PermissionsMgr::CanEditJob(
 bool PermissionsMgr::CanDeleteJob(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
-    const std::shared_ptr<JobRequest>& job, 
+    const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
     const GuildSettings& settings)
 {
@@ -249,7 +249,7 @@ bool PermissionsMgr::CanDeleteJob(
 bool PermissionsMgr::CanAddNote(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user, 
-    const std::shared_ptr<JobRequest>& job, 
+    const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
     const GuildSettings& settings)
 {

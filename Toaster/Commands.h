@@ -231,7 +231,7 @@ public:
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 
 private:
-    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const;
+    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const;
 
 };
 
@@ -330,7 +330,7 @@ public:
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 
 private:
-    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const;
+    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -360,7 +360,7 @@ public:
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 
 private:
-    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const;
+    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

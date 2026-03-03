@@ -47,7 +47,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     utils::FilterWhiteSpace(strJobID);
 
-    const std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strJobID);
+    const auto job = ctx.queue->GetJobByGUID(strJobID);
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -129,7 +129,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::string strParam2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
         std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
-        std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -144,7 +144,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         utils::FilterUserString(strParam2);
         utils::FilterUserString(strParam3);
 
-        job->SetLastEditTime(utils::GetEpochTimestamp());
         const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
@@ -213,8 +212,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 });
         }
 
-        Sleep(10);
-
         // Edit the original message
         event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
@@ -240,7 +237,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::snowflake workerID = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
         const std::string strStatus = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
-        std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -254,8 +251,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 job->SetWorkerID(workerID);
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
             });
-
-        Sleep(10);
 
         dpp::embed embed;
         embed.set_title("Assigned job:")
@@ -281,7 +276,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
         const std::string strStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
-        std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -294,8 +289,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             {
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
             });
-
-        Sleep(10);
 
         dpp::embed embed;
         embed.set_title("Status changed for job:")
@@ -323,7 +316,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
         const std::string strPriority = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
-        std::shared_ptr<JobRequest> job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -336,8 +329,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             {
                 job->SetPriority(JobRequest::StringToPriority(strPriority));
             });
-
-        Sleep(10);
 
         dpp::embed embed;
         embed.set_title("Priority changed for job:")
@@ -362,7 +353,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         //const std::string strDesc = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
         const std::string strJustification = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
-        auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByGUID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -375,7 +366,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::snowflake customerID = job->GetCustomerID();
         const bool bNotifyCustomer = job->IsCustomerSubscribed();
 
-        const bool result = ctx.queue->RequestDeleteJobByGUID(utils::StringToGuid("{" + strID + "}")).get();
+        const bool result = ctx.queue->RequestDeleteJobByGUID(utils::StringToGuid("{" + strID + "}"));
         if (!result)
         {
             event.reply(dpp::message("Failed to delete job.")
@@ -422,8 +413,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     {
         WorkerPanel::CompleteButton(id, ctx, event);
 
-        Sleep(10);
-
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
         const std::string guid = parts[2];
@@ -436,8 +425,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else  if (id.starts_with(fmt::format("{}_edit:", this->name)))
     {
         GeneralUserPanel::EditButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     //-------------------------------------------------------------------------------------------------------------
@@ -446,15 +433,11 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else if (id.starts_with(fmt::format("{}_note:", this->name)))
     {
         GeneralUserPanel::NoteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with(fmt::format("{}_unassign:", this->name)))
     {
         WorkerPanel::UnassignButton(id, ctx, event);
-
-        Sleep(10);
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
@@ -472,8 +455,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     {
         CustomerPanel::SubscribeButton(id, ctx, event);
 
-        Sleep(10);
-
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
         const std::string guid = parts[2];
@@ -489,8 +470,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else  if (id.starts_with(fmt::format("{}_delete:", this->name)))
     {
         GeneralUserPanel::DeleteButton(id, ctx, event);
-
-        Sleep(10);
         return;
     }
     else if (id.starts_with("global_assign:"))
@@ -524,8 +503,6 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
                 job->SetWorkerID(id);
             });
 
-        Sleep(10);
-
         dpp::component row;
         row.add_component(dpp::component()
             .set_type(dpp::cot_button)
@@ -544,7 +521,7 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     }
 }
 
-dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<JobRequest>& job, const dpp::snowflake& user) const
+dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {

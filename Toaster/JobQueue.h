@@ -36,7 +36,6 @@ public:
     JobQueue();
     ~JobQueue();
 
-
     // For Managers and Workers
     const std::string PrintQueue(dpp::cluster& cluster, 
                                  const dpp::snowflake& idGuild) const; 
@@ -62,8 +61,6 @@ public:
                                            const std::size_t page, const dpp::snowflake& idGuild) const;
 
     // For Everyone
-    const std::vector<std::shared_ptr<JobRequest>> GetQueueByUser(const dpp::snowflake& userID,
-                                                                  const std::size_t filter) const;
     const std::string PrintQueueByUser(dpp::cluster& cluster, 
                                        const dpp::snowflake& userID, 
                                        const std::size_t filter, 
@@ -74,33 +71,38 @@ public:
                                            const std::size_t page, 
                                            const dpp::snowflake& idGuild) const;
     // For workers
-    const std::vector<std::shared_ptr<JobRequest>> GetQueueByWorker(const dpp::snowflake& userID) const;
     const std::string PrintQueueByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const;
     const std::string PrintQueuePageByWorker(dpp::cluster& cluster, const dpp::snowflake& userID, const std::size_t page, const dpp::snowflake& idGuild) const;
     const std::string PrintFirstAssignment(dpp::cluster& cluster, const dpp::snowflake& userID, const dpp::snowflake& idGuild) const;
-    std::shared_ptr<JobRequest> FirstAssignment(const dpp::snowflake& userID);
 
-    bool IsInQueue(const std::string& strID) const;
-    const std::size_t GetQueueSize() const { return m_vQueue.size(); }
+    const bool IsInQueue(const std::string& strID) const;
+    const std::size_t GetQueueSize() const 
+    {
+        std::shared_lock lock(m_mtxShared);
+        return m_vQueue.size();
+    }
     const std::size_t GetFilteredQueueSizeByType(const std::size_t filter) const;
     const std::size_t GetFilteredQueueSizeByStatus(const JobRequest::status filter) const;
     const std::size_t GetFilteredQueueSizeByWorker(const dpp::snowflake& worker) const;
     const std::size_t GetFilteredQueueSizeByUser(const dpp::snowflake& user, const std::size_t filter) const;
 
-    std::shared_ptr<JobRequest> GetJobByGUID(const GUID& guid) const;
-    std::shared_ptr<JobRequest> GetJobByGUID(const std::string& guid) const;
+    std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
+    const std::shared_ptr<const JobRequest> GetJobByGUID(const GUID& guid) const;
+    const std::shared_ptr<const JobRequest> GetJobByGUID(const std::string& guid) const;
 
-    void EnqueueMutation(QueueMutation mut);
     void RequestModifyJob(const GUID& guid, JobMutation mutator);
     void RequestAddToQueue(std::shared_ptr<JobRequest> job);
-    std::future<bool> RequestDeleteJobByGUID(const GUID& guid);
+    const bool RequestDeleteJobByGUID(const GUID& guid);
 
 private: // Methods
-    std::shared_ptr<JobRequest> GetJobByGUID_NoLock(const GUID& guid) const;
-    template<typename T>
-    std::future<T> EnqueueTaskWithResult(std::function<T(std::shared_ptr<JobQueue>)> task);
-    void MutationWorker();
+    // Internal 
+    const std::vector<std::shared_ptr<const JobRequest>> GetQueueByUser(const dpp::snowflake& userID, const std::size_t filter) const;
+    const std::vector<std::shared_ptr<const JobRequest>> GetQueueByWorker(const dpp::snowflake& userID) const;
 
+    // Private modification and worker thread methods
+    void EnqueueMutation(QueueMutation mut);
+    std::shared_ptr<JobRequest> GetJobByGUID_NoLock(const GUID& guid) const;
+    void MutationWorker();
     void SaveQueueToFile();
 
 private: // Variables
@@ -111,7 +113,7 @@ private: // Variables
     std::mutex m_mtxMutQueue;
     std::condition_variable m_cv;
     std::jthread m_worker;
-    bool m_bRunning = true;
+    std::atomic<bool> m_bRunning{ true };
 };
 
 

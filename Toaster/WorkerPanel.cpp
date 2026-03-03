@@ -49,7 +49,7 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
     const dpp::snowflake worker = parts[1];
     const std::string guid = parts[2];
 
-    auto job = ctx.queue->GetJobByGUID(guid);
+    const auto job = ctx.queue->GetJobByGUID(guid);
     if (!job)
     {
         event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -93,7 +93,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
     dpp::snowflake user = parts[1];
     const std::string guid = parts[2];
 
-    auto job = ctx.queue->GetJobByGUID(guid);
+    const auto job = ctx.queue->GetJobByGUID(guid);
     if (!job)
     {
         event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));

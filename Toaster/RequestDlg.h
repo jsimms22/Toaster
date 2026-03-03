@@ -206,7 +206,7 @@ private:
 class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	AssignRequestDlg(const std::shared_ptr<JobRequest>& job,
+	AssignRequestDlg(const std::shared_ptr<const JobRequest>& job,
 				     const std::vector<std::pair<dpp::snowflake, std::string>>& workers,
 					 const std::string& worker = "")
 		: dpp::interaction_modal_response(), m_spJob(job), m_workers(workers), m_svWorker(worker)
@@ -230,7 +230,7 @@ private:
 	dpp::component WorkerAssignSelect;
 	dpp::component StatusUpdateSelect;
 
-	std::shared_ptr<JobRequest> m_spJob;
+	std::shared_ptr<const JobRequest> m_spJob;
 	std::vector<std::pair<dpp::snowflake, std::string>> m_workers;
 	std::string m_svWorker;
 };
@@ -250,7 +250,7 @@ public:
 
 	static const std::vector<StatusOption> StatusList;
 
-	StatusChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
+	StatusChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
 		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
@@ -270,7 +270,7 @@ private:
 	dpp::component JobRequestIDEdit;
 	dpp::component StatusUpdateSelect;
 
-	std::shared_ptr<JobRequest> m_spJob;
+	std::shared_ptr<const JobRequest> m_spJob;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -289,7 +289,7 @@ public:
 
 	static const std::vector<PriorityOption> PriorityList;
 
-	PriorityChangeRequestDlg(const std::shared_ptr<JobRequest>& job)
+	PriorityChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
 		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
@@ -309,7 +309,7 @@ private:
 	dpp::component JobRequestIDEdit;
 	dpp::component PrioritySelect;
 
-	std::shared_ptr<JobRequest> m_spJob;
+	std::shared_ptr<const JobRequest> m_spJob;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ private:
 class EditRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	EditRequestDlg(const std::shared_ptr<JobRequest>& job)
+	EditRequestDlg(const std::shared_ptr<const JobRequest>& job)
 		: dpp::interaction_modal_response(), m_spJob(job)
 	{
 		set_custom_id(modalID);
@@ -356,7 +356,7 @@ private:
 	dpp::component HazResourceZoneEdit;
 	dpp::component HazResourceListEdit;
 
-	std::shared_ptr<JobRequest> m_spJob;
+	std::shared_ptr<const JobRequest> m_spJob;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -366,7 +366,7 @@ private:
 class DeleteRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	DeleteRequestDlg(const std::shared_ptr<JobRequest>& job, const std::string details)
+	DeleteRequestDlg(const std::shared_ptr<const JobRequest>& job, const std::string details)
 		: dpp::interaction_modal_response(), m_spJob(job), m_strDetails(details)
 	{
 		set_custom_id(modalID);
@@ -387,6 +387,6 @@ private:
 	dpp::component JobDescriptionEdit;
 	dpp::component DeleteJustificationEdit;
 
-	std::shared_ptr<JobRequest> m_spJob;
+	std::shared_ptr<const JobRequest> m_spJob;
 	std::string m_strDetails;
 };

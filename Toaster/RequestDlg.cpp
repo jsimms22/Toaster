@@ -630,7 +630,7 @@ void EditRequestDlg::InitializeControls()
 
     if (m_spJob->SupportsType(JOB_TYPE_CRAFTING))
     {
-        std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(m_spJob);
+        const std::shared_ptr<const CraftingJobRequest> craft = std::dynamic_pointer_cast<const CraftingJobRequest>(m_spJob);
         // Create a text box component
         ItemDescEdit.set_label("Item Description or Name")
             .set_type(dpp::cot_text)
@@ -651,7 +651,7 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_spJob->SupportsType(JOB_TYPE_BUILDING))
     {
-        std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(m_spJob);
+        const std::shared_ptr<const BuildingJobRequest> bldg = std::dynamic_pointer_cast<const BuildingJobRequest>(m_spJob);
         // Create a text box component
         BuildDesignEdit.set_label("Type of Building(s)")
             .set_type(dpp::cot_text)
@@ -684,7 +684,7 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_spJob->SupportsType(JOB_TYPE_COMPONENT))
     {
-        std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(m_spJob);
+        const std::shared_ptr<const ComponentJobRequest> comp = std::dynamic_pointer_cast<const ComponentJobRequest>(m_spJob);
         // Create a text box component
         ComponentListEdit.set_label("Component List")
             .set_type(dpp::cot_text)
@@ -697,7 +697,7 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_spJob->SupportsType(JOB_TYPE_RESOURCE))
     {
-        std::shared_ptr<ResourceJobRequest> resource = std::dynamic_pointer_cast<ResourceJobRequest>(m_spJob);
+        const std::shared_ptr<const ResourceJobRequest> resource = std::dynamic_pointer_cast<const ResourceJobRequest>(m_spJob);
         // Create a text box component
         ResourceListEdit.set_label("Resource List")
             .set_type(dpp::cot_text)
@@ -710,7 +710,7 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_spJob->SupportsType(JOB_TYPE_REFINERY))
     {
-        std::shared_ptr<RefineryJobRequest> refine = std::dynamic_pointer_cast<RefineryJobRequest>(m_spJob);
+        const std::shared_ptr<const RefineryJobRequest> refine = std::dynamic_pointer_cast<const RefineryJobRequest>(m_spJob);
         // Create a text box component
         ResourceListEdit.set_label("Resource List")
             .set_type(dpp::cot_text)
@@ -733,20 +733,28 @@ void EditRequestDlg::InitializeControls()
     }
     else if (m_spJob->SupportsType(JOB_TYPE_HAZARD))
     {
+        const std::shared_ptr<const HazardousRequest> hazmat = std::dynamic_pointer_cast<const HazardousRequest>(m_spJob);
         // Create a combo box component
         ThreatLevelSelect.set_label("Expected Threat Level")
             .set_type(dpp::cot_selectmenu)
-            .set_placeholder("Select Threat Level")
-            .add_select_option(dpp::select_option("Permissive", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Permissive), "No threats expected.").set_emoji(dpp::unicode_emoji::green_circle))
-            .add_select_option(dpp::select_option("Minimal", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Minimal), "Minimal to low threat expected.").set_emoji(dpp::unicode_emoji::orange_circle))
-            .add_select_option(dpp::select_option("Uncertain", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Uncertain), "Unknown hostility level.").set_emoji(dpp::unicode_emoji::black_circle))
-            .add_select_option(dpp::select_option("Hostile", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Hostile), "High likelihood of combat").set_emoji(dpp::unicode_emoji::red_circle))
+            .add_select_option(dpp::select_option("Permissive", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Permissive), "No threats expected.")
+                .set_emoji(dpp::unicode_emoji::green_circle)
+                .set_default(hazmat->GetThreatLevel() == HazardousRequest::ThreatLevel::Permissive))
+            .add_select_option(dpp::select_option("Minimal", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Minimal), "Minimal to low threat expected.")
+                .set_emoji(dpp::unicode_emoji::orange_circle)
+                .set_default(hazmat->GetThreatLevel() == HazardousRequest::ThreatLevel::Minimal))
+            .add_select_option(dpp::select_option("Uncertain", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Uncertain), "Unknown hostility level.")
+                .set_emoji(dpp::unicode_emoji::black_circle)
+                .set_default(hazmat->GetThreatLevel() == HazardousRequest::ThreatLevel::Uncertain))
+            .add_select_option(dpp::select_option("Hostile", HazardousRequest::ThreatToString(HazardousRequest::ThreatLevel::Hostile), "High likelihood of combat")
+                .set_emoji(dpp::unicode_emoji::red_circle)
+                .set_default(hazmat->GetThreatLevel() == HazardousRequest::ThreatLevel::Hostile))
             .set_id(Component_ThreatLevel);
 
         // Create a text box component
         HazResourceZoneEdit.set_label("Hazardous Item Location")
             .set_type(dpp::cot_text)
-            .set_placeholder("Zone or Region")
+            .set_default_value(hazmat->GetItemLocation())
             .set_min_length(1)
             .set_max_length(256)
             .set_required(true)
@@ -756,7 +764,7 @@ void EditRequestDlg::InitializeControls()
         // Create a text box component
         HazResourceListEdit.set_label("Hazardous Item List")
             .set_type(dpp::cot_text)
-            .set_placeholder("Item descriptions, quantities, and expected quality levels.")
+            .set_default_value(hazmat->GetItemList())
             .set_min_length(1)
             .set_max_length(256)
             .set_required(true)

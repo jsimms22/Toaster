@@ -266,7 +266,7 @@ void ToasterBot::LoadGuildSettings()
         {
             GuildSettings guild;
             guild.ReadAttributes(xmlNode, root);
-            g_settings.insert({ id, std::move(guild) });
+            g_settings.emplace(id, std::move(guild));
         }
     }
 }

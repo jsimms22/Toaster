@@ -292,7 +292,7 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
-    std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<JobRequest>& job, const GuildSettings& settings)
+    std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<const JobRequest>& job, const GuildSettings& settings)
     {
         if (!guild)
             return {};

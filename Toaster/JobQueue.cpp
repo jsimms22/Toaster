@@ -16,6 +16,7 @@
 #include "tinyxml2.h"
 // std library
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <stdexcept>
 
@@ -33,56 +34,11 @@ namespace
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor: Reads the XML and loads the job requests into the container
 //---------------------------------------------------------------------------------------------------------------------
-JobQueue::JobQueue()
+JobQueue::JobQueue(const dpp::snowflake guildID, tinyxml2::XMLElement* requestList)
+    : m_guildID{guildID}
 {
-    m_worker = std::jthread(&JobQueue::MutationWorker, this);
-
-    tinyxml2::XMLDocument doc;
-    const char* path = "../queue.xml";
-
-    tinyxml2::XMLError result = doc.LoadFile(path);
-
-    if (result == tinyxml2::XML_ERROR_FILE_NOT_FOUND)
-    {
-        // Create new file with root
-        auto* root = doc.NewElement("RequestList");
-        doc.InsertEndChild(root);
-
-        doc.SaveFile(path);
-        return; // No jobs
-    }
-
-    if (result != tinyxml2::XML_SUCCESS)
-    {
-        // Handle corrupted file if desired
-        return;
-    }
-
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
-    {
-        root = doc.NewElement("RequestList");
-        doc.InsertEndChild(root);
-        doc.SaveFile(path);
-        return;
-    }
-
-    // Iterate over all <Request> elements within each <User>
-    for (tinyxml2::XMLElement* xmlNode = root->FirstChildElement("Request"); xmlNode != nullptr; xmlNode = xmlNode->NextSiblingElement("Request"))
-    {
-        const char* type = xmlNode->Attribute("Type");
-        if (type)
-        {
-            auto job = JobRequestFactory::Create(std::stoul(type));
-            if (!job)
-            {
-                continue;
-            }
-
-            job->ReadAttributes(xmlNode);
-            m_vQueue.emplace_back(std::move(job));
-        }
-    }
+    LoadFromXml(requestList);
+    StartWorker();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -90,9 +46,12 @@ JobQueue::JobQueue()
 //---------------------------------------------------------------------------------------------------------------------
 JobQueue::~JobQueue()
 {
-    m_bRunning = false;
-    m_cv.notify_all();
-    SaveQueueToFile();
+    if (m_worker.joinable())
+    {
+        m_worker.request_stop();
+        m_cv.notify_all();
+        SaveQueueToFile();
+    }
 }
 
 void JobQueue::EnqueueMutation(QueueMutation mutation)
@@ -105,20 +64,50 @@ void JobQueue::EnqueueMutation(QueueMutation mutation)
     m_cv.notify_one();
 }
 
+void JobQueue::LoadFromXml(tinyxml2::XMLElement* requestList)
+{
+    if (!requestList)
+        return;
+
+    for (tinyxml2::XMLElement* req = requestList->FirstChildElement("Request");
+        req != nullptr;
+        req = req->NextSiblingElement("Request"))
+    {
+        const char* typeAttr = req->Attribute("Type");
+        if (!typeAttr)
+            continue;
+
+        auto job = JobRequestFactory::Create(std::stoul(typeAttr));
+        if (!job)
+            continue;
+
+        job->ReadAttributes(req);
+        m_vQueue.emplace_back(std::move(job));
+    }
+}
+
+void JobQueue::StartWorker()
+{
+    if (m_worker.joinable())
+        return;
+
+    m_worker = std::jthread([this](std::stop_token st) { MutationWorker(st); });
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::MutationWorker()
+void JobQueue::MutationWorker(std::stop_token stopToken)
 {
-    while (true)
+    while (!stopToken.stop_requested())
     {
         std::unique_lock<std::mutex> lock(m_mtxMutQueue);
 
-        m_cv.wait(lock, [this] {
-            return !m_mutations.empty() || !m_bRunning;
+        m_cv.wait(lock, [this, &stopToken] {
+            return !m_mutations.empty() || stopToken.stop_requested();
             });
 
-        if (!m_bRunning && m_mutations.empty())
+        if (stopToken.stop_requested())
             break;
 
         auto mutation = std::move(m_mutations.front());
@@ -208,30 +197,58 @@ void JobQueue::SaveQueueToFile()
     std::vector<std::shared_ptr<JobRequest>> snapshot;
     {
         std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-        snapshot = m_vQueue;  // copy under shared lock
+        snapshot = m_vQueue;
     }
 
     tinyxml2::XMLDocument doc;
-    doc.LoadFile("../queue.xml");
-    doc.Clear();
+    const char* path = "../queue.xml";
 
-    // Get the root element (<RequestQueue>)
+    if (doc.LoadFile(path) != tinyxml2::XML_SUCCESS)
+        return;
+
     tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
+    if (!root || std::string(root->Name()) != "Queues")
     {
-        root = doc.NewElement("RequestList");
+        doc.Clear();
+        root = doc.NewElement("Queues");
         doc.InsertEndChild(root);
+    }
+
+    tinyxml2::XMLElement* requestList = nullptr;
+    std::uint64_t guildValue = static_cast<std::uint64_t>(m_guildID);
+    for (auto* elem = root->FirstChildElement("RequestList");
+        elem != nullptr;
+        elem = elem->NextSiblingElement("RequestList"))
+    {
+        const char* guildAttr = elem->Attribute("GuildID");
+        if (guildAttr && std::stoull(guildAttr) == guildValue)
+        {
+            requestList = elem;
+            break;
+        }
+    }
+
+    if (!requestList)
+    {
+        requestList = doc.NewElement("RequestList");
+        requestList->SetAttribute("GuildID", std::to_string(guildValue).c_str());
+        root->InsertEndChild(requestList);
+    }
+
+    while (auto* child = requestList->FirstChildElement("Request"))
+    {
+        requestList->DeleteChild(child);
     }
 
     for (const auto& job : snapshot)
     {
-        tinyxml2::XMLElement* xmlNode = root->InsertNewChildElement("Request");
-        job->WriteAttributes(xmlNode, root, &doc);
-        root->InsertEndChild(xmlNode);
+        tinyxml2::XMLElement* xmlNode = doc.NewElement("Request");
+
+        job->WriteAttributes(xmlNode, requestList, &doc);
+        requestList->InsertEndChild(xmlNode);
     }
 
-    // Save the updated XML to a file
-    doc.SaveFile("../queue.xml");
+    doc.SaveFile(path);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

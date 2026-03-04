@@ -25,9 +25,7 @@ class JobQueue;
 class ToasterBot final
 {
 public:
-	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, 
-			   const std::shared_ptr<JobQueue>& spQueue, 
-		       const bool bDebug = false);
+	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const bool bDebug = false);
 	~ToasterBot() { SaveGuildSettings(); }
 
 	// Bot event handlers
@@ -40,27 +38,22 @@ public:
 	
 private:
 	mutable std::shared_mutex m_mtxShared;
-
-	void LoadGuildSettings();
-	void SaveGuildSettings();
-
 	bool m_debug = false;
-
-	std::shared_ptr<JobQueue> m_spQueue;
 
 	// Discord details
 	dpp::cluster& m_cluster;
 	std::uint32_t m_clusterId = 0;
 	std::uint32_t m_iShardCount = 0;
-	const std::vector<dpp::snowflake> m_vWorkers = 
-	{	
-		464542267395538944, 
-		332728115430162444,												  
-		710847331871883294,																	  
-		195997205864120320 
-	};
 
+	// Guild Data
+	void LoadGuildSettings();
+	void SaveGuildSettings();
+	GuildSettings& GetOrCreateSettings(const dpp::snowflake& guildID);
 	std::unordered_map<dpp::snowflake, GuildSettings> g_settings;
-
+	
+	// Queue Data
+	void LoadQueueData();
+	std::shared_ptr<JobQueue> GetOrCreateQueue(const dpp::snowflake& guildID);
+	std::unordered_map<dpp::snowflake, std::shared_ptr<JobQueue>> m_spQueue;
 };
 

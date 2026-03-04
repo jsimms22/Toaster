@@ -460,6 +460,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     strID,
                     strNote));
         }
+        // todo: need a way to allow workers to stop notifications
         else if (event.command.usr.id != job->GetWorkerID() || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster,
@@ -470,7 +471,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     strID,
                     strNote));
         }
-        // todo: notify worker and customer
     }
 }
 
@@ -581,6 +581,7 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
                     return;
 
                 job->SetWorkerID(id);
+                job->SetStatus(JobRequest::status::assigned);
             });
 
         dpp::component row;

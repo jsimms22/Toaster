@@ -20,7 +20,6 @@ WorkerPanel::WorkerPanel(
 		.set_label("Complete")
 		.set_style(dpp::cos_success)
 		.set_id(fmt::format("{}_complete:{}:{}", OwnerName, m_userID, m_jobID));
-	//.set_disabled(job->GetStatus() == JobRequest::status::complete);
 
 	m_btnAssign.set_type(dpp::cot_button)
 		.set_label(userID == workerID ? "Unassign Me" : "Assign Me")
@@ -76,6 +75,8 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
         }
 
         ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
+
+        GuildSettings::AnnounceOnComplete(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
     }
     else
     {

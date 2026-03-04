@@ -8,9 +8,12 @@
 #include <dpp/snowflake.h>
 // microsoft
 #include <guiddef.h>
+// tinyxml2
+#include "tinyxml2.h"
 // std library
 #include <condition_variable>
 #include <cstdlib>
+#include <functional>
 #include <future>
 #include <memory>
 #include <queue>
@@ -33,7 +36,7 @@ public:
     static const std::size_t JOBS_PER_QUEUE_PAGE;
     static const std::size_t JOBS_PER_DETAIL_PAGE;
 
-    JobQueue();
+    JobQueue(const dpp::snowflake, tinyxml2::XMLElement* requestList);
     ~JobQueue();
 
     // For Managers and Workers
@@ -102,10 +105,14 @@ private: // Methods
     // Private modification and worker thread methods
     void EnqueueMutation(QueueMutation mut);
     std::shared_ptr<JobRequest> GetJobByGUID_NoLock(const GUID& guid) const;
-    void MutationWorker();
+    void MutationWorker(std::stop_token stopToken);
     void SaveQueueToFile();
 
+    void LoadFromXml(tinyxml2::XMLElement* requestList);
+    void StartWorker();
+
 private: // Variables
+    dpp::snowflake m_guildID;
     std::vector<std::shared_ptr<JobRequest>> m_vQueue;
     mutable std::shared_mutex m_mtxShared;
 

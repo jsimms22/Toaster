@@ -1,7 +1,6 @@
 #include "Resource.h"
 
 #include "BotUtility.h"
-#include "JobQueue.h"
 #include "Toaster.h"
 // d++
 #include <dpp/dpp.h>
@@ -44,7 +43,7 @@ auto main() -> int
     log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(log);
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
-    log->set_level(spdlog::level::level_enum::debug);
+    log->set_level(spdlog::level::level_enum::info);
 
     const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN") };
     const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
@@ -54,33 +53,8 @@ auto main() -> int
     // Create an instance and establish our MongoDB connection
     mongo::instance mongoInstance{ }; 
     mongo::database mongoDatabase; 
-    std::shared_ptr<JobQueue> spQueue;
-    try
-    {
-        const auto uri = mongo::uri{ fmt::format("mongodb+srv://{}:{}@{}", DB_USER, DB_PASS, DB_CLUSTER) };
 
-        // Set the version of the Stable API on the client
-        mongo::options::client client_options;
-        const auto api = mongo::options::server_api{ mongo::options::server_api::version::k_version_1 };
-        client_options.server_api_opts(api);
-
-        // Setup the connection and get a handle on the "admin" database.
-        mongo::client conn{ uri, client_options };
-        mongoDatabase = conn["admin"];
-
-        // Ping the database.
-        const auto ping_cmd = bson::builder::basic::make_document(bson::builder::basic::kvp("ping", 1));
-        mongoDatabase.run_command(ping_cmd.view());
-        fmt::println("Pinged your deployment. You successfully connected to MongoDB!");
-
-        // Reconstruct our queue from persistent data
-        spQueue = std::make_shared<JobQueue>();
-    }
-    catch (const std::exception& e)
-    {
-        log->critical(fmt::format("Exception: {}", e.what()));
-        return 0;
-    }
+    // todo load the data from remote db
 
     std::uint8_t counter{ 0 };
     while (true)
@@ -139,7 +113,7 @@ auto main() -> int
             }
             });
 
-        ToasterBot toaster(bot, 0, spQueue, true);
+        ToasterBot toaster(bot, 0, false);
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
         bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });
@@ -160,8 +134,6 @@ auto main() -> int
         // Reconnection delay to prevent hammering discord
         Sleep(50);
     }
-
-    //spQueue->SaveQueueToFile();
 
     return 0;
 }

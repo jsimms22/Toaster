@@ -9,12 +9,14 @@ void ICustomCommand::RegisterAll(dpp::cluster* cluster, const std::vector<ICusto
 {
     if (!cluster) return;
 
+    std::vector<dpp::slashcommand> slashCommands;
     for (auto* cmd : vCommands)
     {
         cmd->set_application_id(cluster->me.id);
-        cluster->global_command_create(*cmd);
-        Sleep(250); // Avoid rate limit
+        slashCommands.push_back(*cmd);
     }
+
+    cluster->global_bulk_command_create(slashCommands);
 
     cluster->log(dpp::ll_debug, fmt::format("Created '{}' global commands.", vCommands.size()));
 }
@@ -26,12 +28,14 @@ void ICustomCommand::RegisterGuildAll(dpp::cluster* cluster, const dpp::snowflak
 {
     if (!cluster) return;
 
+    std::vector<dpp::slashcommand> slashCommands;
     for (auto* cmd : vCommands)
     {
         cmd->set_application_id(cluster->me.id);
-        cluster->guild_command_create(*cmd, idGuild);
-        Sleep(250); // Avoid rate limit
+        slashCommands.push_back(*cmd);
     }
+
+    cluster->guild_bulk_command_create(slashCommands, idGuild);
 
     cluster->log(dpp::ll_debug, fmt::format("Created '{}' commands for guild id '{}'.", vCommands.size(), idGuild));
 }

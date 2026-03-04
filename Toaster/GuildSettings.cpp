@@ -87,7 +87,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
         }
     }
 
-    if (ctx.guild.idUpdateJobChannel.has_value())
+    if (ctx.guild.idNewJobChannel.has_value())
     {
         dpp::embed announce;
         announce.set_title("New Job Request")

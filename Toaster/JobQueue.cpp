@@ -34,10 +34,10 @@ namespace
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor: Reads the XML and loads the job requests into the container
 //---------------------------------------------------------------------------------------------------------------------
-JobQueue::JobQueue(const dpp::snowflake guildID, tinyxml2::XMLElement* requestList)
-    : m_guildID{guildID}
+JobQueue::JobQueue(const dpp::snowflake& guildID, std::shared_ptr<IJobRepo> repo)
+    : m_guildID{guildID}, m_repo{repo}
 {
-    LoadFromXml(requestList);
+    m_vQueue = repo->LoadJobs(m_guildID);
     StartWorker();
 }
 
@@ -54,6 +54,9 @@ JobQueue::~JobQueue()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::EnqueueMutation(QueueMutation mutation)
 {
     {
@@ -64,6 +67,9 @@ void JobQueue::EnqueueMutation(QueueMutation mutation)
     m_cv.notify_one();
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::LoadFromXml(tinyxml2::XMLElement* requestList)
 {
     if (!requestList)
@@ -77,7 +83,7 @@ void JobQueue::LoadFromXml(tinyxml2::XMLElement* requestList)
         if (!typeAttr)
             continue;
 
-        auto job = JobRequestFactory::Create(std::stoul(typeAttr));
+        auto job = JobRequestFactory::Create(std::stoul(typeAttr), m_guildID);
         if (!job)
             continue;
 
@@ -86,6 +92,9 @@ void JobQueue::LoadFromXml(tinyxml2::XMLElement* requestList)
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::StartWorker()
 {
     if (m_worker.joinable())
@@ -126,13 +135,15 @@ void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
 
     if (!job) { return; }
+    GUID guid = job->GetID();
     m_vQueue.emplace_back(std::move(job));
 
     std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
 
-    EnqueueMutation([](std::shared_ptr<JobQueue> queue) mutable
+    EnqueueMutation([guid](std::shared_ptr<JobQueue> queue) mutable
         {
-            queue->SaveQueueToFile();
+            queue->AddJobDB(guid);
+            //queue->SaveQueueToFile();
         }
     );
 }
@@ -161,15 +172,19 @@ const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
 
     std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
 
-    EnqueueMutation([](std::shared_ptr<JobQueue> queue)
+    EnqueueMutation([guid](std::shared_ptr<JobQueue> queue)
         {
-            queue->SaveQueueToFile();
+            queue->RemoveJobDB(guid);
+            //queue->SaveQueueToFile();
         }
     );
 
     return bResult;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -182,9 +197,10 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 
     std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
 
-    EnqueueMutation([](std::shared_ptr<JobQueue> queue) mutable
+    EnqueueMutation([guid](std::shared_ptr<JobQueue> queue) mutable
         {
-            queue->SaveQueueToFile();
+            queue->UpdateJobDB(guid);
+            //queue->SaveQueueToFile();
         }
     );
 }
@@ -249,6 +265,34 @@ void JobQueue::SaveQueueToFile()
     }
 
     doc.SaveFile(path);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void JobQueue::AddJobDB(const GUID& guid)
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+    auto job = GetJobByGUID_NoLock(guid);
+    m_repo->InsertJob(m_guildID, job);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void JobQueue::UpdateJobDB(const GUID& guid)
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+    auto job = GetJobByGUID_NoLock(guid);
+    m_repo->UpdateJob(job);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void JobQueue::RemoveJobDB(const GUID& guid)
+{
+    m_repo->DeleteJob(guid);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

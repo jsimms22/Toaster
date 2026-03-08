@@ -106,6 +106,18 @@
     <ClCompile Include="NoteDialog.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="AdminButtonPanel.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TinyXmlWriter.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="MongoWriter.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="MongoJobRepo.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -116,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="BuildingJobRequest.h">
       <Filter>Header Files\Requests</Filter>
-    </ClInclude>
-    <ClInclude Include="Commands.h">
-      <Filter>Header Files\Commands</Filter>
     </ClInclude>
     <ClInclude Include="JobQueue.h">
       <Filter>Header Files</Filter>
@@ -180,6 +189,27 @@
     <ClInclude Include="NoteDialog.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="AdminButtonPanel.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="IDatabaseWriter.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="TinyXmlWriter.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="MongoWriter.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="IJobRepo.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="MongoJobRepo.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ThirdParty">
@@ -211,6 +241,12 @@
     </Filter>
     <Filter Include="Source Files\Requests">
       <UniqueIdentifier>{9b0eed5e-7383-457b-9dee-1175b02c45ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Database">
+      <UniqueIdentifier>{0434a227-c9b5-41f3-8085-c43600eaa765}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Database">
+      <UniqueIdentifier>{6c43257a-4108-4f8f-b3cc-1661b27a57fd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

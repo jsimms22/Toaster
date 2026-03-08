@@ -4,6 +4,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "JobRequest.h"
+#include "IJobRepo.h"
 // d++
 #include <dpp/snowflake.h>
 // microsoft
@@ -36,7 +37,7 @@ public:
     static const std::size_t JOBS_PER_QUEUE_PAGE;
     static const std::size_t JOBS_PER_DETAIL_PAGE;
 
-    JobQueue(const dpp::snowflake, tinyxml2::XMLElement* requestList);
+    JobQueue(const dpp::snowflake&, std::shared_ptr<IJobRepo> repo);
     ~JobQueue();
 
     // For Managers and Workers
@@ -121,6 +122,11 @@ private: // Variables
     std::condition_variable m_cv;
     std::jthread m_worker;
     std::atomic<bool> m_bRunning{ true };
+
+    std::shared_ptr<IJobRepo> m_repo;
+    void AddJobDB(const GUID& guid);
+    void UpdateJobDB(const GUID& guid);
+    void RemoveJobDB(const GUID& id);
 };
 
 

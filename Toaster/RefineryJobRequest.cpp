@@ -1,12 +1,18 @@
 #include "RefineryJobRequest.h"
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp> 
+#include <bsoncxx/document/element.hpp>
+#include <bsoncxx/types.hpp>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLRefineState{ "RefineType" };
-    constexpr const char* pszXMLRefineList{ "RefineList" };
-    constexpr const char* pszXMLRefineryLoc{ "Refinery" };
+    constexpr const char* pszRefineState{ "refine_type" };
+    constexpr const char* pszRefineList{ "refine_list" };
+    constexpr const char* pszRefineryLoc{ "refine_location" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -45,9 +51,9 @@ void RefineryJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 
     JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLRefineState, static_cast<int>(m_eResourceState));
-    xmlNode->SetAttribute(xmlRequest::pszXMLRefineList, m_strResourceList.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLRefineryLoc, m_strRefinery.c_str());
+    xmlNode->SetAttribute(serial::pszRefineState, static_cast<int>(m_eResourceState));
+    xmlNode->SetAttribute(serial::pszRefineList, m_strResourceList.c_str());
+    xmlNode->SetAttribute(serial::pszRefineryLoc, m_strRefinery.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -63,20 +69,57 @@ void RefineryJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 
     JobRequest::ReadAttributes(xmlNode);
 
-    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLRefineState, state::RefinedMineable));
+    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(serial::pszRefineState, state::RefinedMineable));
 
 
-    const char* pszResourceList = xmlNode->Attribute(xmlRequest::pszXMLRefineList);
+    const char* pszResourceList = xmlNode->Attribute(serial::pszRefineList);
     if (pszResourceList)
     {
         m_strResourceList = pszResourceList;
     }
 
-    const char* pszRefineryloc = xmlNode->Attribute(xmlRequest::pszXMLRefineryLoc);
+    const char* pszRefineryloc = xmlNode->Attribute(serial::pszRefineryLoc);
     if (pszRefineryloc)
     {
         m_strRefinery = pszRefineryloc;
     }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document RefineryJobRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+    auto doc = JobRequest::WriteAttributesBSON(); // base class attributes
+
+    // add derived attributes
+    doc.append(
+        kvp(std::string{ serial::pszRefineList }, m_strResourceList),
+        kvp(std::string{ serial::pszRefineryLoc }, m_strRefinery),
+        kvp(std::string{ serial::pszRefineState }, m_eResourceState)
+    );
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void RefineryJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    // Let parent read base fields AND notes
+    JobRequest::ReadAttributesBSON(doc);
+
+    // Read only derived fields
+    if (auto elem = doc[std::string{ serial::pszRefineList }])
+        m_strResourceList = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszRefineryLoc }])
+        m_strRefinery = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszRefineState }])
+        m_eResourceState = static_cast<state>(static_cast<int>(elem.get_int32().value));
 }
 
 //---------------------------------------------------------------------------------------------------------------------

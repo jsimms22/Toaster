@@ -195,6 +195,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AdminButtonPanel.cpp" />
     <ClCompile Include="AdminConfigChannelsCommand.cpp" />
     <ClCompile Include="AdminConfigDialog.cpp" />
     <ClCompile Include="AdminPanelCommand.cpp" />
@@ -215,6 +216,8 @@
     <ClCompile Include="JobRequestFactory.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModifyRequestCommand.cpp" />
+    <ClCompile Include="MongoJobRepo.cpp" />
+    <ClCompile Include="MongoWriter.cpp" />
     <ClCompile Include="MyRequestsCommands.cpp" />
     <ClCompile Include="NoteDialog.cpp" />
     <ClCompile Include="PaginationPanel.cpp" />
@@ -230,8 +233,10 @@
     <ClCompile Include="Toaster.cpp" />
     <ClCompile Include="WorkerPanel.cpp" />
     <ClCompile Include="WorkerPanelCommand.cpp" />
+    <ClCompile Include="TinyXmlWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdminButtonPanel.h" />
     <ClInclude Include="AdminConfigDialog.h" />
     <ClInclude Include="BuildingJobRequest.h" />
     <ClInclude Include="CommandContext.h" />
@@ -239,12 +244,16 @@
     <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
     <ClInclude Include="CustomerPanel.h" />
+    <ClInclude Include="IDatabaseWriter.h" />
     <ClInclude Include="GeneralUserPanel.h" />
     <ClInclude Include="GuildSettings.h" />
     <ClInclude Include="HazardousRequest.h" />
+    <ClInclude Include="IJobRepo.h" />
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="JobRequestFactory.h" />
+    <ClInclude Include="MongoJobRepo.h" />
+    <ClInclude Include="MongoWriter.h" />
     <ClInclude Include="NoteDialog.h" />
     <ClInclude Include="PaginationPanel.h" />
     <ClInclude Include="PermissionsMgr.h" />
@@ -256,6 +265,7 @@
     <ClInclude Include="BotUtility.h" />
     <ClInclude Include="Toaster.h" />
     <ClInclude Include="WorkerPanel.h" />
+    <ClInclude Include="TinyXmlWriter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

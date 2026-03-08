@@ -1,12 +1,18 @@
 #include "BuildingJobRequest.h"
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp> 
+#include <bsoncxx/document/element.hpp>
+#include <bsoncxx/types.hpp>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLBuildDesignation{ "Designation" };
-    constexpr const char* pszXMLBuildRequirements{ "Requirements" };
-    constexpr const char* pszXMLBuildZone{ "Zone" };
+    constexpr const char* pszBuildDesignation{ "build_designation" };
+    constexpr const char* pszBuildRequirements{ "build_requirements" };
+    constexpr const char* pszBuildZone{ "build_zone" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -21,9 +27,9 @@ void BuildingJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 
     JobRequest::WriteAttributes(xmlNode, xmlParent ,doc);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLBuildDesignation, m_strBldgDesignation.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLBuildRequirements, m_strBldgRequires.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLBuildZone, m_strBldgZone.c_str());
+    xmlNode->SetAttribute(serial::pszBuildDesignation, m_strBldgDesignation.c_str());
+    xmlNode->SetAttribute(serial::pszBuildRequirements, m_strBldgRequires.c_str());
+    xmlNode->SetAttribute(serial::pszBuildZone, m_strBldgZone.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -39,23 +45,60 @@ void BuildingJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 
     JobRequest::ReadAttributes(xmlNode);
 
-    const char* pszDesignation = xmlNode->Attribute(xmlRequest::pszXMLBuildDesignation);
+    const char* pszDesignation = xmlNode->Attribute(serial::pszBuildDesignation);
     if (pszDesignation)
     {
         m_strBldgDesignation = pszDesignation;
     }
 
-    const char* pszRequires = xmlNode->Attribute(xmlRequest::pszXMLBuildRequirements);
+    const char* pszRequires = xmlNode->Attribute(serial::pszBuildRequirements);
     if (pszRequires)
     {
         m_strBldgRequires = pszRequires;
     }
 
-    const char* pszBuildZone = xmlNode->Attribute(xmlRequest::pszXMLBuildZone);
+    const char* pszBuildZone = xmlNode->Attribute(serial::pszBuildZone);
     if (pszBuildZone)
     {
         m_strBldgZone = pszBuildZone;
     }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document BuildingJobRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+    auto doc = JobRequest::WriteAttributesBSON(); // base class attributes
+
+    // add derived attributes
+    doc.append(
+        kvp(std::string{ serial::pszBuildDesignation }, m_strBldgDesignation),
+        kvp(std::string{ serial::pszBuildRequirements }, m_strBldgRequires),
+        kvp(std::string{ serial::pszBuildZone }, m_strBldgZone)
+    );
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void BuildingJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    // Let parent read base fields AND notes
+    JobRequest::ReadAttributesBSON(doc);
+
+    // Read only derived fields
+    if (auto elem = doc[std::string{ serial::pszBuildDesignation }])
+        m_strBldgDesignation = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszBuildRequirements }])
+        m_strBldgRequires = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszBuildZone }])
+        m_strBldgZone = std::string{ elem.get_string().value };
 }
 
 //---------------------------------------------------------------------------------------------------------------------

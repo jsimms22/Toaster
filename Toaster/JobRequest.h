@@ -11,6 +11,11 @@
 #include <guiddef.h>
 // tinyxml
 #include "tinyxml2.h"
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp>
+#include <bsoncxx/types.hpp>
 // std library
 #include <chrono>
 #include <cstdlib>
@@ -54,8 +59,8 @@ public:
     using UserNotes = std::vector<NoteMetaData>;
     using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
 
-    JobRequest();
-    ~JobRequest() = default;
+    explicit JobRequest(const dpp::snowflake& guildID);
+    virtual ~JobRequest() = default;
 
     const std::size_t GetCreatedTime() const { return m_timeCreated; }
     void SetCreatedTime(const std::size_t time) { m_timeCreated = time; }
@@ -98,16 +103,23 @@ public:
     virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
     virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
+
+    // Serialization + Deserialization: XML
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const;
     virtual void ReadAttributes(tinyxml2::XMLElement* xmlNode);
     virtual void WriteChildren(tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const;
     virtual void ReadChildren(tinyxml2::XMLElement* xmlNode);
-    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    
+    // Serialization + Deserialization: BSON
+    virtual bsoncxx::builder::basic::document WriteAttributesBSON() const;
+    virtual void ReadAttributesBSON(const bsoncxx::document::view& doc);
 
+    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
 private:
+    dpp::snowflake m_idGuild = 0;
     std::size_t m_timeCreated = 0;
     std::size_t m_timeLastEdit = 0;
     dpp::snowflake m_idCustomer = USERID_NULL;  // Customer id of who submitted the job

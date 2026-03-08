@@ -4,6 +4,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "GuildSettings.h"
+#include "IJobRepo.h"
 // d++
 #include <dpp/cluster.h>
 #include <dpp/dispatcher.h>
@@ -25,7 +26,7 @@ class JobQueue;
 class ToasterBot final
 {
 public:
-	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const bool bDebug = false);
+	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<IJobRepo>& repo, const bool bDebug = false);
 	~ToasterBot() { SaveGuildSettings(); }
 
 	// Bot event handlers
@@ -35,7 +36,7 @@ public:
 	void onButtonClick(const dpp::button_click_t& event);
 	void onInteractionCreate(const dpp::interaction_create_t& event);
 	void onFormSubmit(const dpp::form_submit_t& event);
-	
+
 private:
 	mutable std::shared_mutex m_mtxShared;
 	bool m_debug = false;
@@ -55,5 +56,9 @@ private:
 	void LoadQueueData();
 	std::shared_ptr<JobQueue> GetOrCreateQueue(const dpp::snowflake& guildID);
 	std::unordered_map<dpp::snowflake, std::shared_ptr<JobQueue>> m_spQueue;
+
+	// Database
+	std::shared_ptr<IJobRepo> m_repo;
+	void LoadDBQueueData();
 };
 

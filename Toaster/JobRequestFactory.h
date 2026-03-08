@@ -15,6 +15,6 @@
 class JobRequestFactory
 {
 public:
-    static std::shared_ptr<JobRequest> Create(const std::size_t type);
+    static std::shared_ptr<JobRequest> Create(const std::size_t type, const dpp::snowflake& guildID);
 };
 

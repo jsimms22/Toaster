@@ -1,12 +1,18 @@
 #include "HazardousRequest.h"
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp> 
+#include <bsoncxx/document/element.hpp>
+#include <bsoncxx/types.hpp>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLHazItemList{ "HazItemList" };
-    constexpr const char* pszXMLHazItemLoc{ "HazItemLoc" };
-    constexpr const char* pszXMLThreat{ "ThreatLeavel" };
+    constexpr const char* pszHazItemList{ "hazmat_list" };
+    constexpr const char* pszHazItemLoc{ "hazmat_location" };
+    constexpr const char* pszThreat{ "hazmat_threat" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -47,9 +53,9 @@ void HazardousRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::
 
     JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLHazItemList, m_strHazItemList.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLHazItemLoc, m_strHazItemZone.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLThreat, static_cast<int>(m_threat));
+    xmlNode->SetAttribute(serial::pszHazItemList, m_strHazItemList.c_str());
+    xmlNode->SetAttribute(serial::pszHazItemLoc, m_strHazItemZone.c_str());
+    xmlNode->SetAttribute(serial::pszThreat, static_cast<int>(m_threat));
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -65,19 +71,56 @@ void HazardousRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 
     JobRequest::ReadAttributes(xmlNode);
 
-    const char* pszItemList = xmlNode->Attribute(xmlRequest::pszXMLHazItemList);
+    const char* pszItemList = xmlNode->Attribute(serial::pszHazItemList);
     if (pszItemList)
     {
         m_strHazItemList = pszItemList;
     }
 
-    const char* pszItemZone = xmlNode->Attribute(xmlRequest::pszXMLHazItemLoc);
+    const char* pszItemZone = xmlNode->Attribute(serial::pszHazItemLoc);
     if (pszItemZone)
     {
         m_strHazItemZone = pszItemZone;
     }
 
-    m_threat = static_cast<ThreatLevel>(xmlNode->IntAttribute(xmlRequest::pszXMLThreat, ThreatLevel::Uncertain));
+    m_threat = static_cast<ThreatLevel>(xmlNode->IntAttribute(serial::pszThreat, ThreatLevel::Uncertain));
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document HazardousRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+    auto doc = JobRequest::WriteAttributesBSON(); // base class attributes
+
+    // add derived attributes
+    doc.append(
+        kvp(std::string{ serial::pszHazItemList }, m_strHazItemList),
+        kvp(std::string{ serial::pszHazItemLoc }, m_strHazItemZone),
+        kvp(std::string{ serial::pszThreat }, m_threat)
+    );
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void HazardousRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    // Let parent read base fields AND notes
+    JobRequest::ReadAttributesBSON(doc);
+
+    // Read only derived fields
+    if (auto elem = doc[std::string{ serial::pszHazItemList }])
+        m_strHazItemList = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszHazItemLoc }])
+        m_strHazItemZone = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszThreat }])
+        m_threat = static_cast<ThreatLevel>(static_cast<int>(elem.get_int32().value));
 }
 
 //---------------------------------------------------------------------------------------------------------------------

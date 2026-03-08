@@ -1,10 +1,16 @@
 #include "ComponentJobRequest.h"
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp> 
+#include <bsoncxx/document/element.hpp>
+#include <bsoncxx/types.hpp>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLCompList{ "ComponentList" };
+    constexpr const char* pszCompList{ "comp_list" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -19,7 +25,7 @@ void ComponentJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml
 
     JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLCompList, m_strComponentList.c_str());
+    xmlNode->SetAttribute(serial::pszCompList, m_strComponentList.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -35,7 +41,7 @@ void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 
     JobRequest::ReadAttributes(xmlNode);
 
-    const char* pszCompList = xmlNode->Attribute(xmlRequest::pszXMLCompList);
+    const char* pszCompList = xmlNode->Attribute(serial::pszCompList);
     if (pszCompList)
     {
         m_strComponentList = pszCompList;
@@ -54,4 +60,33 @@ std::string ComponentJobRequest::PrintJobDetails(dpp::cluster& cluster, const dp
         "**Component List**: \n{}\n",
         base,
         m_strComponentList);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document ComponentJobRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+    auto doc = JobRequest::WriteAttributesBSON(); // base class attributes
+
+    // add derived attributes
+    doc.append(
+        kvp(std::string{ serial::pszCompList }, m_strComponentList)
+    );
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void ComponentJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    // Let parent read base fields AND notes
+    JobRequest::ReadAttributesBSON(doc);
+
+    // Read only derived fields
+    if (auto elem = doc[std::string{ serial::pszCompList }])
+        m_strComponentList = std::string{ elem.get_string().value };
 }

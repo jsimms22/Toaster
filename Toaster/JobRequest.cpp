@@ -7,23 +7,27 @@
 #include <dpp/unicode_emoji.h>
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/concatenate.hpp>
 // std library
 #include <chrono>
 #include <stdexcept>
 #include <string>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLCreation{ "Created" };
-    constexpr const char* pszXMLLastEdit{ "LastEdit" };
-    constexpr const char* pszXMLRequestUser{ "Requester" };
-    constexpr const char* pszXMLJobWorker{ "Worker" };
-    constexpr const char* pszXMLRequestSCHandle{ "GameHandle" };
-    constexpr const char* pszXMLJobPriority{ "Priority" };
-    constexpr const char* pszXMLJobStatus{ "Status" };
-    constexpr const char* pszXMLJobGUID{ "GUID" };
-    constexpr const char* pszXMLJobType{ "Type" };
-    constexpr const char* pszXMLSubscribed{ "Subscribed" };
+    constexpr const char* pszJobGUID{ "_id" };
+    constexpr const char* pszGuild{ "_guild" };
+    constexpr const char* pszCreation{ "created_time" };
+    constexpr const char* pszLastEdit{ "last_edit_time" };
+    constexpr const char* pszRequestUser{ "customer_id" };
+    constexpr const char* pszJobWorker{ "worker_id" };
+    constexpr const char* pszRequestSCHandle{ "sc_handle" };
+    constexpr const char* pszJobPriority{ "priority" };
+    constexpr const char* pszJobStatus{ "status" };
+    constexpr const char* pszJobType{ "job_type" };
+    constexpr const char* pszSubscribed{ "notify_customer" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -115,8 +119,8 @@ const char* JobRequest::StatusToEmoji(const JobRequest::status s)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-JobRequest::JobRequest() 
-    : m_id(utils::CreateGUID()) 
+JobRequest::JobRequest(const dpp::snowflake& guildID) 
+    : m_idGuild{ guildID }, m_id(utils::CreateGUID())
 {
     m_timeCreated = utils::GetEpochTimestamp();
     m_timeLastEdit = m_timeCreated;
@@ -133,16 +137,16 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     }
 
     // Create a new <Request> element for this submission
-    xmlNode->SetAttribute(xmlRequest::pszXMLCreation, m_timeCreated);
-    xmlNode->SetAttribute(xmlRequest::pszXMLLastEdit, m_timeLastEdit);
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobGUID, utils::GuidToString(m_id).c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobPriority, static_cast<int>(m_eJobPriority));
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobStatus, static_cast<int>(m_eJobStatus));
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobType, JobType());
-    xmlNode->SetAttribute(xmlRequest::pszXMLJobWorker, m_idWorker);
-    xmlNode->SetAttribute(xmlRequest::pszXMLRequestUser, m_idCustomer);
-    xmlNode->SetAttribute(xmlRequest::pszXMLRequestSCHandle, m_strSCHandle.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLSubscribed, m_bNotifyCustomer);
+    xmlNode->SetAttribute(serial::pszCreation, m_timeCreated);
+    xmlNode->SetAttribute(serial::pszLastEdit, m_timeLastEdit);
+    xmlNode->SetAttribute(serial::pszJobGUID, utils::GuidToString(m_id).c_str());
+    xmlNode->SetAttribute(serial::pszJobPriority, static_cast<int>(m_eJobPriority));
+    xmlNode->SetAttribute(serial::pszJobStatus, static_cast<int>(m_eJobStatus));
+    xmlNode->SetAttribute(serial::pszJobType, JobType());
+    xmlNode->SetAttribute(serial::pszJobWorker, m_idWorker);
+    xmlNode->SetAttribute(serial::pszRequestUser, m_idCustomer);
+    xmlNode->SetAttribute(serial::pszRequestSCHandle, m_strSCHandle.c_str());
+    xmlNode->SetAttribute(serial::pszSubscribed, m_bNotifyCustomer);
 
     // Write notes as child elements
     WriteChildren(xmlNode, xmlNode->GetDocument());
@@ -188,9 +192,9 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
         return;
     }
 
-    m_timeCreated = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLCreation, 0);
-    m_timeLastEdit = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLLastEdit, 0);
-    const char* pszJobGUID = xmlNode->Attribute(xmlRequest::pszXMLJobGUID);
+    m_timeCreated = xmlNode->Unsigned64Attribute(serial::pszCreation, 0);
+    m_timeLastEdit = xmlNode->Unsigned64Attribute(serial::pszLastEdit, 0);
+    const char* pszJobGUID = xmlNode->Attribute(serial::pszJobGUID);
     if (pszJobGUID)
     {
         try
@@ -203,17 +207,17 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
         }
     }
 
-    m_eJobPriority = static_cast<priority>(xmlNode->IntAttribute(xmlRequest::pszXMLJobPriority, priority::low));
-    m_eJobStatus = static_cast<status>(xmlNode->IntAttribute(xmlRequest::pszXMLJobStatus, status::open));
-    m_idWorker = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLJobWorker, USERID_NULL);
-    m_idCustomer = xmlNode->Unsigned64Attribute(xmlRequest::pszXMLRequestUser, USERID_NULL);
-    const char* pszHandle = xmlNode->Attribute(xmlRequest::pszXMLRequestSCHandle);
+    m_eJobPriority = static_cast<priority>(xmlNode->IntAttribute(serial::pszJobPriority, priority::low));
+    m_eJobStatus = static_cast<status>(xmlNode->IntAttribute(serial::pszJobStatus, status::open));
+    m_idWorker = xmlNode->Unsigned64Attribute(serial::pszJobWorker, USERID_NULL);
+    m_idCustomer = xmlNode->Unsigned64Attribute(serial::pszRequestUser, USERID_NULL);
+    const char* pszHandle = xmlNode->Attribute(serial::pszRequestSCHandle);
     if (pszHandle)
     {
         m_strSCHandle = pszHandle;
     }
 
-    m_bNotifyCustomer = xmlNode->BoolAttribute(xmlRequest::pszXMLSubscribed, false);
+    m_bNotifyCustomer = xmlNode->BoolAttribute(serial::pszSubscribed, false);
 
     // Read notes
     ReadChildren(xmlNode);
@@ -242,6 +246,108 @@ void JobRequest::ReadChildren(tinyxml2::XMLElement* xmlNode)
         note.note = text ? text : "";
 
         m_notes[dpp::snowflake{ userID }].push_back(note);
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document JobRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+
+    document doc{};
+
+    doc.append(
+        kvp(std::string{ serial::pszJobGUID }, utils::GuidToStringNoBrackets(m_id)),
+        kvp(std::string{ serial::pszGuild }, static_cast<std::int64_t>(m_idGuild)),
+        kvp(std::string{ serial::pszJobType }, static_cast<int>(JobType())),
+        kvp(std::string{ serial::pszCreation }, static_cast<int64_t>(m_timeCreated)),
+        kvp(std::string{ serial::pszLastEdit}, static_cast<int64_t>(m_timeLastEdit)),
+        kvp(std::string{ serial::pszRequestUser}, static_cast<int64_t>(m_idCustomer)),
+        kvp(std::string{ serial::pszJobWorker}, static_cast<int64_t>(m_idWorker)),
+        kvp(std::string{ serial::pszRequestSCHandle}, m_strSCHandle),
+        kvp(std::string{ serial::pszJobPriority}, static_cast<int>(m_eJobPriority)),
+        kvp(std::string{ serial::pszJobStatus}, static_cast<int>(m_eJobStatus)),
+        kvp(std::string{ serial::pszSubscribed}, m_bNotifyCustomer)
+    );
+
+    doc.append(kvp("notes", [&](sub_array notesArray)
+        {
+            for (const auto& [userID, notes] : m_notes)
+            {
+                notesArray.append([&](sub_document userDoc)
+                    {
+                        userDoc.append(kvp("user_id", static_cast<int64_t>(userID)));
+                        userDoc.append(kvp("notes", [&](sub_array noteArray)
+                            {
+                                for (const auto& note : notes)
+                                {
+                                    noteArray.append(make_document(
+                                        kvp("guild_id", static_cast<int64_t>(note.guildID)),
+                                        kvp("timestamp", static_cast<int64_t>(note.timestamp)),
+                                        kvp("note", note.note)
+                                    ));
+                                }
+                            }));
+                    });
+            }
+        }));
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void JobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    m_id = utils::StringToGuid("{" + std::string{ doc[std::string{ serial::pszJobGUID}].get_string().value } + "}");
+    m_idGuild = static_cast<std::uint64_t>(doc[std::string{ serial::pszGuild }].get_int64().value);
+    m_timeCreated = doc[std::string{ serial::pszCreation }].get_int64().value;
+    m_timeLastEdit = doc[std::string{ serial::pszLastEdit }].get_int64().value;
+    m_idCustomer = static_cast<std::uint64_t>(doc[std::string{ serial::pszRequestUser }].get_int64().value);
+    m_idWorker = static_cast<std::uint64_t>(doc[std::string{ serial::pszJobWorker }].get_int64().value);
+    m_strSCHandle = std::string{ doc[std::string{ serial::pszRequestSCHandle}].get_string().value };
+    m_eJobPriority = static_cast<priority>(static_cast<int>(doc[std::string{ serial::pszJobPriority }].get_int32().value));
+    m_eJobStatus = static_cast<status>(static_cast<int>(doc[std::string{ serial::pszJobStatus }].get_int32().value));
+    m_bNotifyCustomer = doc[serial::pszSubscribed].get_bool().value;
+
+    m_notes.clear();
+
+    auto notesElem = doc["notes"];
+    if (!notesElem || notesElem.type() != bsoncxx::type::k_array)
+        return;
+
+    for (auto&& userElem : notesElem.get_array().value)
+    {
+        auto userDoc = userElem.get_document().view();
+
+        uint64_t userID = 0;
+        if (auto uid = userDoc["user_id"])
+            userID = static_cast<uint64_t>(uid.get_int64().value);
+
+        auto userNotesElem = userDoc["notes"];
+        if (!userNotesElem || userNotesElem.type() != bsoncxx::type::k_array)
+            continue;
+
+        for (auto&& noteElem : userNotesElem.get_array().value)
+        {
+            auto noteDoc = noteElem.get_document().view();
+
+            NoteMetaData note{};
+
+            if (auto g = noteDoc["guild_id"])
+                note.guildID = g.get_int64().value;
+
+            if (auto t = noteDoc["timestamp"])
+                note.timestamp = t.get_int64().value;
+
+            if (auto n = noteDoc["note"])
+                note.note = std::string{ n.get_string().value };
+
+            m_notes[dpp::snowflake{ userID }].push_back(std::move(note));
+        }
     }
 }
 

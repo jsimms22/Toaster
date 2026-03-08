@@ -133,7 +133,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     //-------------------------------------------------------------------------------------------------------------
     if (event.custom_id == CraftRequestDlg::modalID)
     {
-        std::shared_ptr<CraftingJobRequest> jobCraft = std::make_shared<CraftingJobRequest>();
+        std::shared_ptr<CraftingJobRequest> jobCraft = std::make_shared<CraftingJobRequest>(event.command.guild_id);
         jobID = jobCraft->GetID();
         jobCraft->SetCustomerID(author.id);
         jobCraft->SetSCHandle(strSCHandle);
@@ -147,7 +147,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     else if (event.custom_id == BuildRequestDlg::modalID)
     {
-        std::shared_ptr<BuildingJobRequest> jobBuild = std::make_shared<BuildingJobRequest>();
+        std::shared_ptr<BuildingJobRequest> jobBuild = std::make_shared<BuildingJobRequest>(event.command.guild_id);
         jobID = jobBuild->GetID();
         jobBuild->SetCustomerID(author.id);
         jobBuild->SetSCHandle(strSCHandle);
@@ -161,7 +161,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     else if (event.custom_id == ComponentRequestDlg::modalID)
     {
-        std::shared_ptr<ComponentJobRequest> jobComp = std::make_shared<ComponentJobRequest>();
+        std::shared_ptr<ComponentJobRequest> jobComp = std::make_shared<ComponentJobRequest>(event.command.guild_id);
         jobID = jobComp->GetID();
         jobComp->SetCustomerID(author.id);
         jobComp->SetSCHandle(strSCHandle);
@@ -173,7 +173,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     else if (event.custom_id == ResourceRequestDlg::modalID)
     {
-        std::shared_ptr<ResourceJobRequest> jobRes = std::make_shared<ResourceJobRequest>();
+        std::shared_ptr<ResourceJobRequest> jobRes = std::make_shared<ResourceJobRequest>(event.command.guild_id);
         jobID = jobRes->GetID();
         jobRes->SetCustomerID(author.id);
         jobRes->SetSCHandle(strSCHandle);
@@ -187,7 +187,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     else if (event.custom_id == RefineryRequestDlg::modalID)
     {
-        std::shared_ptr<RefineryJobRequest> jobRefine = std::make_shared<RefineryJobRequest>();
+        std::shared_ptr<RefineryJobRequest> jobRefine = std::make_shared<RefineryJobRequest>(event.command.guild_id);
         jobID = jobRefine->GetID();
         jobRefine->SetCustomerID(author.id);
         jobRefine->SetSCHandle(strSCHandle);
@@ -201,7 +201,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     }
     else if (event.custom_id == HazardousRequestDlg::modalID)
     {
-        std::shared_ptr<HazardousRequest> jobHazard = std::make_shared<HazardousRequest>();
+        std::shared_ptr<HazardousRequest> jobHazard = std::make_shared<HazardousRequest>(event.command.guild_id);
         jobID = jobHazard->GetID();
         jobHazard->SetCustomerID(author.id);
         jobHazard->SetSCHandle(strSCHandle);

@@ -1,12 +1,18 @@
 #include "ResourceJobRequest.h"
 // fmt
 #include <fmt/format.h>
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp> 
+#include <bsoncxx/document/element.hpp>
+#include <bsoncxx/types.hpp>
 
-namespace xmlRequest
+namespace serial
 {
-    constexpr const char* pszXMLResourceState{ "ResourceState" };
-    constexpr const char* pszXMLResourceList{ "ResourceList" };
-    constexpr const char* pszXMLResourceQuality{ "Quality" };
+    constexpr const char* pszResourceState{ "ResourceState" };
+    constexpr const char* pszResourceList{ "ResourceList" };
+    constexpr const char* pszResourceQuality{ "Quality" };
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -51,9 +57,9 @@ void ResourceJobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2
 
     JobRequest::WriteAttributes(xmlNode, xmlParent, doc);
 
-    xmlNode->SetAttribute(xmlRequest::pszXMLResourceState, static_cast<int>(m_eResourceState));
-    xmlNode->SetAttribute(xmlRequest::pszXMLResourceList, m_strResourceList.c_str());
-    xmlNode->SetAttribute(xmlRequest::pszXMLResourceQuality, m_strQuality.c_str());
+    xmlNode->SetAttribute(serial::pszResourceState, static_cast<int>(m_eResourceState));
+    xmlNode->SetAttribute(serial::pszResourceList, m_strResourceList.c_str());
+    xmlNode->SetAttribute(serial::pszResourceQuality, m_strQuality.c_str());
     xmlParent->InsertEndChild(xmlNode);
 }
 
@@ -69,19 +75,56 @@ void ResourceJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 
     JobRequest::ReadAttributes(xmlNode);
 
-    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(xmlRequest::pszXMLResourceState, state::UnrefinedMineable));
+    m_eResourceState = static_cast<state>(xmlNode->IntAttribute(serial::pszResourceState, state::UnrefinedMineable));
 
-    const char* pszResourceList = xmlNode->Attribute(xmlRequest::pszXMLResourceList);
+    const char* pszResourceList = xmlNode->Attribute(serial::pszResourceList);
     if (pszResourceList)
     {
         m_strResourceList = pszResourceList;
     }
 
-    const char* pszResourceQuality = xmlNode->Attribute(xmlRequest::pszXMLResourceQuality);
+    const char* pszResourceQuality = xmlNode->Attribute(serial::pszResourceQuality);
     if (pszResourceQuality)
     {
         m_strQuality = pszResourceQuality;
     }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document ResourceJobRequest::WriteAttributesBSON() const
+{
+    using namespace bsoncxx::builder::basic;
+    auto doc = JobRequest::WriteAttributesBSON(); // base class attributes
+
+    // add derived attributes
+    doc.append(
+        kvp(std::string{ serial::pszResourceList }, m_strResourceList),
+        kvp(std::string{ serial::pszResourceQuality }, m_strQuality),
+        kvp(std::string{ serial::pszResourceState }, m_eResourceState)
+    );
+
+    return doc;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void ResourceJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    // Let parent read base fields AND notes
+    JobRequest::ReadAttributesBSON(doc);
+
+    // Read only derived fields
+    if (auto elem = doc[std::string{ serial::pszResourceList }])
+        m_strResourceList = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszResourceQuality }])
+        m_strQuality = std::string{ elem.get_string().value };
+
+    if (auto elem = doc[std::string{ serial::pszResourceState }])
+        m_eResourceState = static_cast<state>(static_cast<int>(elem.get_int32().value));
 }
 
 //---------------------------------------------------------------------------------------------------------------------

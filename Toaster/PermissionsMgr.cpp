@@ -113,6 +113,8 @@ bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::interac
     dpp::permission perms = event.command.get_resolved_permission(user);
     if (perms.has(dpp::p_administrator))
         return true;
+
+    return false;
 }
 
 //---------------------------------------------------------------------------------------------------------------------

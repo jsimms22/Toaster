@@ -2,6 +2,9 @@
 
 #include "BotUtility.h"
 #include "Toaster.h"
+#include "TinyXmlWriter.h"
+#include "MongoWriter.h"
+#include "MongoJobRepo.h"
 // d++
 #include <dpp/dpp.h>
 // spdlog
@@ -9,10 +12,6 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
-// mongodb
-#include <bsoncxx/json.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
 // fmt
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -22,9 +21,6 @@
 #include <string>
 
 // URL Encoding guidelines for mongodb: https://www.mongodb.com/docs/atlas/troubleshoot-connection/#special-characters-in-connection-string-password
-
-namespace mongo = mongocxx::v_noabi;
-namespace bson = bsoncxx::v_noabi;
 
 auto main() -> int
 {
@@ -43,7 +39,7 @@ auto main() -> int
     log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(log);
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
-    log->set_level(spdlog::level::level_enum::info);
+    log->set_level(spdlog::level::level_enum::debug);
 
     const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN") };
     const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
@@ -51,21 +47,20 @@ auto main() -> int
     const std::string DB_CLUSTER{ utils::LoadSecret("../token.txt", "DB_CLUSTER") };
 
     // Create an instance and establish our MongoDB connection
-    mongo::instance mongoInstance{ }; 
-    mongo::database mongoDatabase; 
-
-    // todo load the data from remote db
+    MongoWriter database;
+    database.connect(fmt::format("mongodb+srv://{}:{}@{}", DB_USER, DB_PASS, DB_CLUSTER));
+    std::shared_ptr<MongoJobRepo> jobRepo = std::make_shared<MongoJobRepo>(database.GetDB());
 
     std::uint8_t counter{ 0 };
     while (true)
     {
         /* Set cache policy for D++ library
          * --------------------------------
-         * User caching:     none
+         * User caching:     cp_aggressive
          * Emoji caching:    none
-         * Role caching:     none
-         * Channel caching:  none
-         * Guild caching:    none
+         * Role caching:     cp_aggressive
+         * Channel caching:  cp_aggressive
+         * Guild caching:    cp_aggressive
          */
         dpp::cache_policy_t cp = { dpp::cp_aggressive, dpp::cp_none, dpp::cp_aggressive, dpp::cp_aggressive, dpp::cp_aggressive };
 
@@ -113,7 +108,8 @@ auto main() -> int
             }
             });
 
-        ToasterBot toaster(bot, 0, false);
+        ToasterBot toaster(bot, 0, jobRepo, false);
+
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
         bot.on_slashcommand([&toaster](const dpp::slashcommand_t& event) { toaster.onSlashCommand(event); });
@@ -134,6 +130,8 @@ auto main() -> int
         // Reconnection delay to prevent hammering discord
         Sleep(50);
     }
+
+    database.disconnect();
 
     return 0;
 }

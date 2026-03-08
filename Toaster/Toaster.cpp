@@ -22,11 +22,12 @@
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor
 //---------------------------------------------------------------------------------------------------------------------
-ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const bool bDebug)
-    : m_cluster(cluster), m_clusterId(clusterId), m_debug(bDebug), m_iShardCount{ 0 } 
+ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<IJobRepo>& repo, const bool bDebug)
+    : m_cluster(cluster), m_clusterId(clusterId), m_iShardCount{ 0 }, m_repo{ repo }, m_debug{ bDebug }
 {
     LoadGuildSettings();
-    LoadQueueData();
+    //LoadQueueData();
+    LoadDBQueueData();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -260,6 +261,9 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
     m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed BUTTON_CLICK '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::LoadGuildSettings()
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -308,6 +312,9 @@ void ToasterBot::LoadGuildSettings()
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::SaveGuildSettings()
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -337,9 +344,12 @@ void ToasterBot::SaveGuildSettings()
     doc.SaveFile("../guilds.xml");
 }
 
-
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::LoadQueueData()
 {
+    /*
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
 
     tinyxml2::XMLDocument doc;
@@ -385,8 +395,12 @@ void ToasterBot::LoadQueueData()
 
         m_spQueue.emplace(guildID, std::move(queue));
     }
+    */
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& guildID)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -396,12 +410,15 @@ std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& gui
         return it->second;
 
     // Create a new queue for this guild
-    auto queue = std::make_shared<JobQueue>(guildID, nullptr);
+    auto queue = std::make_shared<JobQueue>(guildID, m_repo);
 
     m_spQueue.emplace(guildID, queue);
     return queue;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 GuildSettings& ToasterBot::GetOrCreateSettings(const dpp::snowflake& guildID)
 {
     auto it = g_settings.find(guildID);
@@ -411,4 +428,17 @@ GuildSettings& ToasterBot::GetOrCreateSettings(const dpp::snowflake& guildID)
     // Create default settings if none exist
     g_settings[guildID] = GuildSettings{};
     return g_settings[guildID];
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void ToasterBot::LoadDBQueueData()
+{
+    auto guilds = m_repo->GetGuildsWithJobs();
+
+    for (const auto& guildID : guilds)
+    {
+        m_spQueue[guildID] = std::make_shared<JobQueue>(guildID, m_repo);
+    }
 }

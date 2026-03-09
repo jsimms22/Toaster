@@ -1,17 +1,14 @@
-#include "TinyXmlWriter.h"
+#include "TinyXmlDatabase.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-TinyXmlWriter::TinyXmlWriter()
-    : IDatabaseWriter()
-{
-}
+TinyXmlDatabase::TinyXmlDatabase() = default;
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-TinyXmlWriter::~TinyXmlWriter()
+TinyXmlDatabase::~TinyXmlDatabase()
 {
     flush();
 }
@@ -19,7 +16,7 @@ TinyXmlWriter::~TinyXmlWriter()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-bool TinyXmlWriter::connect(const std::string& filePath)
+bool TinyXmlDatabase::connect(const std::string& filePath)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -37,7 +34,7 @@ bool TinyXmlWriter::connect(const std::string& filePath)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void TinyXmlWriter::disconnect()
+void TinyXmlDatabase::disconnect()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     flush();
@@ -46,7 +43,7 @@ void TinyXmlWriter::disconnect()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-bool TinyXmlWriter::flush()
+bool TinyXmlDatabase::flush()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_doc.SaveFile(m_filePath.c_str()) == tinyxml2::XML_SUCCESS;

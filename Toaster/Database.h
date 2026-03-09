@@ -5,13 +5,13 @@
 #include <vector>
 #include <memory>
 
-class IDatabaseWriter
+class Database
 {
 public:
     using Document = std::map<std::string, std::string>;
     using DocumentList = std::vector<Document>;
 
-    virtual ~IDatabaseWriter() = default;
+    virtual ~Database() = default;
 
     // Connection management
     virtual bool connect(const std::string& connectionString) = 0;

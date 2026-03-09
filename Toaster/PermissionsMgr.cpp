@@ -1,5 +1,6 @@
 #include "PermissionsMgr.h"
 
+#include "JobRequest.h"
 #include "GuildSettings.h"
 // std library
 #include <algorithm>
@@ -120,7 +121,7 @@ bool PermissionsMgr::IsGuildAdmin(const dpp::snowflake& user, const dpp::interac
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsWorker(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings)
+bool PermissionsMgr::IsWorker(const dpp::snowflake& user, const dpp::guild* guild, const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!guild) return false;
     auto member_it = guild->members.find(user);
@@ -142,7 +143,7 @@ bool PermissionsMgr::IsWorker(const dpp::snowflake& user, const dpp::guild* guil
 
     for (auto role : worker_roles)
     {
-        if (HasRole(member, settings.roles[static_cast<size_t>(role)]))
+        if (HasRole(member, settings->roles[static_cast<size_t>(role)]))
         {
             return true;
         }
@@ -154,7 +155,7 @@ bool PermissionsMgr::IsWorker(const dpp::snowflake& user, const dpp::guild* guil
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-bool PermissionsMgr::IsManager(const dpp::snowflake& user, const dpp::guild* guild, const GuildSettings& settings)
+bool PermissionsMgr::IsManager(const dpp::snowflake& user, const dpp::guild* guild, const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!guild) return false;
     auto member_it = guild->members.find(user);
@@ -163,7 +164,7 @@ bool PermissionsMgr::IsManager(const dpp::snowflake& user, const dpp::guild* gui
 
     const auto& member = member_it->second;
 
-    return HasRole( member, settings.roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)]);
+    return HasRole( member, settings->roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)]);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -173,7 +174,7 @@ bool PermissionsMgr::CanCreateJob(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user,
     const dpp::guild* guild,
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!guild) return false;
     return IsGuildMember(user, guild) ||
@@ -192,7 +193,7 @@ bool PermissionsMgr::CanAssignJob(
     const dpp::snowflake& user, 
     const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!job || !guild) return false;
     return IsRequestWorker(user, job) ||
@@ -211,7 +212,7 @@ bool PermissionsMgr::CanEditJob(
     const dpp::snowflake& user, 
     const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!job || !guild) return false;
     return ((IsRequestOwner(user, job) && job->GetStatus() != JobRequest::status::active) &&
@@ -232,7 +233,7 @@ bool PermissionsMgr::CanDeleteJob(
     const dpp::snowflake& user, 
     const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!job || !guild) return false;
     return ((IsRequestOwner(user, job) && job->GetStatus() != JobRequest::status::active) &&
@@ -253,7 +254,7 @@ bool PermissionsMgr::CanAddNote(
     const dpp::snowflake& user, 
     const std::shared_ptr<const JobRequest>& job,
     const dpp::guild* guild, 
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!job || !guild) return false;
     return IsRequestOwner(user, job) ||
@@ -272,7 +273,7 @@ bool PermissionsMgr::CanAccessAdminPanel(
     const dpp::interaction_create_t& event,
     const dpp::snowflake& user,
     const dpp::guild* guild,
-    const GuildSettings& settings)
+    const std::shared_ptr<const GuildSettings>& settings)
 {
     if (!guild) return false;
     return IsGuildAdmin(user, event) ||

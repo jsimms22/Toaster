@@ -4,7 +4,6 @@
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "CommandContext.h"
-#include "JobRequest.h"
 #include "Resource.h"
 // d++
 #include <dpp/appcommand.h>
@@ -15,8 +14,6 @@
 #include <memory>
 #include <string_view>
 #include <string>
-
-class ICustomCommand;
 
 //---------------------------------------------------------------------------------------------------------------------
 /// \class AdminConfigDialog

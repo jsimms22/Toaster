@@ -3,15 +3,22 @@
 #include <dpp/snowflake.h>
 // tinyxml2
 #include "tinyxml2.h"
+// bsoncxx
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
+#include <bsoncxx/document/view.hpp>
+#include <bsoncxx/types.hpp>
 // std library
 #include <array>
-#include <cstdlib>
 #include <chrono>
+#include <cstdlib>
+#include <memory>
 #include <optional>
 
+class IJobRepo;
 struct CommandContext;
 
-class GuildSettings
+class GuildSettings : public std::enable_shared_from_this<GuildSettings>
 {
 public:
 	enum class Roles : std::size_t
@@ -26,7 +33,11 @@ public:
 		Manager = 7
 	};
 
-	GuildSettings() = default;
+	GuildSettings(const dpp::snowflake& guildID)
+		: m_idGuild{ guildID }
+	{
+	}
+
 	~GuildSettings() = default;
 
 	// Channel Announcements
@@ -85,9 +96,19 @@ public:
 	static void AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
 	static void AnnounceOnComplete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
 
+	// Serialization + Deserialization: XML
 	void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const;
 	void ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent);
 
-	void SaveGuildSettings(const dpp::snowflake guildID);
+	// Serialization + Deserialization: BSON
+	virtual bsoncxx::builder::basic::document WriteAttributesBSON() const;
+	virtual void ReadAttributesBSON(const bsoncxx::document::view& doc);
+
+	void SaveGuildSettings(std::shared_ptr<IJobRepo> repo);
+
+	dpp::snowflake GetGuildID() const { return m_idGuild; }
+
+private:
+	dpp::snowflake m_idGuild;
 };
 

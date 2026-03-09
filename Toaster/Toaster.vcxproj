@@ -152,6 +152,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/wd4251 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SolutionDir)Toaster\dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -178,6 +179,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/wd4251 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SolutionDir)Toaster\dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -244,7 +246,7 @@
     <ClInclude Include="ComponentJobRequest.h" />
     <ClInclude Include="CraftingJobRequest.h" />
     <ClInclude Include="CustomerPanel.h" />
-    <ClInclude Include="IDatabaseWriter.h" />
+    <ClInclude Include="Database.h" />
     <ClInclude Include="GeneralUserPanel.h" />
     <ClInclude Include="GuildSettings.h" />
     <ClInclude Include="HazardousRequest.h" />
@@ -253,7 +255,7 @@
     <ClInclude Include="JobRequest.h" />
     <ClInclude Include="JobRequestFactory.h" />
     <ClInclude Include="MongoJobRepo.h" />
-    <ClInclude Include="MongoWriter.h" />
+    <ClInclude Include="MongoDatabase.h" />
     <ClInclude Include="NoteDialog.h" />
     <ClInclude Include="PaginationPanel.h" />
     <ClInclude Include="PermissionsMgr.h" />
@@ -265,7 +267,7 @@
     <ClInclude Include="BotUtility.h" />
     <ClInclude Include="Toaster.h" />
     <ClInclude Include="WorkerPanel.h" />
-    <ClInclude Include="TinyXmlWriter.h" />
+    <ClInclude Include="TinyXmlDatabase.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

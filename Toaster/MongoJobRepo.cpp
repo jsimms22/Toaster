@@ -1,4 +1,6 @@
 #include "MongoJobRepo.h"
+#include "JobRequest.h"
+#include "GuildSettings.h"
 #include "BotUtility.h"
 #include "JobRequestFactory.h"
 // mongo
@@ -16,9 +18,58 @@
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
 MongoJobRepo::MongoJobRepo(mongocxx::database db)
-    : m_collection(db["job_queue"])
+    : m_jobsCollection{ db["job_queue"] }, m_guildsCollection{ db["guild_settings"] }
 {
     CreateIndexes();
+    StartWorker();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::StartWorker()
+{
+    if (m_worker.joinable())
+        return;
+
+    m_worker = std::jthread([this](std::stop_token st) { DatabaseWorker(st); });
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::DatabaseWorker(std::stop_token stopToken)
+{
+    while (!stopToken.stop_requested())
+    {
+        std::unique_lock<std::mutex> lock(m_mtxMutQueue);
+
+        m_cv.wait(lock, [this, &stopToken] {
+            return !m_mutations.empty() || stopToken.stop_requested();
+            });
+
+        if (stopToken.stop_requested())
+            break;
+
+        auto mutation = std::move(m_mutations.front());
+        m_mutations.pop();
+        lock.unlock();
+
+        mutation(this);
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::EnqueueDBMutation(Mutation mutation)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_mtxMutQueue);
+        m_mutations.emplace(std::move(mutation));
+    }
+
+    m_cv.notify_one();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -26,13 +77,15 @@ MongoJobRepo::MongoJobRepo(mongocxx::database db)
 //---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::InsertJob(const dpp::snowflake& guildID, const std::shared_ptr<const JobRequest>& job)
 {
-    using namespace bsoncxx::builder::basic;
-
-    auto doc = job->WriteAttributesBSON();
-
-    //std::cout << bsoncxx::to_json(doc.view()) << std::endl;
-
-    m_collection.insert_one(doc.view());
+    auto doc = job->WriteAttributesBSON().extract();
+    EnqueueDBMutation([doc](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            mongoRepo->Insert("job_queue", doc.view());
+        }
+    );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -40,13 +93,17 @@ void MongoJobRepo::InsertJob(const dpp::snowflake& guildID, const std::shared_pt
 //---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::UpdateJob(const std::shared_ptr<const JobRequest>& job)
 {
-    using namespace bsoncxx::builder::basic;
-
-    auto filter = make_document(
-        kvp("_id", utils::GuidToStringNoBrackets(job->GetID()))
+    auto guid = job->GetID();
+    auto doc = job->WriteAttributesBSON().extract();
+    EnqueueDBMutation([guid, doc](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            auto filter = make_document(kvp("_id", utils::GuidToStringNoBrackets(guid)));
+            mongoRepo->Update("job_queue", filter.view(), doc.view());
+        }
     );
-
-    m_collection.replace_one(filter.view(), job->WriteAttributesBSON().view());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -55,12 +112,65 @@ void MongoJobRepo::UpdateJob(const std::shared_ptr<const JobRequest>& job)
 void MongoJobRepo::DeleteJob(const GUID& id)
 {
     using namespace bsoncxx::builder::basic;
-
-    auto filter = make_document(
-        kvp("_id", utils::GuidToStringNoBrackets(id))
+    EnqueueDBMutation([id](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            auto filter = make_document(kvp("_id", utils::GuidToStringNoBrackets(id)));
+            mongoRepo->Insert("job_queue", filter.view());
+        }
     );
+}
 
-    m_collection.delete_one(filter.view());
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::InsertGuild(const std::shared_ptr<const GuildSettings>& settings)
+{
+    auto doc = settings->WriteAttributesBSON().extract();
+    EnqueueDBMutation([doc](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            mongoRepo->Insert("guild_settings", doc.view());
+        }
+    );
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::UpdateGuild(const dpp::snowflake& guildID, const std::shared_ptr<const GuildSettings>& settings)
+{
+    auto doc = settings->WriteAttributesBSON().extract();
+    EnqueueDBMutation([guildID, doc](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            auto filter = make_document(kvp("_id", static_cast<std::int64_t>(guildID)));
+            mongoRepo->Update("guild_settings", filter.view(), doc.view());
+        }
+    );
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::DeleteGuild(const dpp::snowflake& guildID)
+{
+    using namespace bsoncxx::builder::basic;
+    EnqueueDBMutation([guildID](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+            if (!mongoRepo) return;
+            auto filter = make_document(kvp("_id", static_cast<std::int64_t>(guildID)));
+            mongoRepo->Insert("guild_settings", filter.view());
+        }
+    );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -70,7 +180,7 @@ std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithJobs()
 {
     std::vector<dpp::snowflake> guilds;
 
-    auto cursor = m_collection.distinct("_guild", {});
+    auto cursor = m_jobsCollection.distinct("_guild", {});
 
     for (auto&& doc : cursor)
     {
@@ -87,7 +197,7 @@ std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithJobs()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(dpp::snowflake guildID)
+std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(const dpp::snowflake& guildID)
 {
     using namespace bsoncxx::builder::basic;
 
@@ -95,7 +205,7 @@ std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(dpp::snowflake g
 
     auto filter = make_document(kvp("_guild", static_cast<int64_t>(guildID)));
 
-    auto cursor = m_collection.find(filter.view());
+    auto cursor = m_jobsCollection.find(filter.view());
 
     for (auto&& doc : cursor)
     {
@@ -119,18 +229,103 @@ std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(dpp::snowflake g
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithSettings()
+{
+    std::vector<dpp::snowflake> guilds;
+
+    auto cursor = m_guildsCollection.distinct("_id", {});
+
+    for (auto&& doc : cursor)
+    {
+        auto&& val_elem = doc["values"];
+        for (auto&& val : val_elem.get_array().value)
+        {
+            guilds.emplace_back(val.get_int64().value);
+        }
+    }
+
+    return guilds;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bool MongoJobRepo::LoadGuildSettings(const std::shared_ptr<GuildSettings>& settings)
+{
+    using namespace bsoncxx::builder::basic;
+
+    auto filter = make_document(kvp("_id", static_cast<int64_t>(settings->GetGuildID())));
+
+    auto cursor = m_guildsCollection.find(filter.view());
+
+    bool bResult = false;
+    for (auto&& doc : cursor)
+    {
+        settings->ReadAttributesBSON(doc);
+        bResult = true;
+    }
+
+    return bResult;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::CreateIndexes()
 {
     using namespace bsoncxx::builder::basic;
 
     try
     {
-        m_collection.create_index(
-            make_document(kvp("_guild", 1))
-        );
+        m_jobsCollection.create_index(make_document(kvp("_guild", 1)));
     }
     catch (const std::exception& e)
     {
         std::cerr << "Failed to create MongoDB indexes: " << e.what() << std::endl;
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::Insert(const std::string& name, bsoncxx::document::view_or_value document)
+{
+    if (name == m_jobsCollection.name())
+    {
+        m_jobsCollection.insert_one(document);
+    }
+    else if (name == m_guildsCollection.name())
+    {
+        m_guildsCollection.insert_one(document);
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::Update(const std::string& name, bsoncxx::document::view_or_value filter, bsoncxx::document::view_or_value replacement)
+{
+    if (name == m_jobsCollection.name())
+    {
+        m_jobsCollection.replace_one(filter, replacement);
+    }
+    else if (name == m_guildsCollection.name())
+    {
+        m_guildsCollection.replace_one(filter, replacement);
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::Delete(const std::string& name, bsoncxx::document::view_or_value filter)
+{
+    if (name == m_jobsCollection.name())
+    {
+        m_jobsCollection.delete_one(filter);
+    }
+    else if (name == m_guildsCollection.name())
+    {
+        m_guildsCollection.delete_one(filter);
     }
 }

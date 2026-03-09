@@ -360,21 +360,47 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 
     return fmt::format(
         "**ID**: {}\n"
-        "**Customer**: {}\n"
-        "**Assigned**: {}\n"
-        "**Type**: {}\n"
-        "**Status**: {}\n"
-        "**Priority**: {}\n"
         "**Created**: <t:{}:F>\n"
-        "**Last Edit**: <t:{}:F>\n",
-        utils::GuidToStringNoBrackets(m_id),
-        GetCustomerName(cluster, idGuild),
-        GetWorkerName(cluster, idGuild),
+        "**Last Edit**: <t:{}:F>\n"
+        "**Type**: {}\t"
+        "**Status**: {}\t"
+        "**Priority**: {}\n"
+        "**Customer**: {}\n"
+        "**Assigned**: {}\n",
+        utils::GuidToStringNoBrackets(m_id), 
+        m_timeCreated,
+        m_timeLastEdit,
         JobTypeToString(),
         StatusToString(m_eJobStatus),
         PriorityToString(m_eJobPriority),
+        GetCustomerName(cluster, idGuild),
+        GetWorkerName(cluster, idGuild)
+    );
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+{
+    fmt::memory_buffer buffer;
+
+    return fmt::format(
+        "**ID**: {}\n"
+        "**Created**: <t:{}:F>\n"
+        "**Type**: {}\t"
+        "**Status**: {}\t"
+        "**Priority**: {}\n"
+        "**Customer**: {}\n"
+        "**Assigned**: {}\n",
+        utils::GuidToStringNoBrackets(m_id),
         m_timeCreated,
-        m_timeLastEdit);
+        JobTypeToString(),
+        StatusToString(m_eJobStatus),
+        PriorityToString(m_eJobPriority),
+        GetCustomerName(cluster, idGuild),
+        GetWorkerName(cluster, idGuild)
+    );
 }
 
 //---------------------------------------------------------------------------------------------------------------------

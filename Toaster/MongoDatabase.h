@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IDatabaseWriter.h"
+#include "Database.h"
 // mongo
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
@@ -8,11 +8,11 @@
 #include <memory>
 #include <mutex>
 
-class MongoWriter : public IDatabaseWriter
+class MongoDatabase : public Database
 {
 public:
-    MongoWriter();
-    virtual ~MongoWriter() override;
+    MongoDatabase();
+    virtual ~MongoDatabase() override;
     bool connect(const std::string& connectionString) override;
     void disconnect() override;
     bool flush() override;

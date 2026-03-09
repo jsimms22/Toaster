@@ -115,6 +115,7 @@ public:
     virtual void ReadAttributesBSON(const bsoncxx::document::view& doc);
 
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 

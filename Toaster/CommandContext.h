@@ -3,9 +3,6 @@
 /// \brief
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
-#include "GuildSettings.h"
-#include "PermissionsMgr.h"
-#include "Toaster.h"
 // d++
 #include <dpp/cluster.h>
 // std library
@@ -13,6 +10,8 @@
 #include <vector>
 
 class JobQueue;
+class GuildSettings;
+class IJobRepo;
 
 //---------------------------------------------------------------------------------------------------------------------
 /// \class 
@@ -21,7 +20,8 @@ class JobQueue;
 struct CommandContext
 {
 	dpp::cluster& cluster;
-	std::shared_ptr<JobQueue>& queue;
-	GuildSettings& guild;
+	std::shared_ptr<JobQueue> queue;
+	std::shared_ptr<GuildSettings> guild;
+	std::shared_ptr<IJobRepo> repo;
 	bool debug = false;
 };

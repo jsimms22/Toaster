@@ -1,16 +1,16 @@
 #pragma once
 
-#include "IDatabaseWriter.h"
+#include "Database.h"
 // tinyxml
 #include "tinyxml2.h"
 // std library
 #include <mutex>
 
-class TinyXmlWriter : public IDatabaseWriter
+class TinyXmlDatabase : public Database
 {
 public:
-    TinyXmlWriter();
-    virtual ~TinyXmlWriter() override;
+    TinyXmlDatabase();
+    virtual ~TinyXmlDatabase() override;
     bool connect(const std::string& filePath) override;
     void disconnect() override;
     bool flush() override;

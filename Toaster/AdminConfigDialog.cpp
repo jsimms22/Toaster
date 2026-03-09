@@ -1,6 +1,7 @@
 #include "AdminConfigDialog.h"
 
 #include "Commands.h"
+#include "GuildSettings.h"
 // std library
 #include <string>
 
@@ -23,33 +24,33 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_PingRole);
 
-		if (m_ctx.guild.HasPingRole())
+		if (m_ctx.guild->HasPingRole())
 		{
-			PingRoleEdit.set_default_value(std::to_string(m_ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)].value_or(0)));
+			PingRoleEdit.set_default_value(std::to_string(m_ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)].value_or(0)));
 		}
 
 		OnNewSelect.set_label("Ping on New Request")
 			.set_type(dpp::cot_selectmenu)
-			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild.bPingOnNew))
-			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild.bPingOnNew))
+			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild->bPingOnNew))
+			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild->bPingOnNew))
 			.set_id(Component_PingOnNew);
 
 		OnUpdateSelect.set_label("Ping on Request Updated")
 			.set_type(dpp::cot_selectmenu)
-			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild.bPingOnUpdate))
-			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild.bPingOnUpdate))
+			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild->bPingOnUpdate))
+			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild->bPingOnUpdate))
 			.set_id(Component_PingOnUpdate);
 
 		OnDeleteSelect.set_label("Ping on Request Deleted")
 			.set_type(dpp::cot_selectmenu)
-			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild.bPingOnDelete))
-			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild.bPingOnDelete))
+			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild->bPingOnDelete))
+			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild->bPingOnDelete))
 			.set_id(Component_PingOnDelete);
 
 		OnCompleteSelect.set_label("Ping on Request Completed")
 			.set_type(dpp::cot_selectmenu)
-			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild.bPingOnComplete))
-			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild.bPingOnComplete))
+			.add_select_option(dpp::select_option("True", "1", "Ping when this event occurs.").set_default(m_ctx.guild->bPingOnComplete))
+			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild->bPingOnComplete))
 			.set_id(Component_PingOnComplete);
 	}
 
@@ -64,9 +65,9 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_NewChannel);
 
-		if (m_ctx.guild.idNewJobChannel.has_value())
+		if (m_ctx.guild->idNewJobChannel.has_value())
 		{
-			NewChannelEdit.set_default_value(std::to_string(m_ctx.guild.idNewJobChannel.value_or(0)));
+			NewChannelEdit.set_default_value(std::to_string(m_ctx.guild->idNewJobChannel.value_or(0)));
 		}
 
 		UpdateChannelEdit.set_label("Request Updated Announcements")
@@ -77,9 +78,9 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_EditChannel);
 
-		if (m_ctx.guild.idUpdateJobChannel.has_value())
+		if (m_ctx.guild->idUpdateJobChannel.has_value())
 		{
-			UpdateChannelEdit.set_default_value(std::to_string(m_ctx.guild.idUpdateJobChannel.value_or(0)));
+			UpdateChannelEdit.set_default_value(std::to_string(m_ctx.guild->idUpdateJobChannel.value_or(0)));
 		}
 
 		DeleteChannelEdit.set_label("Request Deleted Announcements")
@@ -90,9 +91,9 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_DeletedChannel);
 
-		if (m_ctx.guild.idDeleteJobChannel.has_value())
+		if (m_ctx.guild->idDeleteJobChannel.has_value())
 		{
-			DeleteChannelEdit.set_default_value(std::to_string(m_ctx.guild.idDeleteJobChannel.value_or(0)));
+			DeleteChannelEdit.set_default_value(std::to_string(m_ctx.guild->idDeleteJobChannel.value_or(0)));
 		}
 
 		CompleteChannelEdit.set_label("Request Completed Announcements")
@@ -103,9 +104,9 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_CompletedChannel);
 
-		if (m_ctx.guild.idCompleteJobChannel.has_value())
+		if (m_ctx.guild->idCompleteJobChannel.has_value())
 		{
-			CompleteChannelEdit.set_default_value(std::to_string(m_ctx.guild.idCompleteJobChannel.value_or(0)));
+			CompleteChannelEdit.set_default_value(std::to_string(m_ctx.guild->idCompleteJobChannel.value_or(0)));
 		}
 	}
 }

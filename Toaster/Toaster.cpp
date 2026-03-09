@@ -1,8 +1,10 @@
 #include "Toaster.h"
 
+#include "IJobRepo.h"
 #include "BotUtility.h"
 #include "CommandContext.h"
 #include "Commands.h"
+#include "GuildSettings.h"
 #include "JobQueue.h"
 #include "Resource.h"
 // d++
@@ -25,9 +27,7 @@
 ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<IJobRepo>& repo, const bool bDebug)
     : m_cluster(cluster), m_clusterId(clusterId), m_iShardCount{ 0 }, m_repo{ repo }, m_debug{ bDebug }
 {
-    LoadGuildSettings();
-    //LoadQueueData();
-    LoadDBQueueData();
+    LoadDatabase();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -89,12 +89,13 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
-    GuildSettings& guild = GetOrCreateSettings(event.command.guild_id);
+    std::shared_ptr<GuildSettings> guild = GetOrCreateSettings(event.command.guild_id);
 
     CommandContext ctx{
         m_cluster,
         queue,
         guild,
+        m_repo,
         m_debug
     };
 
@@ -135,12 +136,13 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
-    GuildSettings& guild = GetOrCreateSettings(event.command.guild_id);
+    std::shared_ptr<GuildSettings> guild = GetOrCreateSettings(event.command.guild_id);
 
     CommandContext ctx{
         m_cluster,
         queue,
         guild,
+        m_repo,
         m_debug
     };
 
@@ -181,12 +183,13 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
-    GuildSettings& guild = GetOrCreateSettings(event.command.guild_id);
+    std::shared_ptr<GuildSettings> guild = GetOrCreateSettings(event.command.guild_id);
 
     CommandContext ctx{
         m_cluster,
         queue,
         guild,
+        m_repo,
         m_debug
     };
 
@@ -227,12 +230,13 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
-    GuildSettings& guild = GetOrCreateSettings(event.command.guild_id);
+    std::shared_ptr<GuildSettings> guild = GetOrCreateSettings(event.command.guild_id);
 
     CommandContext ctx{
         m_cluster,
         queue,
         guild,
+        m_repo,
         m_debug
     };
 
@@ -264,143 +268,6 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ToasterBot::LoadGuildSettings()
-{
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
-
-    tinyxml2::XMLDocument doc;
-    const char* path = "../guilds.xml";
-
-    tinyxml2::XMLError result = doc.LoadFile(path);
-
-    if (result == tinyxml2::XML_ERROR_FILE_NOT_FOUND)
-    {
-        // Create new file with root
-        auto* root = doc.NewElement("GuildList");
-        doc.InsertEndChild(root);
-
-        doc.SaveFile(path);
-        return; // No guilds yet
-    }
-
-    if (result != tinyxml2::XML_SUCCESS)
-    {
-        // Handle corrupted file if desired
-        return;
-    }
-
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
-    {
-        root = doc.NewElement("GuildList");
-        doc.InsertEndChild(root);
-        doc.SaveFile(path);
-        return;
-    }
-
-    // Iterate over all <Request> elements within each <User>
-    for (tinyxml2::XMLElement* xmlNode = root->FirstChildElement("Guild"); xmlNode != nullptr; xmlNode = xmlNode->NextSiblingElement("Guild"))
-    {
-        const dpp::snowflake id = xmlNode->Unsigned64Attribute("ID", 0);
-
-        if (id)
-        {
-            GuildSettings guild;
-            guild.ReadAttributes(xmlNode, root);
-            g_settings.emplace(id, std::move(guild));
-        }
-    }
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-// \brief
-//---------------------------------------------------------------------------------------------------------------------
-void ToasterBot::SaveGuildSettings()
-{
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
-
-    tinyxml2::XMLDocument doc;
-    doc.LoadFile("../guilds.xml");
-    doc.Clear();
-
-    // Get the root element (<RequestQueue>)
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
-    {
-        root = doc.NewElement("GuildList");
-        doc.InsertEndChild(root);
-    }
-
-    for (const auto& [id, settings] : g_settings)
-    {
-        tinyxml2::XMLElement* xmlNode = root->InsertNewChildElement("Guild");
-        root->SetAttribute("ID", id);
-
-        settings.WriteAttributes(xmlNode, root);
-        root->InsertEndChild(xmlNode);
-    }
-
-    // Save the updated XML to a file
-    doc.SaveFile("../guilds.xml");
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-// \brief
-//---------------------------------------------------------------------------------------------------------------------
-void ToasterBot::LoadQueueData()
-{
-    /*
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
-
-    tinyxml2::XMLDocument doc;
-    const char* path = "../queue.xml";
-
-    auto result = doc.LoadFile(path);
-    if (result == tinyxml2::XML_ERROR_FILE_NOT_FOUND)
-    {
-        auto* root = doc.NewElement("Queues");
-        doc.InsertEndChild(root);
-        doc.SaveFile(path);
-    }
-    else if (result != tinyxml2::XML_SUCCESS)
-    {
-        return; // Corrupted or unreadable
-    }
-
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root || std::string(root->Name()) != "Queues")
-    {
-        doc.Clear();
-        root = doc.NewElement("Queues");
-        doc.InsertEndChild(root);
-        doc.SaveFile(path);
-    }
-
-    // Clear any existing queues
-    m_spQueue.clear();
-
-    // Iterate all <RequestList> nodes
-    for (tinyxml2::XMLElement* requestList = root->FirstChildElement("RequestList");
-        requestList != nullptr;
-        requestList = requestList->NextSiblingElement("RequestList"))
-    {
-        const char* guildAttr = requestList->Attribute("GuildID");
-        if (!guildAttr)
-            continue;
-
-        uint64_t guildID = std::stoull(guildAttr);
-
-        // Let JobQueue handle loading its own jobs
-        auto queue = std::make_shared<JobQueue>(guildID, requestList);
-
-        m_spQueue.emplace(guildID, std::move(queue));
-    }
-    */
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-// \brief
-//---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& guildID)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -411,34 +278,46 @@ std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& gui
 
     // Create a new queue for this guild
     auto queue = std::make_shared<JobQueue>(guildID, m_repo);
-
     m_spQueue.emplace(guildID, queue);
+
     return queue;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-GuildSettings& ToasterBot::GetOrCreateSettings(const dpp::snowflake& guildID)
+std::shared_ptr<GuildSettings> ToasterBot::GetOrCreateSettings(const dpp::snowflake& guildID)
 {
     auto it = g_settings.find(guildID);
     if (it != g_settings.end())
         return it->second;
 
-    // Create default settings if none exist
-    g_settings[guildID] = GuildSettings{};
-    return g_settings[guildID];
+    // Create default settings if none exist, then update database with defaults
+    auto settings = std::make_shared<GuildSettings>(guildID);
+    g_settings.emplace(guildID, settings);
+    m_repo->InsertGuild(settings);
+
+    return settings;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void ToasterBot::LoadDBQueueData()
+void ToasterBot::LoadDatabase()
 {
-    auto guilds = m_repo->GetGuildsWithJobs();
-
-    for (const auto& guildID : guilds)
+    // Load persistent queues
+    auto queues = m_repo->GetGuildsWithJobs();
+    for (const auto& guild : queues)
     {
-        m_spQueue[guildID] = std::make_shared<JobQueue>(guildID, m_repo);
+        m_spQueue.emplace(guild, std::make_shared<JobQueue>(guild, m_repo));
+    }
+
+    // Load persistent guild settings
+    auto settings = m_repo->GetGuildsWithSettings();
+    for (const auto& guild : settings)
+    {
+        auto setting = std::make_shared<GuildSettings>(guild);
+        auto bResult = m_repo->LoadGuildSettings(setting);
+        g_settings.emplace(guild, setting);
     }
 }

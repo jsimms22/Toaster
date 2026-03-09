@@ -7,9 +7,11 @@
 /// All results are scoped to the requesting user and validated
 /// against the active JobQueue instance.
 //---------------------------------------------------------------------------------------------------------------------
-#include "BotUtility.h"
 #include "Commands.h"
+
+#include "BotUtility.h"
 #include "JobQueue.h"
+#include "JobRequest.h"
 #include "PaginationPanel.h"
 // fmt
 #include <fmt/format.h>
@@ -50,9 +52,14 @@ void MyRequestsCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inte
     const std::size_t type = utils::CmdStringToJobType(strCmdID);
     const dpp::snowflake user = event.command.get_issuing_user().id;
     const std::size_t page = 0;
-    const std::string result = ctx.queue->PrintQueuePageByUser(ctx.cluster, user, type, page, event.command.guild_id);
-    const std::size_t size = ctx.queue->GetFilteredQueueSizeByUser(user, type);
-    const std::string header = "Your Requests";
+    const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
+                                                          event.command.guild_id,
+                                                          page,
+                                                          [user, type](const std::shared_ptr<const JobRequest> job) -> bool
+                                                          { return job->GetCustomerID() == user && job->SupportsType(type); });
+    const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool
+                                                    { return job->GetCustomerID() == user && job->SupportsType(type); });
+    const std::string header = "Your Requests"; 
 
     PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
     panel.AddEmbed(header, size != 0 ? result : "You have no job requests of this type in queue.");
@@ -81,8 +88,13 @@ void MyRequestsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         const dpp::snowflake user = parts[3];
 
         // Construct the actual info panel
-        const std::string result = ctx.queue->PrintQueuePageByUser(ctx.cluster, user, type, page, event.command.guild_id);
-        const std::size_t size = ctx.queue->GetFilteredQueueSizeByUser(user, type);
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
+                                                              event.command.guild_id,
+                                                              page,
+                                                              [user, type](const std::shared_ptr<const JobRequest> job) -> bool
+                                                              { return job->GetCustomerID() == user && job->SupportsType(type); });
+        const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool
+                                                        { return job->GetCustomerID() == user && job->SupportsType(type); });
         const std::string header = "Your Requests";
 
         PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);

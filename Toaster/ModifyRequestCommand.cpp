@@ -11,6 +11,8 @@
 #include "JobQueue.h"
 #include "RequestDlg.h"
 #include "NoteDialog.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"

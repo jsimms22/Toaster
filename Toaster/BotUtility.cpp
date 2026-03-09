@@ -292,18 +292,18 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
-    std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<const JobRequest>& job, const GuildSettings& settings)
+    std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<const JobRequest>& job, const std::shared_ptr<const GuildSettings>& settings)
     {
         if (!guild)
             return {};
 
         std::vector<std::pair<dpp::snowflake, std::string>> vWorkerList;
 
-        auto roleForType = settings.JobTypeToRole(job->JobType());
+        auto roleForType = settings->JobTypeToRole(job->JobType());
         if (!roleForType.has_value())
             return {};
 
-        auto role_id = settings.roles[static_cast<std::size_t>(roleForType.value())];
+        auto role_id = settings->roles[static_cast<std::size_t>(roleForType.value())];
 
         const auto pManager = PermissionsMgr::GetInstance();
         if (!role_id || !pManager)

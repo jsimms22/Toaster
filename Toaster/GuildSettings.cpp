@@ -1,11 +1,17 @@
 #include "GuildSettings.h"
 
 #include "CommandContext.h"
+#include "IJobRepo.h"
 #include "Resource.h"
 // d++
 #include <dpp/message.h>
 // fmt
 #include <fmt/format.h>
+// mongo
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/concatenate.hpp>
+// std library
+#include <string_view>
 
 // ================================
 // Helper Utilities
@@ -22,6 +28,13 @@ namespace
     std::optional<dpp::snowflake> ReadOptionalId(tinyxml2::XMLElement* xmlNode, const char* name)
     {
         const std::size_t attr = xmlNode->Unsigned64Attribute(name, 0);
+        if (!attr) { return std::nullopt; }
+        return attr;
+    }
+
+    std::optional<dpp::snowflake> ReadOptionalId(bsoncxx::document::element elem)
+    {
+        const std::size_t attr = static_cast<std::size_t>(elem.get_int64().value);
         if (!attr) { return std::nullopt; }
         return attr;
     }
@@ -67,12 +80,12 @@ std::optional<std::size_t> GuildSettings::RoleToJobType(const GuildSettings::Rol
 void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
 {
     std::string roleMention;
-    if (ctx.guild.bPingOnNew)
+    if (ctx.guild->bPingOnNew)
     {
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild.roles[static_cast<size_t>(roleEnum)];
+            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -80,14 +93,14 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
             }
         }
 
-        if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
+        if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
             roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 
-    if (ctx.guild.idNewJobChannel.has_value())
+    if (ctx.guild->idNewJobChannel.has_value())
     {
         dpp::embed announce;
         announce.set_title("New Job Request")
@@ -118,7 +131,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
             .set_style(dpp::cos_success)
             .set_id(fmt::format("global_assign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
 
-        ctx.cluster.message_create(dpp::message(ctx.guild.idNewJobChannel.value_or(0), roleMention).add_embed(announce).add_component(row));
+        ctx.cluster.message_create(dpp::message(ctx.guild->idNewJobChannel.value_or(0), roleMention).add_embed(announce).add_component(row));
     }
 }
 
@@ -128,12 +141,12 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
 void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
 {
     std::string roleMention;
-    if (ctx.guild.bPingOnUpdate)
+    if (ctx.guild->bPingOnUpdate)
     {
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild.roles[static_cast<size_t>(roleEnum)];
+            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -141,21 +154,21 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobT
             }
         }
 
-        if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
+        if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
             roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
     
-    if (ctx.guild.idUpdateJobChannel.has_value())
+    if (ctx.guild->idUpdateJobChannel.has_value())
     {
         dpp::embed announce;
         announce.set_title("Job Request Edited")
             .set_description(jobDetails)
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild.idUpdateJobChannel.value_or(0), roleMention).add_embed(announce));
+        ctx.cluster.message_create(dpp::message(ctx.guild->idUpdateJobChannel.value_or(0), roleMention).add_embed(announce));
     }
 }
 
@@ -165,12 +178,12 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobT
 void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
 {
     std::string roleMention;
-    if (ctx.guild.bPingOnDelete)
+    if (ctx.guild->bPingOnDelete)
     {
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild.roles[static_cast<size_t>(roleEnum)];
+            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -178,21 +191,21 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
             }
         }
 
-        if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
+        if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
             roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 
-    if (ctx.guild.idDeleteJobChannel.has_value())
+    if (ctx.guild->idDeleteJobChannel.has_value())
     {
         dpp::embed announce;
         announce.set_title("Job Request Deleted")
             .set_description(jobDetails)
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild.idDeleteJobChannel.value_or(0), roleMention).add_embed(announce));
+        ctx.cluster.message_create(dpp::message(ctx.guild->idDeleteJobChannel.value_or(0), roleMention).add_embed(announce));
     }
 }
 
@@ -202,12 +215,12 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
 void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
 {
     std::string roleMention;
-    if (ctx.guild.bPingOnComplete)
+    if (ctx.guild->bPingOnComplete)
     {
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild.roles[static_cast<size_t>(roleEnum)];
+            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -215,21 +228,21 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jo
             }
         }
 
-        if (const auto roleOpt = ctx.guild.roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
+        if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
             roleMention += (!roleMention.empty() ? "\n" : "");
             roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
         }
     }
 
-    if (ctx.guild.idCompleteJobChannel.has_value())
+    if (ctx.guild->idCompleteJobChannel.has_value())
     {
         dpp::embed announce;
         announce.set_title("Job Request Completed")
             .set_description(jobDetails)
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild.idCompleteJobChannel.value_or(0), roleMention).add_embed(announce));
+        ctx.cluster.message_create(dpp::message(ctx.guild->idCompleteJobChannel.value_or(0), roleMention).add_embed(announce));
     }
 }
 
@@ -297,48 +310,109 @@ void GuildSettings::ReadAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLE
     roles[static_cast<std::size_t>(Roles::Manager)] = ReadOptionalId(xmlNode, "ManagerRole");
 }
 
-void GuildSettings::SaveGuildSettings(const dpp::snowflake guildID)
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+bsoncxx::builder::basic::document GuildSettings::WriteAttributesBSON() const
 {
-    tinyxml2::XMLDocument doc;
-    doc.LoadFile("../guilds.xml");
+    using namespace bsoncxx::builder::basic;
 
-    // Get the root element (<GuidlList>)
-    tinyxml2::XMLElement* root = doc.RootElement();
-    if (!root)
-    {
-        root = doc.NewElement("GuidlList");
-        doc.InsertEndChild(root);
-    }
+    document doc{};
 
-    tinyxml2::XMLElement* guildNode = nullptr;
+    doc.append(
+        kvp("_id", static_cast<std::int64_t>(m_idGuild)),
+        // Channel IDs
+        kvp("NewJobChannel", static_cast<std::int64_t>(idNewJobChannel.value_or(0))),
+        kvp("UpdateJobChannel", static_cast<std::int64_t>(idUpdateJobChannel.value_or(0))),
+        kvp("DeleteJobChannel", static_cast<std::int64_t>(idDeleteJobChannel.value_or(0))),
+        kvp("CompleteJobChannel", static_cast<std::int64_t>(idCompleteJobChannel.value_or(0))),
+        // Cooldown
+        kvp("Cooldown", announcement_cooldown.count()),
+        // Ping Rules
+        kvp("PingOnNew", bPingOnNew),
+        kvp("PingOnUpdate", bPingOnUpdate),
+        kvp("PingOnDelete", bPingOnDelete),
+        kvp("PingOnComplete", bPingOnComplete),
+        // Roles
+        kvp("PingRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Ping)].value_or(0))),
+        kvp("CraftRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Crafter)].value_or(0))),
+        kvp("BuildRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Builder)].value_or(0))),
+        kvp("ComponentRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Comp)].value_or(0))),
+        kvp("ResourceRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Gatherer)].value_or(0))),
+        kvp("RefineRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Refiner)].value_or(0))),
+        kvp("HazmatRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Hazmat)].value_or(0))),
+        kvp("ManagerRole", static_cast<std::int64_t>(roles[static_cast<std::size_t>(Roles::Manager)].value_or(0)))
+    );
 
-    // Search for existing Guild node with matching ID
-    for (auto* xmlNode = root->FirstChildElement("Guild");
-        xmlNode != nullptr;
-        xmlNode = xmlNode->NextSiblingElement("Guild"))
-    {
-        const dpp::snowflake id = xmlNode->Unsigned64Attribute("ID", 0);
-        if (id == guildID)
-        {
-            guildNode = xmlNode;
-            break;
-        }
-    }
+    return doc;
+}
 
-    // If not found, create new node
-    if (!guildNode)
-    {
-        guildNode = doc.NewElement("Guild");
-        guildNode->SetAttribute("ID", guildID);
-        root->InsertEndChild(guildNode);
-    }
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void GuildSettings::ReadAttributesBSON(const bsoncxx::document::view& doc)
+{
+    if (auto elem = doc["_id"])
+        m_idGuild = static_cast<std::uint64_t>(doc["_id"].get_int64().value);
 
-    // Re-set ID (since we cleared attributes)
-    guildNode->SetAttribute("ID", std::to_string(guildID).c_str());
+    // Channel IDs
+    if (auto elem = doc["NewJobChannel"])
+        idNewJobChannel = ReadOptionalId(doc["NewJobChannel"]);
 
-    // Write settings
-    WriteAttributes(guildNode, root);
+    if (auto elem = doc["UpdateJobChannel"])
+        idUpdateJobChannel = ReadOptionalId(doc["NewJobChannel"]);
 
-    // Save the updated XML to a file
-    doc.SaveFile("../guilds.xml");
+    if (auto elem = doc["DeleteJobChannel"])
+        idDeleteJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+
+    if (auto elem = doc["CompleteJobChannel"])
+        idCompleteJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+
+    // Cooldown
+    if (auto elem = doc["Cooldown"])
+        announcement_cooldown = static_cast<std::chrono::seconds>(elem.get_int64().value);
+
+    // Ping Rules
+    if (auto elem = doc["PingOnNew"])
+        bPingOnNew = elem.get_bool().value;
+
+    if (auto elem = doc["PingOnUpdate"])
+        bPingOnUpdate = elem.get_bool().value;
+
+    if (auto elem = doc["PingOnDelete"])
+        bPingOnDelete = elem.get_bool().value;
+
+    if (auto elem = doc["PingOnComplete"])
+        bPingOnComplete = elem.get_bool().value;
+
+    // Roles
+    if (auto elem = doc["PingRole"])
+        roles[static_cast<std::size_t>(Roles::Ping)] = ReadOptionalId(doc["PingRole"]);
+
+    if (auto elem = doc["CraftRole"])
+        roles[static_cast<std::size_t>(Roles::Crafter)] = ReadOptionalId(doc["CraftRole"]);
+
+    if (auto elem = doc["BuildRole"])
+        roles[static_cast<std::size_t>(Roles::Builder)] = ReadOptionalId(doc["BuildRole"]);
+
+    if (auto elem = doc["ComponentRole"])
+        roles[static_cast<std::size_t>(Roles::Comp)] = ReadOptionalId(doc["ComponentRole"]);
+
+    if (auto elem = doc["ResourceRole"])
+        roles[static_cast<std::size_t>(Roles::Gatherer)] = ReadOptionalId(doc["ResourceRole"]);
+
+    if (auto elem = doc["RefineRole"])
+        roles[static_cast<std::size_t>(Roles::Refiner)] = ReadOptionalId(doc["RefineRole"]);
+
+    if (auto elem = doc["HazmatRole"])
+        roles[static_cast<std::size_t>(Roles::Hazmat)] = ReadOptionalId(doc["HazmatRole"]);
+
+    if (auto elem = doc["ManagerRole"])
+        roles[static_cast<std::size_t>(Roles::Manager)] = ReadOptionalId(doc["ManagerRole"]);
+}
+
+void GuildSettings::SaveGuildSettings(std::shared_ptr<IJobRepo> repo)
+{
+    auto copy = shared_from_this();
+    repo->UpdateGuild(m_idGuild, copy);
 }

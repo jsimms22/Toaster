@@ -2,6 +2,8 @@
 
 #include "AdminConfigDialog.h"
 #include "BotUtility.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 // fmt
 #include <fmt/format.h>
 #include <string>
@@ -54,28 +56,28 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
         if (!strParam1.empty())
         {
             utils::FilterWhiteSpace(strParam1);
-            ctx.guild.idNewJobChannel = dpp::snowflake(strParam1);
+            ctx.guild->idNewJobChannel = dpp::snowflake(strParam1);
         }
 
         if (!strParam2.empty())
         {
             utils::FilterWhiteSpace(strParam2);
-            ctx.guild.idUpdateJobChannel = dpp::snowflake(strParam2);
+            ctx.guild->idUpdateJobChannel = dpp::snowflake(strParam2);
         }
 
         if (!strParam3.empty())
         {
             utils::FilterWhiteSpace(strParam3);
-            ctx.guild.idDeleteJobChannel = dpp::snowflake(strParam3);
+            ctx.guild->idDeleteJobChannel = dpp::snowflake(strParam3);
         }
 
         if (!strParam4.empty())
         {
             utils::FilterWhiteSpace(strParam4);
-            ctx.guild.idCompleteJobChannel = dpp::snowflake(strParam4);
+            ctx.guild->idCompleteJobChannel = dpp::snowflake(strParam4);
         }
 
-        ctx.guild.SaveGuildSettings(event.command.guild_id);
+        ctx.guild->SaveGuildSettings(ctx.repo);
 
         auto FormatChannel = [](const std::optional<dpp::snowflake>& id)
             {
@@ -89,10 +91,10 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
                                                 "**Update Job:** {}\n"
                                                 "**Delete Job:** {}\n"
                                                 "**Complete Job:** {}\n\n",
-                                                FormatChannel(ctx.guild.idNewJobChannel),
-                                                FormatChannel(ctx.guild.idUpdateJobChannel),
-                                                FormatChannel(ctx.guild.idDeleteJobChannel),
-                                                FormatChannel(ctx.guild.idCompleteJobChannel));
+                                                FormatChannel(ctx.guild->idNewJobChannel),
+                                                FormatChannel(ctx.guild->idUpdateJobChannel),
+                                                FormatChannel(ctx.guild->idDeleteJobChannel),
+                                                FormatChannel(ctx.guild->idCompleteJobChannel));
 
         dpp::embed embed;
         embed.set_title("Channel Announcement Settings")

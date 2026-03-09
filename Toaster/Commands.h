@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+class JobRequest;
+
 //---------------------------------------------------------------------------------------------------------------------
 /// \class ICustomCommand
 /// \brief Abstract base class for all custom slash commands.

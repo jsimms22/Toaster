@@ -1,7 +1,5 @@
 #pragma once
 #include "Commands.h"
-#include "CommandContext.h"
-// d++
 #include <dpp/message.h>
 #include <dpp/snowflake.h>
 // std library

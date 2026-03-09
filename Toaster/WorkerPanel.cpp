@@ -1,6 +1,8 @@
 #include "WorkerPanel.h"
 
 #include "CommandContext.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 #include "JobRequest.h"
 #include "JobQueue.h"
 #include "BotUtility.h"

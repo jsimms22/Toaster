@@ -1,4 +1,4 @@
-#include "MongoWriter.h"
+#include "MongoDatabase.h"
 // mongo
 #include <mongocxx/uri.hpp>
 // std library
@@ -7,7 +7,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-MongoWriter::MongoWriter()
+MongoDatabase::MongoDatabase()
     : m_instance{}
 {
 }
@@ -15,7 +15,7 @@ MongoWriter::MongoWriter()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-MongoWriter::~MongoWriter()
+MongoDatabase::~MongoDatabase()
 {
     disconnect();
 }
@@ -23,7 +23,7 @@ MongoWriter::~MongoWriter()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-bool MongoWriter::connect(const std::string& connectionString)
+bool MongoDatabase::connect(const std::string& connectionString)
 {
     using namespace bsoncxx::builder::basic;
 
@@ -54,7 +54,7 @@ bool MongoWriter::connect(const std::string& connectionString)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void MongoWriter::disconnect()
+void MongoDatabase::disconnect()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_client.reset();
@@ -63,7 +63,7 @@ void MongoWriter::disconnect()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-bool MongoWriter::flush() 
+bool MongoDatabase::flush()
 { 
     return true;
 }
@@ -71,7 +71,7 @@ bool MongoWriter::flush()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-mongocxx::database MongoWriter::GetDB() const 
+mongocxx::database MongoDatabase::GetDB() const
 { 
     return m_db; 
 }

@@ -2,8 +2,8 @@
 
 #include "BotUtility.h"
 #include "Toaster.h"
-#include "TinyXmlWriter.h"
-#include "MongoWriter.h"
+#include "TinyXmlDatabase.h"
+#include "MongoDatabase.h"
 #include "MongoJobRepo.h"
 // d++
 #include <dpp/dpp.h>
@@ -47,7 +47,7 @@ auto main() -> int
     const std::string DB_CLUSTER{ utils::LoadSecret("../token.txt", "DB_CLUSTER") };
 
     // Create an instance and establish our MongoDB connection
-    MongoWriter database;
+    MongoDatabase database;
     database.connect(fmt::format("mongodb+srv://{}:{}@{}", DB_USER, DB_PASS, DB_CLUSTER));
     std::shared_ptr<MongoJobRepo> jobRepo = std::make_shared<MongoJobRepo>(database.GetDB());
 

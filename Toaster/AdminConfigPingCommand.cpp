@@ -1,6 +1,8 @@
 #include "Commands.h"
 
 #include "AdminConfigDialog.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 #include "BotUtility.h"
 // fmt
 #include <fmt/format.h>
@@ -54,30 +56,30 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
         if (!strParam1.empty())
         {
             utils::FilterWhiteSpace(strParam1);
-            ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = dpp::snowflake(strParam1);
+            ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = dpp::snowflake(strParam1);
         }
 
         if (!strParam2.empty())
         {
-            ctx.guild.bPingOnNew = strParam2 == "1" ? true : false;
+            ctx.guild->bPingOnNew = strParam2 == "1" ? true : false;
         }
 
         if (!strParam2.empty())
         {
-            ctx.guild.bPingOnUpdate = strParam3 == "1" ? true : false;
+            ctx.guild->bPingOnUpdate = strParam3 == "1" ? true : false;
         }
 
         if (!strParam2.empty())
         {
-            ctx.guild.bPingOnDelete = strParam4 == "1" ? true : false;
+            ctx.guild->bPingOnDelete = strParam4 == "1" ? true : false;
         }
 
         if (!strParam2.empty())
         {
-            ctx.guild.bPingOnComplete = strParam5 == "1" ? true : false;
+            ctx.guild->bPingOnComplete = strParam5 == "1" ? true : false;
         }
 
-        ctx.guild.SaveGuildSettings(event.command.guild_id);
+        ctx.guild->SaveGuildSettings(ctx.repo);
 
         auto FormatRole = [](const std::optional<dpp::snowflake>& id)
             {
@@ -93,11 +95,11 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
             "**On Update:** {}\n"
             "**On Delete:** {}\n"
             "**On Complete:** {}\n\n",
-            FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)]),
-            ctx.guild.bPingOnNew ? "Enabled" : "Disabled",
-            ctx.guild.bPingOnUpdate ? "Enabled" : "Disabled",
-            ctx.guild.bPingOnDelete ? "Enabled" : "Disabled",
-            ctx.guild.bPingOnComplete ? "Enabled" : "Disabled");
+            FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)]),
+            ctx.guild->bPingOnNew ? "Enabled" : "Disabled",
+            ctx.guild->bPingOnUpdate ? "Enabled" : "Disabled",
+            ctx.guild->bPingOnDelete ? "Enabled" : "Disabled",
+            ctx.guild->bPingOnComplete ? "Enabled" : "Disabled");
 
         dpp::embed embed;
         embed.set_title("Ping Rule Settings")

@@ -7,6 +7,8 @@
 #include "Commands.h"
 #include "BotUtility.h"
 #include "JobQueue.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 // fmt
 #include <fmt/format.h>
 
@@ -164,26 +166,26 @@ dpp::embed AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const dpp::int
         "**Hazmat:** {}\n"
         "**Manager:** {}\n",
 
-        FormatChannel(ctx.guild.idNewJobChannel),
-        FormatChannel(ctx.guild.idUpdateJobChannel),
-        FormatChannel(ctx.guild.idDeleteJobChannel),
-        FormatChannel(ctx.guild.idCompleteJobChannel),
+        FormatChannel(ctx.guild->idNewJobChannel),
+        FormatChannel(ctx.guild->idUpdateJobChannel),
+        FormatChannel(ctx.guild->idDeleteJobChannel),
+        FormatChannel(ctx.guild->idCompleteJobChannel),
 
-        ctx.guild.announcement_cooldown.count(),
+        ctx.guild->announcement_cooldown.count(),
 
-        ctx.guild.bPingOnNew ? "Enabled" : "Disabled",
-        ctx.guild.bPingOnUpdate ? "Enabled" : "Disabled",
-        ctx.guild.bPingOnDelete ? "Enabled" : "Disabled",
-        ctx.guild.bPingOnComplete ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnNew ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnUpdate ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnDelete ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnComplete ? "Enabled" : "Disabled",
 
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Crafter)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Builder)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Comp)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Gatherer)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Refiner)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Hazmat)]),
-        FormatRole(ctx.guild.roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)])
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Crafter)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Builder)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Comp)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Gatherer)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Refiner)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Hazmat)]),
+        FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)])
     );
 
     dpp::embed embed;

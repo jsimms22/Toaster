@@ -195,13 +195,13 @@
     <ClInclude Include="Commands.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="IDatabaseWriter.h">
+    <ClInclude Include="Database.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
-    <ClInclude Include="TinyXmlWriter.h">
+    <ClInclude Include="TinyXmlDatabase.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
-    <ClInclude Include="MongoWriter.h">
+    <ClInclude Include="MongoDatabase.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
     <ClInclude Include="IJobRepo.h">

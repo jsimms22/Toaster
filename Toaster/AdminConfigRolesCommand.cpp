@@ -1,5 +1,7 @@
 #include "Commands.h"
 
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 #include "BotUtility.h"
 // fmt
 #include <fmt/format.h>
@@ -28,7 +30,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
 
     auto SetRole = [&ctx, &event, &selectedRole](GuildSettings::Roles roleEnum, const std::string& label)
         {
-            ctx.guild.roles[static_cast<std::size_t>(roleEnum)] = selectedRole;
+            ctx.guild->roles[static_cast<std::size_t>(roleEnum)] = selectedRole;
 
             // Role display names in enum order
             constexpr std::array<const char*, 8> roleNames{
@@ -43,13 +45,13 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
             };
 
             std::string roleList;
-            for (std::size_t i = 0; i < ctx.guild.roles.size(); ++i)
+            for (std::size_t i = 0; i < ctx.guild->roles.size(); ++i)
             {
                 roleList += fmt::format(
                     "**{}:** {}\n",
                     roleNames[i],
-                    ctx.guild.roles[i].has_value()
-                    ? fmt::format("<@&{}>", ctx.guild.roles[i].value())
+                    ctx.guild->roles[i].has_value()
+                    ? fmt::format("<@&{}>", ctx.guild->roles[i].value())
                     : "*Not Set*"
                 );
             }
@@ -101,5 +103,5 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
         return;
     }
 
-    ctx.guild.SaveGuildSettings(event.command.guild_id);
+    ctx.guild->SaveGuildSettings(ctx.repo);
 }

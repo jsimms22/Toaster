@@ -10,6 +10,7 @@
 #include "BotUtility.h"
 #include "PaginationPanel.h"
 #include "WorkerPanel.h"
+#include "PermissionsMgr.h"
 // fmt
 #include <fmt/format.h>
 
@@ -62,8 +63,14 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 
         // Construct the actual info panel
         const std::size_t page = 0;
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, author.id, page, event.command.guild_id);
-        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(author.id);
+
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
+                                                              event.command.guild_id,
+                                                              page,
+                                                              [worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
+                                                              { return job->GetWorkerID() == worker; });
+        const std::size_t size = ctx.queue->GetQueueSize([worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
+                                                        { return job->GetWorkerID() == worker; });
         const std::string header = "Your Assignments";
 
         PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, author.id);
@@ -104,8 +111,13 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         const dpp::snowflake user = parts[3];
 
         // Construct the actual info panel
-        const std::string result = ctx.queue->PrintQueuePageByWorker(ctx.cluster, user, page, event.command.guild_id);
-        const std::size_t size = ctx.queue->GetFilteredQueueSizeByWorker(user);
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
+                                                              event.command.guild_id,
+                                                              page,
+                                                              [worker = user](const std::shared_ptr<const JobRequest> job) -> bool
+                                                              { return job->GetWorkerID() == worker; });
+        const std::size_t size = ctx.queue->GetQueueSize([worker = user](const std::shared_ptr<const JobRequest> job) -> bool
+                                                        { return job->GetWorkerID() == worker; });
         const std::string header = "Your Assignments";
 
         PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);

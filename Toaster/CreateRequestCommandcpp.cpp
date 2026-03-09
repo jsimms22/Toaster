@@ -13,6 +13,8 @@
 #include "Commands.h"
 #include "JobQueue.h"
 #include "BotUtility.h"
+#include "GuildSettings.h"
+#include "PermissionsMgr.h"
 
 #include "RequestDlg.h"
 #include "CraftingJobRequest.h"

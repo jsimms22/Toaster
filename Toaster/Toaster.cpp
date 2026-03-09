@@ -82,10 +82,10 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 {
-    std::chrono::time_point<std::chrono::steady_clock> start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
     if (m_debug)
     {
-        start = std::chrono::steady_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
@@ -106,9 +106,9 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 
     if (m_debug)
     {
-        auto end = std::chrono::steady_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         auto duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
             dpp::ll_debug,
@@ -129,10 +129,10 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
 {
-    std::chrono::time_point<std::chrono::steady_clock> start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
     if (m_debug)
     {
-        start = std::chrono::steady_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
@@ -153,9 +153,9 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
 
     if (m_debug)
     {
-        auto end = std::chrono::steady_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         auto duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
             dpp::ll_debug,
@@ -176,10 +176,10 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 {
-    std::chrono::time_point<std::chrono::steady_clock> start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
     if (m_debug)
     {
-        start = std::chrono::steady_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
@@ -200,9 +200,9 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 
     if (m_debug)
     {
-        auto end = std::chrono::steady_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         auto duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
             dpp::ll_debug,
@@ -223,10 +223,10 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 {
-    std::chrono::time_point<std::chrono::steady_clock> start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
     if (m_debug)
     {
-        start = std::chrono::steady_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     std::shared_ptr<JobQueue> queue = GetOrCreateQueue(event.command.guild_id);
@@ -247,9 +247,9 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 
     if (m_debug)
     {
-        auto end = std::chrono::steady_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         auto duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
             dpp::ll_debug,

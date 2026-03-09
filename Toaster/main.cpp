@@ -108,7 +108,7 @@ auto main() -> int
             }
             });
 
-        ToasterBot toaster(bot, 0, jobRepo, false);
+        ToasterBot toaster(bot, 0, jobRepo, true);
 
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });

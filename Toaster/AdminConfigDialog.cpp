@@ -53,9 +53,8 @@ void AdminConfigDialog::InitializeControls()
 			.add_select_option(dpp::select_option("False", "0", "Do not ping.").set_default(!m_ctx.guild->bPingOnComplete))
 			.set_id(Component_PingOnComplete);
 	}
-
 	// For channel announcement rules
-	if (m_strCommand == Command_ConfigChannels)
+	else if (m_strCommand == Command_ConfigChannels)
 	{
 		NewChannelEdit.set_label("New Request Announcements")
 			.set_type(dpp::cot_text)
@@ -109,6 +108,29 @@ void AdminConfigDialog::InitializeControls()
 			CompleteChannelEdit.set_default_value(std::to_string(m_ctx.guild->idCompleteJobChannel.value_or(0)));
 		}
 	}
+	// For roles
+	else if (m_strCommand == Command_ConfigRoles)
+	{
+		RoleSelect.set_label("Select Role to Set")
+			.set_type(dpp::cot_selectmenu)
+			.add_select_option(dpp::select_option("General Worker", std::to_string(static_cast<int>(GuildSettings::Roles::Ping)), ""))
+			.add_select_option(dpp::select_option("Item Crafter", std::to_string(static_cast<int>(GuildSettings::Roles::Crafter)), ""))
+			.add_select_option(dpp::select_option("Base Builder", std::to_string(static_cast<int>(GuildSettings::Roles::Builder)), ""))
+			.add_select_option(dpp::select_option("Component Dealer", std::to_string(static_cast<int>(GuildSettings::Roles::Comp)), ""))
+			.add_select_option(dpp::select_option("Resource Gatherer", std::to_string(static_cast<int>(GuildSettings::Roles::Gatherer)), ""))
+			.add_select_option(dpp::select_option("Refinery Worker", std::to_string(static_cast<int>(GuildSettings::Roles::Refiner)), ""))
+			.add_select_option(dpp::select_option("Hazardous Materials Collector", std::to_string(static_cast<int>(GuildSettings::Roles::Hazmat)), ""))
+			.add_select_option(dpp::select_option("Manager", std::to_string(static_cast<int>(GuildSettings::Roles::Manager)), ""))
+			.set_id(Component_RoleSelect);
+
+		RoleEdit.set_label("Request Completed Announcements")
+			.set_type(dpp::cot_text)
+			.set_placeholder("Role id")
+			.set_min_length(0)
+			.set_max_length(40)
+			.set_text_style(dpp::text_short)
+			.set_id(Component_RoleEdit);
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -125,13 +147,18 @@ void AdminConfigDialog::AddChildrenComponents()
 		add_component(OnDeleteSelect);
 		add_component(OnCompleteSelect);
 	}
-
 	// For channel announcement rules
-	if (m_strCommand == Command_ConfigChannels)
+	else if (m_strCommand == Command_ConfigChannels)
 	{
 		add_component(NewChannelEdit);
 		add_component(UpdateChannelEdit);
 		add_component(DeleteChannelEdit);
 		add_component(CompleteChannelEdit);
+	}
+	// For roles
+	else if (m_strCommand == Command_ConfigRoles)
+	{
+		add_component(RoleSelect);
+		add_component(RoleEdit);
 	}
 }

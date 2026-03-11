@@ -111,12 +111,11 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
             std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
-            dpp::ll_debug,
+            dpp::ll_info,
             fmt::format(
-                "Slash '{}' executed in '{}' ms (user: '{}').",
+                "Slash '{}' executed in '{}' micro-seconds.",
                 event.command.get_command_name(),
-                duration,
-                event.command.get_issuing_user().id
+                duration
             )
         );
     }
@@ -158,12 +157,11 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
             std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
-            dpp::ll_debug,
+            dpp::ll_info,
             fmt::format(
-                "Interaction '{}' executed in '{}' ms (user: '{}').",
+                "Interaction '{}' executed in '{}' micro-seconds.",
                 event.command.get_command_name(),
-                duration,
-                event.command.get_issuing_user().id
+                duration
             )
         );
     }
@@ -205,12 +203,11 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
             std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
-            dpp::ll_debug,
+            dpp::ll_info,
             fmt::format(
-                "Form '{}' executed in '{}' ms (user: '{}').",
+                "Form '{}' executed in '{}' micro-seconds.",
                 event.custom_id,
-                duration,
-                event.command.get_issuing_user().id
+                duration
             )
         );
     }
@@ -252,12 +249,11 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
             std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
         m_cluster.log(
-            dpp::ll_debug,
+            dpp::ll_info,
             fmt::format(
-                "Button '{}' executed in '{}' ms (user: '{}').",
+                "Button '{}' executed in '{}' micro-seconds.",
                 event.custom_id,
-                duration,
-                event.command.get_issuing_user().id
+                duration
             )
         );
     }

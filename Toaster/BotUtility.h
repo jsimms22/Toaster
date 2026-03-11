@@ -39,6 +39,7 @@ namespace utils
 	const std::string FindPreferredNameByID(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::snowflake& idGuild);
 	std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len = 1500);
 	std::vector<std::string> Split(const std::string& input, char delimiter);
+	void RemoveChar(std::string& str, const char sym);
 	void FilterWhiteSpace(std::string& str);
 	void FilterUserString(std::string& str);
 }

@@ -1,10 +1,53 @@
 #include "Commands.h"
 
+#include "AdminConfigDialog.h"
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
 #include "BotUtility.h"
 // fmt
 #include <fmt/format.h>
+// std library
+#include <string>
+#include <algorithm>
+#include <cctype>
+
+namespace
+{
+    std::string CreateReply(CommandContext& ctx, const dpp::snowflake& selectedRole)
+    {
+        // Role display names in enum order
+        constexpr std::array<const char*, 8> roleNames{
+            "Ping",
+            "Crafter",
+            "Builder",
+            "Component",
+            "Gatherer",
+            "Refiner",
+            "Hazmat",
+            "Manager"
+        };
+
+        std::string roleList;
+        for (std::size_t i = 0; i < ctx.guild->roles.size(); ++i)
+        {
+            roleList += fmt::format(
+                "**{}:** {}\n",
+                roleNames[i],
+                ctx.guild->roles[i].has_value()
+                ? fmt::format("<@&{}>", ctx.guild->roles[i].value())
+                : "*Not Set*"
+            );
+        }
+
+        std::string response = fmt::format(
+            "**Current Role Configuration**\n"
+            "{}",
+            roleList
+        );
+
+        return response;
+    }
+}
 
 void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
 {
@@ -31,42 +74,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
     auto SetRole = [&ctx, &event, &selectedRole](GuildSettings::Roles roleEnum, const std::string& label)
         {
             ctx.guild->roles[static_cast<std::size_t>(roleEnum)] = selectedRole;
-
-            // Role display names in enum order
-            constexpr std::array<const char*, 8> roleNames{
-                "Ping",
-                "Crafter",
-                "Builder",
-                "Component",
-                "Gatherer",
-                "Refiner",
-                "Hazmat",
-                "Manager"
-            };
-
-            std::string roleList;
-            for (std::size_t i = 0; i < ctx.guild->roles.size(); ++i)
-            {
-                roleList += fmt::format(
-                    "**{}:** {}\n",
-                    roleNames[i],
-                    ctx.guild->roles[i].has_value()
-                    ? fmt::format("<@&{}>", ctx.guild->roles[i].value())
-                    : "*Not Set*"
-                );
-            }
-
-            std::string response = fmt::format(
-                "** {} role updated** \n"
-                "Set to: <@&{}>\n\n"
-                "**Current Role Configuration**\n"
-                "{}",
-                label,
-                selectedRole,
-                roleList
-            );
-
-            event.reply(dpp::message(response).set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message(CreateReply(ctx, selectedRole)).set_flags(dpp::m_ephemeral));
         };
 
     if (strCmdID == Option_CraftingRole)
@@ -104,4 +112,54 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
     }
 
     ctx.guild->SaveGuildSettings(ctx.repo);
+}
+
+void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
+{
+    const std::string id = event.custom_id;
+    if (!ctx.queue || !id.starts_with(fmt::format("{}:", AdminConfigDialog::modalID)))
+    {
+        return;
+    }
+
+    auto parts = utils::Split(id, ':');
+    const std::string strDialogOwner = parts[1];
+
+    if (strDialogOwner == this->name)
+    {
+        const dpp::user author = event.command.get_issuing_user();
+        // These parameters are input that depend on the dialog form's order as defined by the type of the job
+        std::string strParam1 = event.components.size() > 0 ? std::get<std::string>(event.components[0].value) : "";
+        std::string strParam2 = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+        
+        auto is_all_numbers = [](const std::string& s) -> bool {
+            return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+                return std::isdigit(c);
+                });
+            };
+
+        if (!strParam1.empty() && !strParam2.empty())
+        {
+            utils::FilterWhiteSpace(strParam1);
+            utils::FilterWhiteSpace(strParam2);
+
+            if (!is_all_numbers(strParam2))
+            {
+                event.reply(dpp::message("Invalid input for the role id.").set_flags(dpp::m_ephemeral));
+                return;
+            }
+
+            try
+            {
+                ctx.guild->roles[std::stoull(strParam1)] = dpp::snowflake(strParam2);
+            }
+            catch (const std::exception)
+            {
+                event.reply(dpp::message("Failed to set new role id.").set_flags(dpp::m_ephemeral));
+                return;
+            }
+
+            event.reply(dpp::message(CreateReply(ctx, dpp::snowflake(strParam2))).set_flags(dpp::m_ephemeral));
+        }
+    }
 }

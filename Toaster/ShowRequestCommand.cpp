@@ -142,13 +142,13 @@ dpp::message ShowRequestCommand::SendPanel(
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {
-        CustomerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        CustomerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }
     else
     {
-        WorkerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

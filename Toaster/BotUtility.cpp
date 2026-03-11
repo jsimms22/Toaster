@@ -132,6 +132,7 @@ namespace utils
         else if (cmd == Option_ComponentRequest) return JOB_TYPE_COMPONENT;
         else if (cmd == Option_ResourceCollect) return JOB_TYPE_RESOURCE;
         else if (cmd == Option_RefineryJob) return JOB_TYPE_REFINERY;
+        else if (cmd == Option_HazardousJob) return JOB_TYPE_HAZARD;
         else return JOB_TYPE_GENERAL;
     }
 
@@ -146,6 +147,7 @@ namespace utils
             case (JOB_TYPE_COMPONENT):  return "Component Request";
             case (JOB_TYPE_RESOURCE):   return "Resource Collection";
             case (JOB_TYPE_REFINERY):   return "Refinery Job";
+            case (JOB_TYPE_HAZARD):     return "Hazmat Collection";
             default: return "General";
         }
     }
@@ -277,7 +279,7 @@ namespace utils
             {
                 if (!cc.is_error())
                 {
-                    auto guild = std::get<dpp::guild>(cc.value);
+                    dpp::guild guild = std::get<dpp::guild>(cc.value);
 
                     // Now properly in DPP cache
                     callback(dpp::find_guild(guild.id));
@@ -303,7 +305,7 @@ namespace utils
         if (!roleForType.has_value())
             return {};
 
-        auto role_id = settings->roles[static_cast<std::size_t>(roleForType.value())];
+        std::optional<dpp::snowflake> role_id = settings->roles[static_cast<std::size_t>(roleForType.value())];
 
         const auto pManager = PermissionsMgr::GetInstance();
         if (!role_id || !pManager)

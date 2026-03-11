@@ -12,12 +12,11 @@
 
 
 CustomerPanel::CustomerPanel(
-	CommandContext& ctx,
 	const std::string& OwnerName,
 	const dpp::snowflake& userID,
 	const std::string& jobID, 
     const bool bSubscribe)
-    : GeneralUserPanel(ctx, OwnerName, userID, jobID)
+    : GeneralUserPanel(OwnerName, userID, jobID)
 {
     m_btnSubscribe.set_type(dpp::cot_button)
         .set_label(bSubscribe ? "Subscribed" : "Unsubscribed")

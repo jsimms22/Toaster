@@ -52,6 +52,10 @@ private:
 	dpp::component DeleteChannelEdit;
 	dpp::component CompleteChannelEdit;
 
+	// For roles
+	dpp::component RoleSelect;
+	dpp::component RoleEdit;
+
 	CommandContext m_ctx;
 	std::string m_strCommand;
 };

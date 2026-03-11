@@ -472,7 +472,7 @@ const std::string JobRequest::PrintNoteHistory(dpp::cluster& cluster) const
         std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
 
         // Append to fmt buffer
-        fmt::format_to(std::back_inserter(buffer), "{} | {}:\n{}\n", timeBuf, username, meta.note);
+        fmt::format_to(std::back_inserter(buffer), "### {} | {}:\n{}\n", timeBuf, username, meta.note);
     }
 
     return fmt::to_string(buffer);

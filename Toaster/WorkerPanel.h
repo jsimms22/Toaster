@@ -9,7 +9,6 @@ class WorkerPanel : public GeneralUserPanel
 {
 public:
 	WorkerPanel(
-		CommandContext& ctx,
 		const std::string& OwnerName,
 		const dpp::snowflake& userID,
 		const std::string& jobID,

@@ -11,12 +11,11 @@
 #include <fmt/format.h>
 
 WorkerPanel::WorkerPanel(
-	CommandContext& ctx,
 	const std::string& OwnerName,
 	const dpp::snowflake& userID,
 	const std::string& jobID,
     const dpp::snowflake& workerID)
-	: GeneralUserPanel(ctx, OwnerName, userID, jobID)
+	: GeneralUserPanel(OwnerName, userID, jobID)
 {
 	m_btnComplete.set_type(dpp::cot_button)
 		.set_label("Complete")

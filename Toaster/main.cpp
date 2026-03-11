@@ -39,7 +39,7 @@ auto main() -> int
     log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(log);
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
-    log->set_level(spdlog::level::level_enum::debug);
+    log->set_level(spdlog::level::level_enum::info);
 
     const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN") };
     const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
@@ -108,7 +108,7 @@ auto main() -> int
             }
             });
 
-        ToasterBot toaster(bot, 0, jobRepo, true);
+        ToasterBot toaster(bot, 0, jobRepo, false);
 
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });

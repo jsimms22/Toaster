@@ -56,6 +56,8 @@ constexpr const char* Component_PingOnNew		{ "pingnew" };
 constexpr const char* Component_PingOnUpdate	{ "pingupdate" };
 constexpr const char* Component_PingOnDelete	{ "pingdelete" };
 constexpr const char* Component_PingOnComplete	{ "pingcomplete" };
+constexpr const char* Component_RoleSelect		{ "roleselect" };
+constexpr const char* Component_RoleEdit		{ "roleedit" };
 /*---------------------------ADMIN COMPONENT IDS--------------------------------*/
 
 /*----------------------------ADMIN COMMAND IDS---------------------------------*/

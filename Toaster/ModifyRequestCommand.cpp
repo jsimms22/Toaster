@@ -221,15 +221,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 });
         }
 
-        dpp::component row;
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_id("placeholder")
-            .set_label("placeholder - show all notes")
-            .set_style(dpp::cos_danger));
-
         // Edit the original message
-        event.edit_original_response(SendPanel(ctx, event, job, author.id).add_component(row).set_flags(dpp::m_ephemeral));
+        event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
@@ -608,13 +601,13 @@ dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::int
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {
-        CustomerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        CustomerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }
     else
     {
-        WorkerPanel panel(ctx, this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

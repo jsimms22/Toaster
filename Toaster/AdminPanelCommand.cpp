@@ -5,6 +5,8 @@
 /// Contains the implementation of AdminPanelCommand declared in Commands.h.
 //---------------------------------------------------------------------------------------------------------------------
 #include "Commands.h"
+
+#include "AdminButtonPanel.h"
 #include "BotUtility.h"
 #include "JobQueue.h"
 #include "GuildSettings.h"
@@ -62,38 +64,92 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
     const std::string id = event.custom_id; // "admin_type:workerid:"
 
     /*-------- Bot buttons --------*/ 
-    if (id.starts_with("admin_shutdown:") || 
-        id.starts_with("admin_logs:") || 
-        id.starts_with("admin_queue:"))
+    if (id.starts_with(fmt::format("{}_changerole:", this->name)) ||
+        id.starts_with(fmt::format("{}_channelrules:", this->name)) ||
+        id.starts_with(fmt::format("{}_pingrules:", this->name)))
     {
-
-        if (id.starts_with("admin_logs:"))
+        if (id.starts_with(fmt::format("{}_changerole:", this->name)))
         {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event).add_file("testLog.txt", "Imagine a forest. There might be a bear. But definitely some logs."));
+            AdminBotButtonPanel::ChangeRoleButton(id, ctx, event);
             return;
         }
-        else if (id.starts_with("admin_queue:"))
+        else if (id.starts_with(fmt::format("{}_channelrules:", this->name)))
         {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event).add_file("testQueue.txt", "Imagine a sea of requests. You begin to feel anxious."));
+            AdminBotButtonPanel::ChangeChannelButton(id, ctx, event);
             return;
         }
-        else if (id.starts_with("admin_shutdown:"))
+        else if (id.starts_with(fmt::format("{}_pingrules:", this->name)))
+        {
+            AdminBotButtonPanel::PingRulesButton(id, ctx, event);
+            return;
+        }
+    }
+    else if (id.starts_with(fmt::format("{}_banlist:", this->name)) ||
+             id.starts_with(fmt::format("{}_addban:", this->name)) ||
+             id.starts_with(fmt::format("{}_removeban:", this->name)))
+    {
+        if (id.starts_with(fmt::format("{}_banlist:", this->name)))
         {
             event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
             return;
         }
-
-        event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
-        return;
+        else if (id.starts_with(fmt::format("{}_addban:", this->name)))
+        {
+            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_removeban:", this->name)))
+        {
+            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
+            return;
+        }
+    }
+    else if (id.starts_with(fmt::format("{}_sendlogs:", this->name)) ||
+             id.starts_with(fmt::format("{}_sendqueue:", this->name)) ||
+             id.starts_with(fmt::format("{}_deleteguild:", this->name)))
+    {
+        if (id.starts_with(fmt::format("{}_sendlogs:", this->name)))
+        {
+            AdminBotButtonPanel::SendLogsButton(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_sendqueue:", this->name)))
+        {
+            AdminBotButtonPanel::SendQueueButton(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_deleteguild:", this->name)))
+        {
+            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
+            return;
+        }
     }
     /*-------- Queue buttons --------*/
-    else if (id.starts_with("admin_addworker:") || 
-        id.starts_with("admin_modifyworker:") || 
-        id.starts_with("admin_bulkassign:") ||
-        id.starts_with("admin_archive:"))
+    else if (id.starts_with(fmt::format("{}_showworkers:", this->name)) || 
+             id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
+             id.starts_with(fmt::format("{}_addworker:", this->name)) ||
+             id.starts_with(fmt::format("{}_removeworker:", this->name)) ||
+             id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
     {
-        event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event));
+        if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
+        {
+            AdminQueueButtonPanel::ShowWorkersButton(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_assignworkers:", this->name)))
+        {
+        }
+        else if (id.starts_with(fmt::format("{}_addworker:", this->name)))
+        {
+        }
+        else if (id.starts_with(fmt::format("{}_removeworker:", this->name)))
+        {
+        }
+        else if (id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
+        {
+        }
 
+        event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event));
         return;
     }
 }
@@ -110,10 +166,10 @@ dpp::message AdminPanelCommand::CreateBotPanel(CommandContext& ctx, const dpp::i
 {
     const dpp::user author = event.command.get_issuing_user();
 
-    dpp::embed embed = CreateBotEmbed(ctx, event);
-    dpp::component row = CreateBotButtonRow(author.id);
+    AdminBotButtonPanel botPanel(this->name, author.id);
+    botPanel.AddEmbed("Bot Admin Panel:", CreateBotEmbed(ctx, event));
 
-    return dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral);
+    return botPanel.set_flags(dpp::m_ephemeral);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -124,7 +180,7 @@ dpp::message AdminPanelCommand::CreateBotPanel(CommandContext& ctx, const dpp::i
 /// 
 /// \return Returns an embed object to attach to a message.
 //---------------------------------------------------------------------------------------------------------------------
-dpp::embed AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const
+const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const
 {
     auto FormatChannel = [](const std::optional<dpp::snowflake>& id)
         {
@@ -188,46 +244,7 @@ dpp::embed AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const dpp::int
         FormatRole(ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)])
     );
 
-    dpp::embed embed;
-    embed.set_title("Bot Admin Panel:")
-        .set_description(settings)
-        .set_color(0x3498db);
-
-    return embed;
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-/// \brief Helper function to build a row of buttons for the bot panel.
-///
-/// \param[out] user     The unique user id to store as state in the button ids.
-/// 
-/// \return Returns a component object containing a row of buttons.
-//---------------------------------------------------------------------------------------------------------------------
-dpp::component AdminPanelCommand::CreateBotButtonRow(const dpp::snowflake& user) const
-{
-    dpp::component row;
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Shutdown")
-        .set_style(dpp::cos_danger)
-        .set_id(fmt::format("admin_shutdown:{}", user)));
-
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Send Logs")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_logs:{}", user)));
-
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Send Queue")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_queue:{}", user)));
-
-    return row;
+    return settings;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -242,10 +259,10 @@ dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp:
 {
     const dpp::user author = event.command.get_issuing_user();
 
-    dpp::embed embed = CreateQueueEmbed(ctx, event);
-    dpp::component row = CreateQueueButtonRow(author.id);
+    AdminQueueButtonPanel queuePanel(this->name, author.id);
+    queuePanel.AddEmbed("Queue Admin Panel:", CreateQueueEmbed(ctx, event));
 
-    return dpp::message().add_embed(embed).add_component(row).set_flags(dpp::m_ephemeral);
+    return queuePanel.set_flags(dpp::m_ephemeral);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -256,65 +273,9 @@ dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp:
 /// 
 /// \return Returns an embed object to attach to a message.
 //---------------------------------------------------------------------------------------------------------------------
-dpp::embed AdminPanelCommand::CreateQueueEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const
+const std::string AdminPanelCommand::CreateQueueEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const
 {
-    const std::string header = "Queue Admin Panel:";
-    dpp::embed embed;
-    if (ctx.queue->GetQueueSize() == 0)
-    {
-        const std::string summmary = "Request queue is currently empty.";
-        embed.set_title(header)
-            .set_description(summmary)
-            .set_color(0x3498db);
-    }
-    else
-    {
-        const std::string summmary = ctx.queue->PrintQueueAdminSummary(ctx.cluster);
-        embed.set_title(header)
-            .set_description(summmary)
-            .set_color(0x3498db);
-    }
-
-    return embed;
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-/// \brief Helper function to build a row of buttons for the admin queue panel.
-///
-/// \param[out] user     The unique user id to store as state in the button ids.
-/// 
-/// \return Returns a component object containing a row of buttons.
-//---------------------------------------------------------------------------------------------------------------------
-dpp::component AdminPanelCommand::CreateQueueButtonRow(const dpp::snowflake& user) const
-{
-    dpp::component row;
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Add Worker")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_addworker:{}", user)));
-
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Modify Workers")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_modifyworker:{}", user)));
-
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Bulk Assign")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_bulkassign:{}", user)));
-
-    row.add_component(
-        dpp::component()
-        .set_type(dpp::cot_button)
-        .set_label("Archive")
-        .set_style(dpp::cos_primary)
-        .set_id(fmt::format("admin_archive:{}", user)));
-
-    return row;
+    return (ctx.queue->GetQueueSize() == 0) ?
+        "Request queue is currently empty." : 
+        ctx.queue->PrintQueueAdminSummary(ctx.cluster);
 }

@@ -9,7 +9,6 @@ class CustomerPanel : public GeneralUserPanel
 {
 public:
 	CustomerPanel(
-		CommandContext& ctx,
 		const std::string& OwnerName,
 		const dpp::snowflake& userID,
 		const std::string& jobID, 

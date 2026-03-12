@@ -21,7 +21,8 @@ public:
 
     };
 
-    explicit RefineryJobRequest(const dpp::snowflake& guildID) : JobRequest(guildID) {}
+    explicit RefineryJobRequest(const dpp::snowflake& guildID, const dpp::snowflake& customerID) 
+        : JobRequest(guildID, customerID) {}
     virtual ~RefineryJobRequest() = default;
 
     static std::string StateToString(const RefineryJobRequest::state s);
@@ -36,9 +37,9 @@ public:
     const std::string& GetRefinery() const { return m_strRefinery; }
     void SetRefinery(const std::string& location) { m_strRefinery = location; }
 
-    virtual std::size_t JobType() const override { return JOB_TYPE_REFINERY; }
+    virtual std::uint64_t JobType() const override { return JOB_TYPE_REFINERY; }
     virtual std::string JobTypeToString() const override { return "Refining"; }
-    virtual bool SupportsType(const std::size_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
+    virtual bool SupportsType(const std::uint64_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
 
     // Serialization + Deserialization: XML
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const override;

@@ -24,7 +24,8 @@ public:
 
     };
 
-    explicit ResourceJobRequest(const dpp::snowflake& guildID) : JobRequest(guildID) {}
+    explicit ResourceJobRequest(const dpp::snowflake& guildID, const dpp::snowflake& customerID) 
+        : JobRequest(guildID, customerID) {}
     virtual ~ResourceJobRequest() = default;
 
     static std::string StateToString(const ResourceJobRequest::state s);
@@ -39,9 +40,9 @@ public:
     std::string GetQualityThres() const { return m_strQuality; }
     void SetQualityThres(const std::string quality) { m_strQuality = quality; }
 
-    virtual std::size_t JobType() const override { return JOB_TYPE_RESOURCE; }
+    virtual std::uint64_t JobType() const override { return JOB_TYPE_RESOURCE; }
     virtual std::string JobTypeToString() const override { return "Resource"; }
-    virtual bool SupportsType(const std::size_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
+    virtual bool SupportsType(const std::uint64_t type) const override { return (type == JobType() || type == JobRequest::JobType()); }
 
     // Serialization + Deserialization: XML
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const override;

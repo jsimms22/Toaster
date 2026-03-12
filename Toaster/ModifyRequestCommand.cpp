@@ -10,6 +10,7 @@
 #include "Commands.h"
 #include "JobQueue.h"
 #include "RequestDlg.h"
+#include "RequestID.h"
 #include "NoteDialog.h"
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
@@ -50,7 +51,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
     utils::FilterWhiteSpace(strJobID);
 
-    const auto job = ctx.queue->GetJobByGUID(strJobID);
+    const auto job = ctx.queue->GetJobByID(strJobID);
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -61,13 +62,13 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     const auto pManager = PermissionsMgr::GetInstance();
     dpp::guild* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
 
-    if (strCmdID == Option_Edit && pGuild && (pManager->CanEditJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    if (strCmdID == Option_Edit && pGuild && (pManager->CanEditJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         EditRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         const auto vWorkerList = utils::BuildWorkerList(pGuild, job, ctx.guild);
         const std::string strCurrentWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
@@ -75,25 +76,25 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Status && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Status && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         StatusChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Priority && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Priority && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         PriorityChangeRequestDlg modal(job);
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         DeleteRequestDlg modal(job, job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         event.dialog(modal);
         return;
     }
-    else if (strCmdID == Option_Note && pGuild && (pManager->CanAddNote(event, author.id, job, pGuild, ctx.guild) && !ctx.debug))
+    else if (strCmdID == Option_Note && pGuild && (pManager->CanAddNote(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         NoteDialog modal(ctx, job);
         event.dialog(modal);
@@ -138,7 +139,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::string strParam2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
         std::string strParam3 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -156,7 +157,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strOldJobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if (job->SupportsType(JOB_TYPE_CRAFTING))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1, strParam2](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<CraftingJobRequest> craft = std::dynamic_pointer_cast<CraftingJobRequest>(job);
@@ -167,7 +168,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         else if (job->SupportsType(JOB_TYPE_BUILDING))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1, strParam2, strParam3](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<BuildingJobRequest> bldg = std::dynamic_pointer_cast<BuildingJobRequest>(job);
@@ -179,7 +180,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         else if (job->SupportsType(JOB_TYPE_COMPONENT))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<ComponentJobRequest> comp = std::dynamic_pointer_cast<ComponentJobRequest>(job);
@@ -189,7 +190,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         else if (job->SupportsType(JOB_TYPE_RESOURCE))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<ResourceJobRequest> resrc = std::dynamic_pointer_cast<ResourceJobRequest>(job);
@@ -199,7 +200,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         else if (job->SupportsType(JOB_TYPE_REFINERY))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1, strParam2](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<RefineryJobRequest> jobRefine = std::dynamic_pointer_cast<RefineryJobRequest>(job);
@@ -210,7 +211,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         else if (job->SupportsType(JOB_TYPE_HAZARD))
         {
-            ctx.queue->RequestModifyJob(job->GetID(),
+            ctx.queue->RequestModify(job->GetID(),
                 [strSCHandle, strParam1, strParam2, strParam3](std::shared_ptr<JobRequest> job)
                 {
                     std::shared_ptr<HazardousRequest> jobHazard = std::dynamic_pointer_cast<HazardousRequest>(job);
@@ -230,7 +231,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
-                    utils::GuidToStringNoBrackets(job->GetID()), author.global_name, jobDetails));
+                    ToString(job->GetID()), author.global_name, jobDetails));
         }
 
         GuildSettings::AnnounceOnUpdate(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
@@ -246,7 +247,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::snowflake workerID = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
         const std::string strStatus = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -254,7 +255,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
 
         const std::string strWorker = utils::FindPreferredNameByID(ctx.cluster, workerID, event.command.guild_id);
-        ctx.queue->RequestModifyJob(job->GetID(),
+        ctx.queue->RequestModify(job->GetID(),
             [workerID, strStatus](std::shared_ptr<JobRequest> job)
             {
                 job->SetWorkerID(workerID);
@@ -285,7 +286,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
         const std::string strStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -293,7 +294,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
 
         const std::string strOldStatus = JobRequest::StatusToString(job->GetStatus());
-        ctx.queue->RequestModifyJob(job->GetID(),
+        ctx.queue->RequestModify(job->GetID(),
             [strStatus](std::shared_ptr<JobRequest> job)
             {
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
@@ -325,7 +326,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
         const std::string strPriority = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -333,7 +334,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
 
         const std::string strOldPriority = JobRequest::PriorityToString(job->GetPriority());
-        ctx.queue->RequestModifyJob(job->GetID(),
+        ctx.queue->RequestModify(job->GetID(),
             [strPriority](std::shared_ptr<JobRequest> job)
             {
                 job->SetPriority(JobRequest::StringToPriority(strPriority));
@@ -362,20 +363,21 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         //const std::string strDesc = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
         const std::string strJustification = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
             return;
         }
 
+        const auto rID = job->GetID();
         const dpp::user author = event.command.get_issuing_user();
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         const std::size_t jobType = job->JobType();
         const dpp::snowflake customerID = job->GetCustomerID();
         const bool bNotifyCustomer = job->IsCustomerSubscribed();
 
-        const bool result = ctx.queue->RequestDeleteJobByGUID(utils::StringToGuid("{" + strID + "}"));
+        const bool result = ctx.queue->RequestDelete(rID);
         if (!result)
         {
             event.reply(dpp::message("Failed to delete job.")
@@ -417,7 +419,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
         std::string strNote = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
 
-        const auto job = ctx.queue->GetJobByGUID(strID);
+        const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.")
@@ -427,6 +429,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         // Filter the note string for safety
         utils::FilterUserString(strNote);
+        if (strNote.empty())
+        {
+            event.reply(dpp::message("Cannot add an empty note.").set_flags(dpp::m_ephemeral));
+            return;
+        }
 
         // Record the note with timestamp
         JobRequest::NoteMetaData noteEntry;
@@ -434,7 +441,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         noteEntry.timestamp = utils::GetEpochTimestamp();
         noteEntry.note = strNote;
 
-        ctx.queue->RequestModifyJob(job->GetID(),
+        ctx.queue->RequestModify(job->GetID(),
             [authorID = author.id, noteEntry](std::shared_ptr<JobRequest> job)
             {
                 job->AddNote(authorID, std::move(noteEntry));
@@ -477,7 +484,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 //---------------------------------------------------------------------------------------------------------------------
 void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    const std::string id = event.custom_id; // "modify_type:workerid:guid"
+    const std::string id = event.custom_id; // "modify_type:workerid:rID"
 
     if (id.starts_with(fmt::format("{}_complete:", this->name)))
     {
@@ -485,8 +492,8 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -511,8 +518,8 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -527,8 +534,8 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -550,12 +557,12 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
     else if (id.starts_with("global_assign:"))
     {
         auto parts = utils::Split(id, ':');
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
         if (!job)
         {
             event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", guid));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", rID));
             return;
         }
 
@@ -564,12 +571,12 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         if (!pManager || (!pManager->CanAssignJob(event, user.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug))
         {
             // Permission denied
-            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", utils::GuidToStringNoBrackets(job->GetID()))).set_flags(dpp::m_ephemeral));
-            ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, utils::GuidToStringNoBrackets(job->GetID())));
+            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", ToString(job->GetID()))).set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, ToString(job->GetID())));
             return;
         }
 
-        ctx.queue->RequestModifyJob(job->GetID(), 
+        ctx.queue->RequestModify(job->GetID(), 
             [id = user.id](std::shared_ptr<JobRequest> job)
             {
                 if (job->GetWorkerID() != 0)
@@ -601,13 +608,13 @@ dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::int
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {
-        CustomerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        CustomerPanel panel(this->name, user, ToString(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }
     else
     {
-        WorkerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->GetWorkerID());
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

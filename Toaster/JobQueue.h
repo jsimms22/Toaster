@@ -6,8 +6,6 @@
 // d++
 #include <dpp/cluster.h>
 #include <dpp/snowflake.h>
-// microsoft
-#include <guiddef.h>
 // std library
 #include <cstdlib>
 #include <functional>
@@ -18,6 +16,7 @@
 
 class JobRequest;
 class IJobRepo;
+struct RequestID;
 
 //---------------------------------------------------------------------------------------------------------------------
 /// \class ToasterBot
@@ -55,22 +54,23 @@ public:
 
     // Retrieve Job Methods
     std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
-    const std::shared_ptr<const JobRequest> GetJobByGUID(const GUID& guid) const;
-    const std::shared_ptr<const JobRequest> GetJobByGUID(const std::string& guid) const;
+    const std::shared_ptr<const JobRequest> GetJobByID(const RequestID rID) const;
+    const std::shared_ptr<const JobRequest> GetJobByID(const std::string& rID) const;
 
     // Job Mutation Methods
-    void RequestModifyJob(const GUID& guid, JobMutation mutator);
-    void RequestAddToQueue(std::shared_ptr<JobRequest> job);
-    const bool RequestDeleteJobByGUID(const GUID& guid);
+    void RequestModify(const RequestID rID, JobMutation mutator);
+    void RequestAdd(std::shared_ptr<JobRequest> job);
+    const bool RequestDelete(const RequestID rID);
 
 private:
     // Worker thread methods
-    std::shared_ptr<JobRequest> GetJobByGUID_NoLock(const GUID& guid) const;
+    std::shared_ptr<JobRequest> GetJobByID_NoLock(const RequestID rID) const;
+    std::shared_ptr<JobRequest> GetJobByID_NoLock(const std::string& rID) const;
 
     // Mongo Database Methods
-    void AddJobDB(const GUID& guid);
-    void UpdateJobDB(const GUID& guid);
-    void RemoveJobDB(const GUID& id);
+    void AddJobDB(const RequestID rID);
+    void UpdateJobDB(const RequestID rID);
+    void RemoveJobDB(const RequestID rID);
 
     dpp::snowflake m_guildID;
     std::vector<std::shared_ptr<JobRequest>> m_vQueue;

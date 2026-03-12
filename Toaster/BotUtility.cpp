@@ -48,75 +48,6 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
-    std::string GuidToString(const GUID& guid) 
-    {
-        char guidString[39]; // 36 characters + null terminator
-
-        // Format the GUID as a string "{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}"
-        snprintf(guidString, sizeof(guidString),
-            "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            guid.Data1, guid.Data2, guid.Data3,
-            guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-            guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-        return std::string(guidString);
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // \brief
-    //---------------------------------------------------------------------------------------------------------------------
-    std::string GuidToStringNoBrackets(const GUID& guid)
-    {
-        char guidString[37]; // 36 characters + null terminator
-
-        // Format the GUID as a string "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-        snprintf(guidString, sizeof(guidString),
-            "%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-            guid.Data1, guid.Data2, guid.Data3,
-            guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-            guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-        return std::string(guidString);
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // \brief
-    //---------------------------------------------------------------------------------------------------------------------
-    const GUID StringToGuid(const std::string& guidStr)
-    {
-        GUID guid;
-        // Convert the GUID string to a GUID structure using IIDFromString
-        HRESULT hr = IIDFromString(std::wstring(guidStr.begin(), guidStr.end()).c_str(), &guid);
-
-        // Check if the conversion was successful
-        if (FAILED(hr))
-        {
-            throw std::invalid_argument("Invalid GUID string format");
-        }
-
-        return guid;
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // \brief
-    //---------------------------------------------------------------------------------------------------------------------
-    const GUID CreateGUID() 
-    {
-        GUID guid;
-        HRESULT hr = CoCreateGuid(&guid);
-
-        // Check if the conversion was successful
-        if (FAILED(hr))
-        {
-            throw std::invalid_argument("Invalid GUID string format");
-        }
-
-        return guid;
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // \brief
-    //---------------------------------------------------------------------------------------------------------------------
     const std::size_t GetEpochTimestamp()
     {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -174,7 +105,7 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
-        if (id == USERID_NULL)
+        if (id == ID_NULL)
         {
             cluster.log(dpp::ll_debug, fmt::format("Skipped look up for user id '{}'.", id));
             return {};
@@ -220,7 +151,7 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
-        if (id == USERID_NULL)
+        if (id == ID_NULL)
         {
             cluster.log(dpp::ll_debug, fmt::format("Skipped look up for guild id '{}'.", id));
             return {};
@@ -262,7 +193,7 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     void FindGuildCallback(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback)
     {
-        if (id == USERID_NULL)
+        if (id == ID_NULL)
         {
             callback(nullptr);
             return;

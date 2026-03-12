@@ -16,8 +16,6 @@
 #include <fmt/format.h>
 // tinyxml
 #include "tinyxml2.h"
-// microsoft
-#include <guiddef.h>
 // std library
 #include <chrono>
 

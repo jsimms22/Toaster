@@ -8,6 +8,7 @@
 // fmt
 #include <fmt/format.h>
 // mongo
+#include <bsoncxx/builder/basic/array.hpp>
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/concatenate.hpp>
 // std library
@@ -328,6 +329,13 @@ bsoncxx::builder::basic::document GuildSettings::WriteAttributesBSON() const
         kvp("CompleteJobChannel", static_cast<std::int64_t>(idCompleteJobChannel.value_or(0))),
         // Cooldown
         kvp("Cooldown", announcement_cooldown.count()),
+        // New Job Counter
+        kvp("JobCounter", [&]() {
+            bsoncxx::builder::basic::array a;
+            for (const auto& c : g_counter)
+                a.append(c.load());
+            return a;
+            }()),
         // Ping Rules
         kvp("PingOnNew", bPingOnNew),
         kvp("PingOnUpdate", bPingOnUpdate),
@@ -371,6 +379,25 @@ void GuildSettings::ReadAttributesBSON(const bsoncxx::document::view& doc)
     // Cooldown
     if (auto elem = doc["Cooldown"])
         announcement_cooldown = static_cast<std::chrono::seconds>(elem.get_int64().value);
+
+    // New Job Counter
+    if (auto elem = doc["JobCounter"]; elem && elem.type() == bsoncxx::type::k_array) {
+        auto array = elem.get_array().value;
+        size_t index = 0;
+        for (auto&& val : array) {
+            if (index >= g_counter.size()) break;
+
+            switch (val.type()) {
+            case bsoncxx::type::k_int32:
+                g_counter[index].store(val.get_int32());
+                break;
+            default:
+                g_counter[index].store(0);
+                break;
+            }
+            ++index;
+        }
+    }
 
     // Ping Rules
     if (auto elem = doc["PingOnNew"])

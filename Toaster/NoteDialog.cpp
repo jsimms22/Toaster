@@ -2,6 +2,7 @@
 
 #include "BotUtility.h"
 #include "JobRequest.h"
+#include "RequestID.h"
 // fmt
 #include <fmt/format.h>
 // std library
@@ -18,7 +19,7 @@ void NoteDialog::InitializeControls()
 	// Create a text box component
 	JobRequestIDEdit.set_label("Job Request ID")
 		.set_type(dpp::cot_text)
-		.set_default_value(utils::GuidToStringNoBrackets(m_spJob->GetID()))
+		.set_default_value(ToString(m_spJob->GetID()))
 		.set_min_length(0)
 		.set_max_length(128)
 		.set_text_style(dpp::text_short)
@@ -37,7 +38,7 @@ void NoteDialog::InitializeControls()
 	AddNewNoteEdit.set_label("Add New Note")
 		.set_type(dpp::cot_text)
 		.set_placeholder("Add note...")
-		.set_min_length(0)
+		.set_min_length(2)
 		.set_max_length(256)
 		.set_text_style(dpp::text_paragraph)
 		.set_id(Component_AddNewNote);

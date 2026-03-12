@@ -5,17 +5,19 @@
 #pragma once
 // std library
 #include <cstdlib>
+#include <cstdint>
 #include <string_view>
 
-constexpr std::size_t USERID_NULL{ 0 };
+constexpr std::uint64_t ID_NULL{ 0 };
 
-constexpr std::size_t JOB_TYPE_GENERAL	{ 10 };
-constexpr std::size_t JOB_TYPE_CRAFTING	{ 20 };
-constexpr std::size_t JOB_TYPE_BUILDING	{ 30 };
-constexpr std::size_t JOB_TYPE_RESOURCE	{ 40 };
-constexpr std::size_t JOB_TYPE_REFINERY	{ 50 };
-constexpr std::size_t JOB_TYPE_COMPONENT{ 60 };
-constexpr std::size_t JOB_TYPE_HAZARD	{ 70 };
+constexpr std::uint64_t JOB_TYPE_GENERAL	{ 1 };
+constexpr std::uint64_t JOB_TYPE_CRAFTING	{ 2 };
+constexpr std::uint64_t JOB_TYPE_BUILDING	{ 3 };
+constexpr std::uint64_t JOB_TYPE_RESOURCE	{ 4 };
+constexpr std::uint64_t JOB_TYPE_REFINERY	{ 5 };
+constexpr std::uint64_t JOB_TYPE_COMPONENT	{ 6 };
+constexpr std::uint64_t JOB_TYPE_HAZARD		{ 7 };
+constexpr std::uint64_t JOB_PLACEHOLDER		{ 8 };
 
 /*------------------------------COMPONENT IDS-----------------------------------*/
 constexpr const char* Component_RequestID		{ "request_id" };

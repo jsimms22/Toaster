@@ -1,8 +1,6 @@
 #pragma once
 // dpp
 #include <dpp/snowflake.h>
-// microsoft
-#include <guiddef.h>
 // std library
 #include <condition_variable>
 #include <functional>
@@ -15,6 +13,7 @@
 
 class GuildSettings;
 class JobRequest;
+struct RequestID;
 
 class IJobRepo
 {
@@ -35,9 +34,9 @@ public:
     virtual std::vector<dpp::snowflake> GetGuildsWithJobs() = 0;
     virtual std::vector<std::shared_ptr<JobRequest>> LoadJobs(const dpp::snowflake& guild) = 0;
 
-    virtual void InsertJob(const dpp::snowflake& guildID, const std::shared_ptr<const JobRequest>& job) = 0;
+    virtual void InsertJob(const std::shared_ptr<const JobRequest>& job) = 0;
     virtual void UpdateJob(const std::shared_ptr<const JobRequest>& job) = 0;
-    virtual void DeleteJob(const GUID&) = 0;
+    virtual void DeleteJob(const RequestID) = 0;
 
     // Guild Settings
     virtual std::vector<dpp::snowflake> GetGuildsWithSettings() = 0;

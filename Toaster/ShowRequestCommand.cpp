@@ -30,9 +30,9 @@ void ShowRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
         return;
     }
 
-    std::string strJobID = std::get<std::string>(event.get_parameter(Parameter_Id));
-    utils::FilterWhiteSpace(strJobID);
-    const auto job = ctx.queue->GetJobByGUID(strJobID);
+    std::string rID = std::get<std::string>(event.get_parameter(Parameter_Id));
+    utils::FilterWhiteSpace(rID);
+    const auto job = ctx.queue->GetJobByID(rID);
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -76,8 +76,8 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -99,8 +99,8 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -112,8 +112,8 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 
         auto parts = utils::Split(id, ':');
         dpp::snowflake user = parts[1];
-        const std::string guid = parts[2];
-        const auto job = ctx.queue->GetJobByGUID(guid);
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -142,13 +142,13 @@ dpp::message ShowRequestCommand::SendPanel(
 {
     if (user == job->GetCustomerID() && user != job->GetWorkerID())
     {
-        CustomerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->IsCustomerSubscribed());
+        CustomerPanel panel(this->name, user, ToString(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }
     else
     {
-        WorkerPanel panel(this->name, user, utils::GuidToStringNoBrackets(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->GetWorkerID());
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

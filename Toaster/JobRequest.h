@@ -4,11 +4,10 @@
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
 #include "Resource.h"
+#include "RequestID.h"
 // d++
 #include <dpp/cluster.h>
 #include <dpp/snowflake.h>
-// microsoft
-#include <guiddef.h>
 // tinyxml
 #include "tinyxml2.h"
 // bsoncxx
@@ -59,7 +58,7 @@ public:
     using UserNotes = std::vector<NoteMetaData>;
     using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
 
-    explicit JobRequest(const dpp::snowflake& guildID);
+    explicit JobRequest(const dpp::snowflake& guildID, const dpp::snowflake& customerID);
     virtual ~JobRequest() = default;
 
     const std::size_t GetCreatedTime() const { return m_timeCreated; }
@@ -89,7 +88,8 @@ public:
     static status StringToStatus(const std::string& str);
     static const char* StatusToEmoji(const status s);
 
-    const GUID& GetID() const { return m_id; }
+    const RequestID GetID() const { return m_id; }
+    const void SetID(const RequestID rID) { m_id = rID; }
 
     const NoteHistory GetNoteHistory() const { return m_notes; }
     const UserNotes GetNoteHistory(const dpp::snowflake user) const { return m_notes.at(user); }
@@ -100,9 +100,9 @@ public:
     bool IsCustomerSubscribed() const { return m_bNotifyCustomer; }
     void SubscribeCustomer(const bool bUpdate) { m_bNotifyCustomer = bUpdate; }
 
-    virtual std::size_t JobType() const { return JOB_TYPE_GENERAL; }
+    virtual std::uint64_t JobType() const { return JOB_TYPE_GENERAL; }
     virtual std::string JobTypeToString() const { return "General"; }
-    virtual bool SupportsType(const std::size_t type) const { return type == JobType(); }
+    virtual bool SupportsType(const std::uint64_t type) const { return type == JobType(); }
 
     // Serialization + Deserialization: XML
     virtual void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent, tinyxml2::XMLDocument* doc) const;
@@ -115,20 +115,20 @@ public:
     virtual void ReadAttributesBSON(const bsoncxx::document::view& doc);
 
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
-    std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    const std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
 private:
-    dpp::snowflake m_idGuild = 0;
-    std::size_t m_timeCreated = 0;
-    std::size_t m_timeLastEdit = 0;
-    dpp::snowflake m_idCustomer = USERID_NULL;  // Customer id of who submitted the job
-    dpp::snowflake m_idWorker = USERID_NULL;    // Id of the worker assigned to the job
-    std::string m_strSCHandle = "n/a";          // SC Handle for identification (could be username or custom ID)
-    priority m_eJobPriority = priority::low;    // Priority of the job
-    status m_eJobStatus = status::open;         // Current status of the job
-    GUID m_id = GUID_NULL;                      // Unique identifier for the job
+    RequestID m_id;                         // Unique identifier for the job
+    dpp::snowflake m_idGuild = ID_NULL;
+    std::uint64_t m_timeCreated = 0;
+    std::uint64_t m_timeLastEdit = 0;
+    dpp::snowflake m_idCustomer = ID_NULL;  // Customer id of who submitted the job
+    dpp::snowflake m_idWorker = ID_NULL;    // Id of the worker assigned to the job
+    std::string m_strSCHandle = "n/a";      // SC Handle for identification (could be username or custom ID)
+    priority m_eJobPriority = priority::low;// Priority of the job
+    status m_eJobStatus = status::open;     // Current status of the job
     NoteHistory m_notes;
     bool m_bNotifyCustomer = false;
 };

@@ -17,7 +17,7 @@
 
 namespace serial
 {
-    constexpr const char* pszJobGUID{ "_id" };
+    constexpr const char* pszRequestID{ "_id" };
     constexpr const char* pszGuild{ "_guild" };
     constexpr const char* pszCreation{ "created_time" };
     constexpr const char* pszLastEdit{ "last_edit_time" };
@@ -119,8 +119,8 @@ const char* JobRequest::StatusToEmoji(const JobRequest::status s)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-JobRequest::JobRequest(const dpp::snowflake& guildID) 
-    : m_idGuild{ guildID }, m_id(utils::CreateGUID())
+JobRequest::JobRequest(const dpp::snowflake& guildID, const dpp::snowflake& customerID)
+    : m_idGuild{ guildID }, m_idCustomer{ customerID }
 {
     m_timeCreated = utils::GetEpochTimestamp();
     m_timeLastEdit = m_timeCreated;
@@ -137,9 +137,9 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     }
 
     // Create a new <Request> element for this submission
+    xmlNode->SetAttribute(serial::pszRequestID, m_id.value);
     xmlNode->SetAttribute(serial::pszCreation, m_timeCreated);
     xmlNode->SetAttribute(serial::pszLastEdit, m_timeLastEdit);
-    xmlNode->SetAttribute(serial::pszJobGUID, utils::GuidToString(m_id).c_str());
     xmlNode->SetAttribute(serial::pszJobPriority, static_cast<int>(m_eJobPriority));
     xmlNode->SetAttribute(serial::pszJobStatus, static_cast<int>(m_eJobStatus));
     xmlNode->SetAttribute(serial::pszJobType, JobType());
@@ -192,25 +192,13 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
         return;
     }
 
+    m_id = xmlNode->Unsigned64Attribute(serial::pszRequestID, ID_NULL);
     m_timeCreated = xmlNode->Unsigned64Attribute(serial::pszCreation, 0);
     m_timeLastEdit = xmlNode->Unsigned64Attribute(serial::pszLastEdit, 0);
-    const char* pszJobGUID = xmlNode->Attribute(serial::pszJobGUID);
-    if (pszJobGUID)
-    {
-        try
-        {
-            m_id = utils::StringToGuid(pszJobGUID);
-        }
-        catch (std::exception e)
-        {
-            m_id = GUID_NULL;
-        }
-    }
-
     m_eJobPriority = static_cast<priority>(xmlNode->IntAttribute(serial::pszJobPriority, priority::low));
     m_eJobStatus = static_cast<status>(xmlNode->IntAttribute(serial::pszJobStatus, status::open));
-    m_idWorker = xmlNode->Unsigned64Attribute(serial::pszJobWorker, USERID_NULL);
-    m_idCustomer = xmlNode->Unsigned64Attribute(serial::pszRequestUser, USERID_NULL);
+    m_idWorker = xmlNode->Unsigned64Attribute(serial::pszJobWorker, ID_NULL);
+    m_idCustomer = xmlNode->Unsigned64Attribute(serial::pszRequestUser, ID_NULL);
     const char* pszHandle = xmlNode->Attribute(serial::pszRequestSCHandle);
     if (pszHandle)
     {
@@ -259,7 +247,7 @@ bsoncxx::builder::basic::document JobRequest::WriteAttributesBSON() const
     document doc{};
 
     doc.append(
-        kvp(std::string{ serial::pszJobGUID }, utils::GuidToStringNoBrackets(m_id)),
+        kvp(std::string{ serial::pszRequestID }, static_cast<std::int64_t>(m_id.value)),
         kvp(std::string{ serial::pszGuild }, static_cast<std::int64_t>(m_idGuild)),
         kvp(std::string{ serial::pszJobType }, static_cast<int>(JobType())),
         kvp(std::string{ serial::pszCreation }, static_cast<int64_t>(m_timeCreated)),
@@ -302,7 +290,7 @@ bsoncxx::builder::basic::document JobRequest::WriteAttributesBSON() const
 //---------------------------------------------------------------------------------------------------------------------
 void JobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
 {
-    m_id = utils::StringToGuid("{" + std::string{ doc[std::string{ serial::pszJobGUID}].get_string().value } + "}");
+    m_id = static_cast<std::uint64_t>(doc[std::string{ serial::pszRequestID}].get_int64().value);
     m_idGuild = static_cast<std::uint64_t>(doc[std::string{ serial::pszGuild }].get_int64().value);
     m_timeCreated = doc[std::string{ serial::pszCreation }].get_int64().value;
     m_timeLastEdit = doc[std::string{ serial::pszLastEdit }].get_int64().value;
@@ -362,18 +350,18 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         "**ID**: {}\n"
         "**Created**: <t:{}:F>\n"
         "**Last Edit**: <t:{}:F>\n"
-        "**Type**: {}\t"
-        "**Status**: {}\t"
         "**Priority**: {}\n"
+        "**Status**: {}\n"
         "**Customer**: {}\n"
+        "**Game Handle**: {}\n"
         "**Assigned**: {}\n",
-        utils::GuidToStringNoBrackets(m_id), 
+        ToString(m_id),
         m_timeCreated,
         m_timeLastEdit,
-        JobTypeToString(),
-        StatusToString(m_eJobStatus),
         PriorityToString(m_eJobPriority),
+        StatusToString(m_eJobStatus),
         GetCustomerName(cluster, idGuild),
+        GetSCHandle(),
         GetWorkerName(cluster, idGuild)
     );
 }
@@ -381,24 +369,24 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
     fmt::memory_buffer buffer;
 
     return fmt::format(
         "**ID**: {}\n"
         "**Created**: <t:{}:F>\n"
-        "**Type**: {}\t"
-        "**Status**: {}\t"
-        "**Priority**: {}\n"
+        "**Priority**: {}\t"
+        "**Status**: {}\n"
         "**Customer**: {}\n"
+        "**Game Handle**: {}\n"
         "**Assigned**: {}\n",
-        utils::GuidToStringNoBrackets(m_id),
+        ToString(m_id),
         m_timeCreated,
-        JobTypeToString(),
-        StatusToString(m_eJobStatus),
         PriorityToString(m_eJobPriority),
+        StatusToString(m_eJobStatus),
         GetCustomerName(cluster, idGuild),
+        GetSCHandle(),
         GetWorkerName(cluster, idGuild)
     );
 }

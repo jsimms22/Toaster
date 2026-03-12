@@ -60,9 +60,9 @@ void GeneralUserPanel::EditButton(const std::string& id, CommandContext& ctx, co
 {
 	auto parts = utils::Split(id, ':');
 	const dpp::snowflake user = parts[1];
-	const std::string guid = parts[2];
+	const std::string rID = parts[2];
 
-	const auto job = ctx.queue->GetJobByGUID(guid);
+	const auto job = ctx.queue->GetJobByID(rID);
 	if (!job)
 	{
 		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -94,9 +94,9 @@ void GeneralUserPanel::NoteButton(const std::string& id, CommandContext& ctx, co
 {
 	auto parts = utils::Split(id, ':');
 	const dpp::snowflake user = parts[1];
-	const std::string guid = parts[2];
+	const std::string rID = parts[2];
 
-	const auto job = ctx.queue->GetJobByGUID(guid);
+	const auto job = ctx.queue->GetJobByID(rID);
 	if (!job)
 	{
 		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -128,9 +128,9 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 {
 	auto parts = utils::Split(id, ':');
 	const dpp::snowflake user = parts[1];
-	const std::string guid = parts[2];
+	const std::string rID = parts[2];
 
-	const auto job = ctx.queue->GetJobByGUID(guid);
+	const auto job = ctx.queue->GetJobByID(rID);
 	if (!job)
 	{
 		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -155,10 +155,9 @@ void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ct
 {
 	auto parts = utils::Split(id, ':');
 	const dpp::snowflake user = parts[1];
-	const std::string guid = parts[2];
+	const std::string rID = parts[2];
 
-	// Retrieve the job by GUID
-	const auto job = ctx.queue->GetJobByGUID(guid);
+	const auto job = ctx.queue->GetJobByID(rID);
 	if (!job)
 	{
 		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -181,7 +180,7 @@ void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ct
 		{
 			// Send the note history in an embed message
 			dpp::embed embed;
-			embed.set_title(fmt::format("Notes for Job: {}", guid))
+			embed.set_title(fmt::format("Notes for Job: {}", rID))
 				.set_description(noteHistory)
 				.set_color(0x3498db); // You can adjust this color as needed
 
@@ -192,7 +191,7 @@ void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ct
 	{
 		// If user doesn't have permission to view notes
 		event.reply(dpp::message("You do not have sufficient permissions to view the notes for this job.").set_flags(dpp::m_ephemeral));
-		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", user, guid));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", user, rID));
 		return;
 	}
 }

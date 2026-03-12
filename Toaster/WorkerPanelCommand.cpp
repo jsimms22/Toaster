@@ -208,7 +208,7 @@ dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::inter
     }
 
     const std::string priority = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
-    const std::string strJobID = utils::GuidToStringNoBrackets(job->GetID());
+    const std::string strJobID = ToString(job->GetID());
 
     WorkerPanel panel(Option_Overview, user, strJobID, job->GetWorkerID());
     panel.AddEmbed(header, summary);

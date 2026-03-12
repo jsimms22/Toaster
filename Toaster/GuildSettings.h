@@ -1,4 +1,5 @@
 #pragma once
+#include "Resource.h"
 // d++
 #include <dpp/snowflake.h>
 // tinyxml2
@@ -10,7 +11,9 @@
 #include <bsoncxx/types.hpp>
 // std library
 #include <array>
+#include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <optional>
@@ -76,6 +79,9 @@ public:
 		idHazardMatRole,
 		idManagerRole
 	};
+
+	// increment by +1 for number of job types
+	std::array<std::atomic<std::int32_t>, JOB_PLACEHOLDER> g_counter;
 
 	// Utility
 	bool HasAnnouncementChannel() const 

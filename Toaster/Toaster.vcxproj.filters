@@ -118,6 +118,7 @@
     <ClCompile Include="MongoJobRepo.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
+    <ClCompile Include="RequestID.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -210,6 +211,7 @@
     <ClInclude Include="MongoJobRepo.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
+    <ClInclude Include="RequestID.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ThirdParty">

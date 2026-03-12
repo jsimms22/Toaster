@@ -4,6 +4,7 @@
 #include "BotUtility.h"
 #include "IJobRepo.h"
 
+#include "RequestID.h"
 #include "JobRequestFactory.h"
 #include "CraftingJobRequest.h"
 #include "BuildingJobRequest.h"
@@ -54,56 +55,29 @@ JobQueue::JobQueue(const dpp::snowflake& guildID, std::shared_ptr<IJobRepo> repo
 JobQueue::~JobQueue() = default;
 
 //---------------------------------------------------------------------------------------------------------------------
-// \brief
-//---------------------------------------------------------------------------------------------------------------------
-/*
-void JobQueue::LoadFromXml(tinyxml2::XMLElement* requestList)
-{
-    if (!requestList)
-        return;
-
-    for (tinyxml2::XMLElement* req = requestList->FirstChildElement("Request");
-        req != nullptr;
-        req = req->NextSiblingElement("Request"))
-    {
-        const char* typeAttr = req->Attribute("Type");
-        if (!typeAttr)
-            continue;
-
-        auto job = JobRequestFactory::Create(std::stoul(typeAttr), m_guildID);
-        if (!job)
-            continue;
-
-        job->ReadAttributes(req);
-        m_vQueue.emplace_back(std::move(job));
-    }
-}
-*/
-
-//---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::RequestAddToQueue(std::shared_ptr<JobRequest> job)
+void JobQueue::RequestAdd(std::shared_ptr<JobRequest> job)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
 
     lock.lock();
 
     if (!job) { return; }
-    GUID guid = job->GetID();
+    RequestID rID = job->GetID();
     m_vQueue.emplace_back(std::move(job));
 
     std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
 
     lock.unlock();
 
-    AddJobDB(guid);
+    AddJobDB(rID);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
+const bool JobQueue::RequestDelete(const RequestID rID)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
 
@@ -112,7 +86,7 @@ const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
     bool bResult{ false };
     for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
     {
-        if ((*itr)->GetID() == guid)
+        if ((*itr)->GetID() == rID)
         {
             itr->reset();
             m_vQueue.erase(itr);
@@ -125,7 +99,7 @@ const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
 
     lock.unlock();
 
-    RemoveJobDB(guid);
+    RemoveJobDB(rID);
 
     return bResult;
 }
@@ -133,13 +107,13 @@ const bool JobQueue::RequestDeleteJobByGUID(const GUID& guid)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
+void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 {
     std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
 
     lock.lock();
 
-    auto job = GetJobByGUID_NoLock(guid);
+    auto job = GetJobByID_NoLock(rID);
 
     if (!job) { return; }
 
@@ -150,48 +124,48 @@ void JobQueue::RequestModifyJob(const GUID& guid, JobMutation mutator)
 
     lock.unlock();
 
-    UpdateJobDB(guid);
+    UpdateJobDB(rID);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::AddJobDB(const GUID& guid)
+void JobQueue::AddJobDB(const RequestID rID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    auto job = GetJobByGUID_NoLock(guid);
-    m_repo->InsertJob(m_guildID, job);
+    auto job = GetJobByID_NoLock(rID);
+    m_repo->InsertJob(job);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::UpdateJobDB(const GUID& guid)
+void JobQueue::UpdateJobDB(const RequestID rID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    auto job = GetJobByGUID_NoLock(guid);
+    auto job = GetJobByID_NoLock(rID);
     m_repo->UpdateJob(job);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::RemoveJobDB(const GUID& guid)
+void JobQueue::RemoveJobDB(const RequestID rID)
 {
-    m_repo->DeleteJob(guid);
+    m_repo->DeleteJob(rID);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::GetJobByGUID_NoLock(const GUID& guid) const
+std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const RequestID rID) const
 {
     auto it = std::find_if(
         m_vQueue.begin(),
         m_vQueue.end(),
-        [&guid](const std::shared_ptr<JobRequest>& job)
+        [&rID](const std::shared_ptr<JobRequest>& job)
         {
-            return job && job->GetID() == guid;
+            return job && job->GetID() == rID;
         }
     );
 
@@ -204,25 +178,48 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByGUID_NoLock(const GUID& guid) cons
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::shared_ptr<const JobRequest> JobQueue::GetJobByGUID(const GUID& guid) const
+std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const std::string& strID) const
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    return GetJobByGUID_NoLock(guid);
+    auto is_all_numbers = [](const std::string& s) -> bool {
+        return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+            return std::isdigit(c);
+            });
+        };
+
+    auto it = std::find_if(
+        m_vQueue.begin(),
+        m_vQueue.end(),
+        [&strID, &is_all_numbers](const std::shared_ptr<JobRequest>& job)
+        {
+            if (!is_all_numbers(strID))
+                return job && ToString(job->GetID()) == strID;
+            else
+                return job && job->GetID() == std::stoull(strID);
+        }
+    );
+
+    if (it != m_vQueue.end())
+        return *it;
+
+    return nullptr;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::shared_ptr<const JobRequest> JobQueue::GetJobByGUID(const std::string& guid) const
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const RequestID rID) const
 {
-    GUID search;
-    if (guid.at(0) != '{')
-        search = utils::StringToGuid("{" + guid + "}");
-    else
-        search = utils::StringToGuid(guid);
-
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    return GetJobByGUID_NoLock(search);
+    return GetJobByID_NoLock(rID);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const std::string& strID) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+    return GetJobByID_NoLock(strID);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -249,7 +246,7 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
             "**Type**: {}\n\n",
             position,
             JobRequest::PriorityToString(job->GetPriority()),
-            utils::GuidToStringNoBrackets(job->GetID()),
+            ToString(job->GetID()),
             JobRequest::StatusToString(job->GetStatus()),
             job->GetCustomerName(cluster, idGuild),
             job->GetWorkerName(cluster, idGuild),
@@ -325,7 +322,7 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
     std::map<std::size_t, std::size_t> typeCounts;
     std::map<JobRequest::status, std::size_t> statusCounts;
     std::map<JobRequest::priority, std::size_t> priorityCounts;
-    std::vector<GUID> assignedActiveIDs;
+    std::vector<RequestID> assignedActiveIDs;
 
     // Collect counts
     for (const auto& job : m_vQueue)
@@ -368,7 +365,7 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
     fmt::format_to(std::back_inserter(buffer), "\n### Top 5 Active Job IDs\n");
     for (const auto& id : assignedActiveIDs)
     {
-        fmt::format_to(std::back_inserter(buffer), "{}\n", utils::GuidToStringNoBrackets(id));
+        fmt::format_to(std::back_inserter(buffer), "{}\n", ToString(id));
     }
 
     // Convert memory_buffer to std::string
@@ -383,7 +380,7 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     const std::string strAdminPortion = PrintQueueAdminSummary(cluster);
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
-    std::vector<GUID> stalledJobs;
+    std::vector<RequestID> stalledJobs;
 
     // Collect counts
     for (const auto& job : m_vQueue)
@@ -398,7 +395,7 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     fmt::format_to(std::back_inserter(buffer), "\n### Stalled Job ID:\n");
     for (const auto& id : stalledJobs)
     {
-        fmt::format_to(std::back_inserter(buffer), "  {}\n", utils::GuidToStringNoBrackets(id));
+        fmt::format_to(std::back_inserter(buffer), "  {}\n", ToString(id));
     }
 
     // Convert memory_buffer to std::string

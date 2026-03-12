@@ -7,6 +7,7 @@
 #include "JobQueue.h"
 #include "BotUtility.h"
 #include "RequestDlg.h"
+#include "RequestID.h"
 // fmt
 #include <fmt/format.h>
 
@@ -50,9 +51,9 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
 {
     auto parts = utils::Split(id, ':');
     const dpp::snowflake worker = parts[1];
-    const std::string guid = parts[2];
+    const std::string rID = parts[2];
 
-    const auto job = ctx.queue->GetJobByGUID(guid);
+    const auto job = ctx.queue->GetJobByID(rID);
     if (!job)
     {
         event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -63,7 +64,7 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
     if ((pManager->CanAssignJob(event, worker,job,utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && 
          job->GetStatus() < JobRequest::status::complete) || ctx.debug)
     {
-        ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
+        ctx.queue->RequestModify(job->GetID(), [](std::shared_ptr<JobRequest> job)
             {
                 job->SetStatus(JobRequest::status::complete);
             });
@@ -72,10 +73,10 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
         if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Request {} has been completed by {}.", guid, event.command.get_issuing_user().global_name));
+                fmt::format("Request {} has been completed by {}.", rID, event.command.get_issuing_user().global_name));
         }
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
+        ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
 
         GuildSettings::AnnounceOnComplete(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
     }
@@ -96,9 +97,9 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
 {
     auto parts = utils::Split(id, ':');
     dpp::snowflake user = parts[1];
-    const std::string guid = parts[2];
+    const std::string rID = parts[2];
 
-    const auto job = ctx.queue->GetJobByGUID(guid);
+    const auto job = ctx.queue->GetJobByID(rID);
     if (!job)
     {
         event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
@@ -118,7 +119,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
     {
         if (job->GetWorkerID() == user)
         {
-            ctx.queue->RequestModifyJob(job->GetID(), [](std::shared_ptr<JobRequest> job)
+            ctx.queue->RequestModify(job->GetID(), [](std::shared_ptr<JobRequest> job)
                 {
                     job->SetWorkerID(0);
                     if (job->GetStatus() == JobRequest::status::active ||
@@ -134,15 +135,15 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been unassigned by {}.", guid, event.command.get_issuing_user().global_name));
+                    fmt::format("Request {} has been unassigned by {}.", rID, event.command.get_issuing_user().global_name));
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
         }
         else if (job->GetWorkerID() != user)
         {
             const dpp::snowflake oldWorker = job->GetWorkerID();
-            ctx.queue->RequestModifyJob(job->GetID(), [user](std::shared_ptr<JobRequest> job)
+            ctx.queue->RequestModify(job->GetID(), [user](std::shared_ptr<JobRequest> job)
                 {
                     job->SetWorkerID(user);
                     if (job->GetStatus() != JobRequest::status::assigned ||
@@ -157,17 +158,17 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been assigned to {}.", guid, event.command.get_issuing_user().global_name));
+                    fmt::format("Request {} has been assigned to {}.", rID, event.command.get_issuing_user().global_name));
             }
 
             // Send notification to the previously assigned worker
             if ((oldWorker && oldWorker != user && customer != user) || (oldWorker && ctx.debug))
             {
                 utils::NotifyIssuerMsg(ctx.cluster, oldWorker, event,
-                    fmt::format("Request {} has been reassigned to {}.", guid, event.command.get_issuing_user().global_name));
+                    fmt::format("Request {} has been reassigned to {}.", rID, event.command.get_issuing_user().global_name));
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", utils::GuidToStringNoBrackets(job->GetID()), event.command.get_issuing_user().global_name));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
         }
         else
         {

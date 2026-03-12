@@ -226,6 +226,7 @@
     <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
+    <ClCompile Include="RequestID.cpp" />
     <ClCompile Include="ResourceJobRequest.cpp" />
     <ClCompile Include="ShowQueueCommand.cpp" />
     <ClCompile Include="ShowQueueSummaryCommand.cpp" />
@@ -261,6 +262,7 @@
     <ClInclude Include="PermissionsMgr.h" />
     <ClInclude Include="RefineryJobRequest.h" />
     <ClInclude Include="RequestDlg.h" />
+    <ClInclude Include="RequestID.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceJobRequest.h" />
     <ClInclude Include="tinyxml2.h" />

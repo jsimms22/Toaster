@@ -10,7 +10,9 @@
 // bsoncxx
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/concatenate.hpp>
+#include <bsoncxx/builder/basic/array.hpp>
 // std library
+#include <algorithm>
 #include <chrono>
 #include <stdexcept>
 #include <string>
@@ -22,7 +24,7 @@ namespace serial
     constexpr const char* pszCreation{ "created_time" };
     constexpr const char* pszLastEdit{ "last_edit_time" };
     constexpr const char* pszRequestUser{ "customer_id" };
-    constexpr const char* pszJobWorker{ "worker_id" };
+    constexpr const char* pszJobWorkers{ "worker_id" };
     constexpr const char* pszRequestSCHandle{ "sc_handle" };
     constexpr const char* pszJobPriority{ "priority" };
     constexpr const char* pszJobStatus{ "status" };
@@ -143,7 +145,7 @@ void JobRequest::WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLEle
     xmlNode->SetAttribute(serial::pszJobPriority, static_cast<int>(m_eJobPriority));
     xmlNode->SetAttribute(serial::pszJobStatus, static_cast<int>(m_eJobStatus));
     xmlNode->SetAttribute(serial::pszJobType, JobType());
-    xmlNode->SetAttribute(serial::pszJobWorker, m_idWorker);
+    //xmlNode->SetAttribute(serial::pszJobWorkers, m_idWorker);
     xmlNode->SetAttribute(serial::pszRequestUser, m_idCustomer);
     xmlNode->SetAttribute(serial::pszRequestSCHandle, m_strSCHandle.c_str());
     xmlNode->SetAttribute(serial::pszSubscribed, m_bNotifyCustomer);
@@ -197,7 +199,7 @@ void JobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
     m_timeLastEdit = xmlNode->Unsigned64Attribute(serial::pszLastEdit, 0);
     m_eJobPriority = static_cast<priority>(xmlNode->IntAttribute(serial::pszJobPriority, priority::low));
     m_eJobStatus = static_cast<status>(xmlNode->IntAttribute(serial::pszJobStatus, status::open));
-    m_idWorker = xmlNode->Unsigned64Attribute(serial::pszJobWorker, ID_NULL);
+    //m_idWorker = xmlNode->Unsigned64Attribute(serial::pszJobWorkers, ID_NULL);
     m_idCustomer = xmlNode->Unsigned64Attribute(serial::pszRequestUser, ID_NULL);
     const char* pszHandle = xmlNode->Attribute(serial::pszRequestSCHandle);
     if (pszHandle)
@@ -253,7 +255,12 @@ bsoncxx::builder::basic::document JobRequest::WriteAttributesBSON() const
         kvp(std::string{ serial::pszCreation }, static_cast<int64_t>(m_timeCreated)),
         kvp(std::string{ serial::pszLastEdit}, static_cast<int64_t>(m_timeLastEdit)),
         kvp(std::string{ serial::pszRequestUser}, static_cast<int64_t>(m_idCustomer)),
-        kvp(std::string{ serial::pszJobWorker}, static_cast<int64_t>(m_idWorker)),
+        kvp(std::string{ serial::pszJobWorkers }, [&]() {
+            bsoncxx::builder::basic::array a;
+            for (const auto& worker : m_idWorkerList)
+                a.append(static_cast<int64_t>(worker));
+            return a;
+            }()),
         kvp(std::string{ serial::pszRequestSCHandle}, m_strSCHandle),
         kvp(std::string{ serial::pszJobPriority}, static_cast<int>(m_eJobPriority)),
         kvp(std::string{ serial::pszJobStatus}, static_cast<int>(m_eJobStatus)),
@@ -295,7 +302,17 @@ void JobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     m_timeCreated = doc[std::string{ serial::pszCreation }].get_int64().value;
     m_timeLastEdit = doc[std::string{ serial::pszLastEdit }].get_int64().value;
     m_idCustomer = static_cast<std::uint64_t>(doc[std::string{ serial::pszRequestUser }].get_int64().value);
-    m_idWorker = static_cast<std::uint64_t>(doc[std::string{ serial::pszJobWorker }].get_int64().value);
+    
+    if (auto elem = doc[std::string{ serial::pszJobWorkers }]; elem && elem.type() == bsoncxx::type::k_array) {
+        auto array = elem.get_array().value;
+        std::size_t index = 0;
+        for (auto&& val : array) 
+        {
+            if (val.type() == bsoncxx::type::k_int64)
+                m_idWorkerList.push_back(static_cast<std::uint64_t>(val.get_int64().value));
+        }
+    }
+
     m_strSCHandle = std::string{ doc[std::string{ serial::pszRequestSCHandle}].get_string().value };
     m_eJobPriority = static_cast<priority>(static_cast<int>(doc[std::string{ serial::pszJobPriority }].get_int32().value));
     m_eJobStatus = static_cast<status>(static_cast<int>(doc[std::string{ serial::pszJobStatus }].get_int32().value));
@@ -346,6 +363,19 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 {
     fmt::memory_buffer buffer;
 
+    std::vector<std::string> workers = GetWorkerNames(cluster, idGuild);
+
+    fmt::memory_buffer workerbuf;
+    for (size_t i = 0; i < workers.size(); ++i)
+    {
+        if (i != 0)
+        {
+            fmt::format_to(std::back_inserter(workerbuf), ", ");
+        }
+
+        fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+    }
+
     return fmt::format(
         "**ID**: {}\n"
         "**Created**: <t:{}:F>\n"
@@ -362,7 +392,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         StatusToString(m_eJobStatus),
         GetCustomerName(cluster, idGuild),
         GetSCHandle(),
-        GetWorkerName(cluster, idGuild)
+        fmt::to_string(workerbuf)
     );
 }
 
@@ -373,10 +403,23 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
 {
     fmt::memory_buffer buffer;
 
+    std::vector<std::string> workers = GetWorkerNames(cluster, idGuild); 
+    
+    fmt::memory_buffer workerbuf;
+    for (size_t i = 0; i < workers.size(); ++i) 
+    {
+        if (i != 0) 
+        { 
+            fmt::format_to(std::back_inserter(workerbuf), ", "); 
+        }
+
+        fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+    }
+
     return fmt::format(
         "**ID**: {}\n"
         "**Created**: <t:{}:F>\n"
-        "**Priority**: {}\t"
+        "**Priority**: {}\n"
         "**Status**: {}\n"
         "**Customer**: {}\n"
         "**Game Handle**: {}\n"
@@ -387,7 +430,7 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
         StatusToString(m_eJobStatus),
         GetCustomerName(cluster, idGuild),
         GetSCHandle(),
-        GetWorkerName(cluster, idGuild)
+        fmt::to_string(workerbuf)
     );
 }
 
@@ -402,9 +445,15 @@ const std::string JobRequest::GetCustomerName(dpp::cluster& cluster, const dpp::
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobRequest::GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+const JobRequest::WorkerList JobRequest::GetWorkerNames(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
 {
-    return utils::FindPreferredNameByID(cluster, m_idWorker, idGuild);
+    WorkerList vResult;
+    for (const auto& worker : m_idWorkerList)
+    {
+        vResult.emplace_back(utils::FindPreferredNameByID(cluster, worker, idGuild));
+    }
+
+    return vResult;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -502,7 +551,7 @@ const std::string JobRequest::PrintLastTwoNotes(dpp::cluster& cluster) const
 
         // Thread-safe UTC conversion
 #if defined(_MSC_VER)
-        gmtime_s(&tm, &tt);   // MSVC-safe
+        gmtime_s(&tm, &tt);     // MSVC-safe
 #else
         tm = *std::gmtime(&tt); // POSIX
 #endif
@@ -518,4 +567,9 @@ const std::string JobRequest::PrintLastTwoNotes(dpp::cluster& cluster) const
     }
 
     return fmt::to_string(buffer);
+}
+
+bool JobRequest::IsWorker(const dpp::snowflake& user) const
+{
+    return m_idWorkerList.cend() != std::find_if(m_idWorkerList.cbegin(), m_idWorkerList.cend(), [&user](const dpp::snowflake& worker) -> bool { return user == worker; });
 }

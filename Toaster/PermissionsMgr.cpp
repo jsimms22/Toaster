@@ -51,8 +51,8 @@ bool PermissionsMgr::IsBotOwner(const dpp::snowflake& user)
 bool PermissionsMgr::IsRequestWorker(const dpp::snowflake& user, const std::shared_ptr<const JobRequest>& job)
 {
     if (!job) return false;
-    return user == job->GetWorkerID();
-}
+    return job->IsWorker(user);
+} 
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 

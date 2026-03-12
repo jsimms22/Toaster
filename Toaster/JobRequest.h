@@ -57,6 +57,7 @@ public:
 
     using UserNotes = std::vector<NoteMetaData>;
     using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
+    using WorkerList = std::vector<std::string>;
 
     explicit JobRequest(const dpp::snowflake& guildID, const dpp::snowflake& customerID);
     virtual ~JobRequest() = default;
@@ -70,8 +71,19 @@ public:
     const dpp::snowflake& GetCustomerID() const { return m_idCustomer; }
     void SetCustomerID(const dpp::snowflake& id) { m_idCustomer = id; }
 
-    const dpp::snowflake& GetWorkerID() const { return m_idWorker; }
-    void SetWorkerID(const dpp::snowflake& id) { m_idWorker = id; }
+    const std::vector<dpp::snowflake>& GetWorkerIDs() const { return m_idWorkerList; }
+    void AddWorkerID(const dpp::snowflake& id) { m_idWorkerList.emplace_back(id); }
+    void RemoveWorkerID(const dpp::snowflake& id) 
+    {
+        m_idWorkerList.erase(
+            std::remove_if(
+                m_idWorkerList.begin(),
+                m_idWorkerList.end(), 
+                [id](const auto& worker) { return worker == id; }), 
+            m_idWorkerList.end()
+        );
+    }
+    bool IsWorker(const dpp::snowflake& user) const;
 
     const std::string& GetSCHandle() const { return m_strSCHandle; }
     void SetSCHandle(const std::string& handle) { m_strSCHandle = handle; }
@@ -117,7 +129,7 @@ public:
     virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
-    const std::string GetWorkerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    const WorkerList GetWorkerNames(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 
 private:
     RequestID m_id;                         // Unique identifier for the job
@@ -125,7 +137,7 @@ private:
     std::uint64_t m_timeCreated = 0;
     std::uint64_t m_timeLastEdit = 0;
     dpp::snowflake m_idCustomer = ID_NULL;  // Customer id of who submitted the job
-    dpp::snowflake m_idWorker = ID_NULL;    // Id of the worker assigned to the job
+    std::vector<dpp::snowflake> m_idWorkerList;// Id of the worker assigned to the job
     std::string m_strSCHandle = "n/a";      // SC Handle for identification (could be username or custom ID)
     priority m_eJobPriority = priority::low;// Priority of the job
     status m_eJobStatus = status::open;     // Current status of the job

@@ -68,9 +68,9 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
                                                               event.command.guild_id,
                                                               page,
                                                               [worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetWorkerID() == worker; });
+                                                              { return job->IsWorker(worker); });
         const std::size_t size = ctx.queue->GetQueueSize([worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
-                                                        { return job->GetWorkerID() == worker; });
+                                                        { return job->IsWorker(worker); });
         const std::string header = "Your Assignments";
 
         PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, author.id);
@@ -115,9 +115,9 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
                                                               event.command.guild_id,
                                                               page,
                                                               [worker = user](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetWorkerID() == worker; });
+                                                              { return job->IsWorker(worker); });
         const std::size_t size = ctx.queue->GetQueueSize([worker = user](const std::shared_ptr<const JobRequest> job) -> bool
-                                                        { return job->GetWorkerID() == worker; });
+                                                        { return job->IsWorker(worker); });
         const std::string header = "Your Assignments";
 
         PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
@@ -210,7 +210,7 @@ dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::inter
     const std::string priority = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
     const std::string strJobID = ToString(job->GetID());
 
-    WorkerPanel panel(Option_Overview, user, strJobID, job->GetWorkerID());
+    WorkerPanel panel(Option_Overview, user, strJobID, job->IsWorker(user));
     panel.AddEmbed(header, summary);
     panel.AddEmbed("Top Assigment (by priority)", priority);
 

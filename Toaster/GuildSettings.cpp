@@ -86,7 +86,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
+            const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -132,6 +132,12 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
             .set_style(dpp::cos_success)
             .set_id(fmt::format("global_assign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
 
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Unassign Me")
+            .set_style(dpp::cos_danger)
+            .set_id(fmt::format("global_unassign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
+
         ctx.cluster.message_create(dpp::message(ctx.guild->idNewJobChannel.value_or(0), roleMention).add_embed(announce).add_component(row));
     }
 }
@@ -147,7 +153,7 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobT
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
+            const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -184,7 +190,7 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
+            const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {
@@ -221,7 +227,7 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jo
         if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
-            const auto roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
+            const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
 
             if (roleSnowflake.has_value())
             {

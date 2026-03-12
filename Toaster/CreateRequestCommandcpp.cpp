@@ -313,7 +313,7 @@ void CreateRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 
 dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const
 {
-    if (user == job->GetCustomerID() && user != job->GetWorkerID())
+    if (user == job->GetCustomerID() && !job->IsWorker(user))
     {
         CustomerPanel panel(this->name, user, ToString(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("You Submitted a New Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
@@ -321,7 +321,7 @@ dpp::message CreateRequestCommand::SendPanel(CommandContext& ctx, const dpp::int
     }
     else
     {
-        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, ToString(job->GetID()), user);
         panel.AddEmbed("You Submitted a New Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

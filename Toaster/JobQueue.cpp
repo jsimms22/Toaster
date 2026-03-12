@@ -238,19 +238,8 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 
         fmt::format_to(
             std::back_inserter(buffer),
-            "***Position: {}***\n"
-            "ID (**{}**): {}\n"
-            "**Status**: {}\n"
-            "**Customer**: {}\n"
-            "**Assigned**: {}\n"
-            "**Type**: {}\n\n",
-            position,
-            JobRequest::PriorityToString(job->GetPriority()),
-            ToString(job->GetID()),
-            JobRequest::StatusToString(job->GetStatus()),
-            job->GetCustomerName(cluster, idGuild),
-            job->GetWorkerName(cluster, idGuild),
-            job->JobTypeToString()
+            "{}",
+            job->PrintJobDetails(cluster, idGuild)
         );
     }
 
@@ -277,7 +266,7 @@ const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
         statusCounts[job->GetStatus()]++;
         priorityCounts[job->GetPriority()]++;
 
-        if ((job->GetWorkerID() == "0" || job->GetWorkerID() == "") && job->GetStatus() < JobRequest::status::hold)
+        if (job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold)
             ++unassignedCounts;
     }
 
@@ -327,7 +316,7 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
     // Collect counts
     for (const auto& job : m_vQueue)
     {
-        if ((job->GetWorkerID() != worker))
+        if (!job->IsWorker(worker))
             continue;
 
         typeCounts[job->JobType()]++;
@@ -557,7 +546,7 @@ std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(const dpp::snowflake
 
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
-        if (job->GetWorkerID() != userID || job->GetStatus() == JobRequest::status::complete)
+        if (!job->IsWorker(userID) || job->GetStatus() == JobRequest::status::complete)
             continue;
            
         return job;

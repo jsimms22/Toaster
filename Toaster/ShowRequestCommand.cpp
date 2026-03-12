@@ -140,7 +140,7 @@ dpp::message ShowRequestCommand::SendPanel(
     const std::shared_ptr<const JobRequest>& job,
     const dpp::snowflake& user) const
 {
-    if (user == job->GetCustomerID() && user != job->GetWorkerID())
+    if (user == job->GetCustomerID() && !job->IsWorker(user))
     {
         CustomerPanel panel(this->name, user, ToString(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
@@ -148,7 +148,7 @@ dpp::message ShowRequestCommand::SendPanel(
     }
     else
     {
-        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, ToString(job->GetID()), user);
         panel.AddEmbed("Here is the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

@@ -71,8 +71,8 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     else if (strCmdID == Option_Assign && pGuild && (pManager->CanAssignJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
         const auto vWorkerList = utils::BuildWorkerList(pGuild, job, ctx.guild);
-        const std::string strCurrentWorker = job->GetWorkerName(ctx.cluster, event.command.guild_id);
-        AssignRequestDlg modal(job, vWorkerList, strCurrentWorker);
+        //const std::string strCurrentWorker = job->GetWorkerNames(ctx.cluster, event.command.guild_id);
+        AssignRequestDlg modal(job, vWorkerList, "");
         event.dialog(modal);
         return;
     }
@@ -258,7 +258,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.queue->RequestModify(job->GetID(),
             [workerID, strStatus](std::shared_ptr<JobRequest> job)
             {
-                job->SetWorkerID(workerID);
+                job->AddWorkerID(workerID);
                 job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
             });
 
@@ -463,7 +463,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     strNote));
         }
         // todo: need a way to allow workers to stop notifications
-        else if (event.command.usr.id != job->GetWorkerID() || ctx.debug)
+        /*
+        else if (!job->IsWorker(event.command.usr.id) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster,
                 job->GetWorkerID(),
@@ -473,6 +474,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                     strID,
                     strNote));
         }
+        */
     }
 }
 
@@ -579,20 +581,26 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         ctx.queue->RequestModify(job->GetID(), 
             [id = user.id](std::shared_ptr<JobRequest> job)
             {
-                if (job->GetWorkerID() != 0)
+                if (job->IsWorker(id))
                     return;
 
-                job->SetWorkerID(id);
-                job->SetStatus(JobRequest::status::assigned);
+                job->AddWorkerID(id);
+                if (job->GetStatus() < JobRequest::status::complete)
+                    job->SetStatus(JobRequest::status::assigned);
             });
 
         dpp::component row;
         row.add_component(dpp::component()
             .set_type(dpp::cot_button)
-            .set_label("Assigned")
+            .set_label("Assign Me")
             .set_style(dpp::cos_success)
-            .set_disabled(true)
-            .set_id("dead_button"));
+            .set_id(fmt::format("global_assign:{}:{}", job->JobType(), job->GetID().value)));
+
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Unassign Me")
+            .set_style(dpp::cos_danger)
+            .set_id(fmt::format("global_unassign:{}:{}", job->JobType(), job->GetID().value)));
 
         dpp::embed announce;
         announce.set_title("New Job Request")
@@ -602,11 +610,65 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
         // Edit the original message
         event.reply(dpp::ir_update_message,dpp::message().add_component(row).add_embed(announce));
     }
+    else if (id.starts_with("global_unassign:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
+        if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", rID));
+            return;
+        }
+
+        const auto pManager = PermissionsMgr::GetInstance();
+        const dpp::user user = event.command.get_issuing_user();
+        if (!pManager || (!pManager->CanAssignJob(event, user.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug))
+        {
+            // Permission denied
+            event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", ToString(job->GetID()))).set_flags(dpp::m_ephemeral));
+            ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, ToString(job->GetID())));
+            return;
+        }
+
+        ctx.queue->RequestModify(job->GetID(),
+            [id = user.id](std::shared_ptr<JobRequest> job)
+            {
+                if (!job->IsWorker(id))
+                    return;
+
+                job->RemoveWorkerID(id);
+                if (job->GetStatus() != JobRequest::status::complete && job->GetWorkerIDs().empty())
+                    job->SetStatus(JobRequest::status::open);
+            });
+
+        dpp::component row;
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Assign Me")
+            .set_style(dpp::cos_success)
+            .set_id(fmt::format("global_assign:{}:{}", job->JobType(), job->GetID().value)));
+
+        row.add_component(dpp::component()
+            .set_type(dpp::cot_button)
+            .set_label("Unassign Me")
+            .set_style(dpp::cos_danger)
+            .set_id(fmt::format("global_unassign:{}:{}", job->JobType(), job->GetID().value)));
+
+        dpp::embed announce;
+        announce.set_title("New Job Request")
+            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+            .set_color(0x3498db);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, dpp::message().add_component(row).add_embed(announce));
+    }
 }
 
 dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::shared_ptr<const JobRequest>& job, const dpp::snowflake& user) const
 {
-    if (user == job->GetCustomerID() && user != job->GetWorkerID())
+    if (user == job->GetCustomerID() && !job->IsWorker(user))
     {
         CustomerPanel panel(this->name, user, ToString(job->GetID()), job->IsCustomerSubscribed());
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
@@ -614,7 +676,7 @@ dpp::message ModifyRequestCommand::SendPanel(CommandContext& ctx, const dpp::int
     }
     else
     {
-        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->GetWorkerID());
+        WorkerPanel panel(this->name, user, ToString(job->GetID()), job->IsWorker(user));
         panel.AddEmbed("You Edited the Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
         return panel;
     }

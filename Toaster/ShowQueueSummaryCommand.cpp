@@ -160,9 +160,9 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
                                                               event.command.guild_id,
                                                               page,
                                                               [](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetWorkerID() == 0 && job->GetStatus() != JobRequest::status::complete; });
+                                                              { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
         const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool
-                                                         { return job->GetWorkerID() == 0 && job->GetStatus() != JobRequest::status::complete; });
+                                                         { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
         const std::string header = "Unassigned Job Report";
 
         PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
@@ -213,9 +213,9 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
                                                               event.command.guild_id,
                                                               page,
                                                               [](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetWorkerID() == 0; });
+                                                              { return job->GetWorkerIDs().empty(); });
         const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool
-                                                         { return job->GetWorkerID() == 0 && job->GetStatus() != JobRequest::status::complete; });
+                                                         { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
         const std::string header = "Unassigned Job Report";
 
         PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);

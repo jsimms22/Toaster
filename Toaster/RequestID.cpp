@@ -57,7 +57,7 @@ std::string ToString(RequestID id)
 {
     const std::uint64_t type = static_cast<std::uint64_t>((id.value >> 15) & 0x3F);
 
-    const uint64_t shortPart = id.value & 0x3FFFFFFFFFFFFF; // last 50-bits
+    const std::uint64_t shortPart = id.value & 0x3FFFFFFFFFFFFF; // last 50-bits
 
     std::string encoded = EncodeBase32(shortPart);
 

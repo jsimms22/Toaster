@@ -12,7 +12,7 @@ public:
 		const std::string& OwnerName,
 		const dpp::snowflake& userID,
 		const std::string& jobID,
-		const dpp::snowflake& workerID);
+		const bool bIsWorker);
 
 	virtual ~WorkerPanel() = default;
 

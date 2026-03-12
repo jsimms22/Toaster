@@ -54,7 +54,7 @@ public:
     bool CanAccessAdminPanel(const dpp::interaction_create_t& event, const dpp::snowflake& user, const dpp::guild* guild, const std::shared_ptr<const GuildSettings>&settings);
 
 private: // Members
-    PermissionsMgr() = delete;  // Prevent instantiation
+    PermissionsMgr() = delete;
     // Allows Application to participate in its own lifetime
     static std::weak_ptr<PermissionsMgr> s_applicationInstance;
 };

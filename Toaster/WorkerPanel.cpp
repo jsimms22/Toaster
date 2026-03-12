@@ -15,7 +15,7 @@ WorkerPanel::WorkerPanel(
 	const std::string& OwnerName,
 	const dpp::snowflake& userID,
 	const std::string& jobID,
-    const dpp::snowflake& workerID)
+    const bool bIsWorker)
 	: GeneralUserPanel(OwnerName, userID, jobID)
 {
 	m_btnComplete.set_type(dpp::cot_button)
@@ -24,8 +24,8 @@ WorkerPanel::WorkerPanel(
 		.set_id(fmt::format("{}_complete:{}:{}", OwnerName, m_userID, m_jobID));
 
 	m_btnAssign.set_type(dpp::cot_button)
-		.set_label(userID == workerID ? "Unassign Me" : "Assign Me")
-		.set_style(userID == workerID ? dpp::cos_primary : dpp::cos_success)
+		.set_label(bIsWorker ? "Unassign Me" : "Assign Me")
+		.set_style(bIsWorker ? dpp::cos_primary : dpp::cos_success)
 		.set_id(fmt::format("{}_unassign:{}:{}", OwnerName, m_userID, m_jobID));
 
 	m_row.add_component(m_btnComplete)
@@ -117,17 +117,16 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
 
     if (job->GetStatus() < JobRequest::status::complete)
     {
-        if (job->GetWorkerID() == user)
+        if (job->IsWorker(user))
         {
-            ctx.queue->RequestModify(job->GetID(), [](std::shared_ptr<JobRequest> job)
+            ctx.queue->RequestModify(job->GetID(), [user](std::shared_ptr<JobRequest> job)
                 {
-                    job->SetWorkerID(0);
+                    job->RemoveWorkerID(user);
                     if (job->GetStatus() == JobRequest::status::active ||
                         job->GetStatus() == JobRequest::status::assigned)
                     {
                         job->SetStatus(JobRequest::status::open);
                     }
-                    job->SetStatus(JobRequest::status::complete);
                 });
 
             // Send notification to the customer
@@ -140,12 +139,11 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
         }
-        else if (job->GetWorkerID() != user)
+        else if (!job->IsWorker(user))
         {
-            const dpp::snowflake oldWorker = job->GetWorkerID();
             ctx.queue->RequestModify(job->GetID(), [user](std::shared_ptr<JobRequest> job)
                 {
-                    job->SetWorkerID(user);
+                    job->AddWorkerID(user);
                     if (job->GetStatus() != JobRequest::status::assigned ||
                         job->GetStatus() != JobRequest::status::active)
                     {
@@ -162,10 +160,10 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             }
 
             // Send notification to the previously assigned worker
-            if ((oldWorker && oldWorker != user && customer != user) || (oldWorker && ctx.debug))
+            if (customer != user || ctx.debug)
             {
-                utils::NotifyIssuerMsg(ctx.cluster, oldWorker, event,
-                    fmt::format("Request {} has been reassigned to {}.", rID, event.command.get_issuing_user().global_name));
+                utils::NotifyIssuerMsg(ctx.cluster, user, event,
+                    fmt::format("{} has been assigned to request {}.", event.command.get_issuing_user().global_name, rID));
             }
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));

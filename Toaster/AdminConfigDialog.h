@@ -22,14 +22,7 @@
 class AdminConfigDialog : public dpp::interaction_modal_response
 {
 public:
-	AdminConfigDialog(const std::string& strCommandName, CommandContext& ctx)
-		: dpp::interaction_modal_response(), m_strCommand{ strCommandName }, m_ctx{ctx}
-	{
-		set_custom_id(fmt::format("{}:{}", modalID, m_strCommand));
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	AdminConfigDialog(const std::string& strCommandName, CommandContext& ctx);
 	~AdminConfigDialog() = default;
 
 	static const std::string modalID;

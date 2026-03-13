@@ -11,15 +11,26 @@
 const std::string NoteDialog::modalID = "NoteDialogModal";
 const std::string NoteDialog::modalDesc = "Add a Note to the Request";
 
+NoteDialog::NoteDialog(CommandContext& ctx, const std::shared_ptr<const JobRequest>& job)
+	: dpp::interaction_modal_response(), m_ctx{ ctx }, m_spJob{ job }
+{
+	set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+	set_title(modalDesc);
+	InitializeControls();
+	AddChildrenComponents();
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
 void NoteDialog::InitializeControls()
 {
+	const std::string rID= ToString(m_spJob->GetID());
+
 	// Create a text box component
 	JobRequestIDEdit.set_label("Job Request ID")
 		.set_type(dpp::cot_text)
-		.set_default_value(ToString(m_spJob->GetID()))
+		.set_default_value(rID)
 		.set_min_length(0)
 		.set_max_length(128)
 		.set_text_style(dpp::text_short)

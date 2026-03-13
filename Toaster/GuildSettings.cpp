@@ -1,6 +1,9 @@
 #include "GuildSettings.h"
 
 #include "CommandContext.h"
+#include "GlobalButtonPanel.h"
+#include "JobRequest.h"
+#include "JobQueue.h"
 #include "IJobRepo.h"
 #include "Resource.h"
 // d++
@@ -17,7 +20,6 @@
 // ================================
 // Helper Utilities
 // ================================
-
 namespace
 {
     void WriteOptionalId(tinyxml2::XMLElement* xmlNode, const char* name, const std::optional<dpp::snowflake>& value)
@@ -103,11 +105,6 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
 
     if (ctx.guild->idNewJobChannel.has_value())
     {
-        dpp::embed announce;
-        announce.set_title("New Job Request")
-            .set_description(jobDetails)
-            .set_color(0x3498db);
-
         auto ExtractJobID = [](const std::string& text) -> std::optional<std::string>
             {
                 constexpr std::string_view key = "**ID**: ";
@@ -124,21 +121,17 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
 
                 return text.substr(start, end - start);
             };
+        
+        const auto strID = ExtractJobID(jobDetails).value_or("unknown");
+        const auto job = ctx.queue->GetJobByID(strID);
+        if (!job) return;
 
-        dpp::component row;
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_label("Assign Me")
-            .set_style(dpp::cos_success)
-            .set_id(fmt::format("global_assign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
+        GlobalButtonPanel panel{ strID };
+        panel.AddEmbed("New Job Request", jobDetails);
+        panel.set_content(roleMention);
+        panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));
 
-        row.add_component(dpp::component()
-            .set_type(dpp::cot_button)
-            .set_label("Unassign Me")
-            .set_style(dpp::cos_danger)
-            .set_id(fmt::format("global_unassign:{}:{}", jobType, ExtractJobID(jobDetails).value_or("unknown"))));
-
-        ctx.cluster.message_create(dpp::message(ctx.guild->idNewJobChannel.value_or(0), roleMention).add_embed(announce).add_component(row));
+        ctx.cluster.message_create(panel);
     }
 }
 
@@ -374,13 +367,13 @@ void GuildSettings::ReadAttributesBSON(const bsoncxx::document::view& doc)
         idNewJobChannel = ReadOptionalId(doc["NewJobChannel"]);
 
     if (auto elem = doc["UpdateJobChannel"])
-        idUpdateJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+        idUpdateJobChannel = ReadOptionalId(doc["UpdateJobChannel"]);
 
     if (auto elem = doc["DeleteJobChannel"])
-        idDeleteJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+        idDeleteJobChannel = ReadOptionalId(doc["DeleteJobChannel"]);
 
     if (auto elem = doc["CompleteJobChannel"])
-        idCompleteJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+        idCompleteJobChannel = ReadOptionalId(doc["CompleteJobChannel"]);
 
     // Cooldown
     if (auto elem = doc["Cooldown"])

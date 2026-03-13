@@ -7,6 +7,8 @@
 #include "JobRequest.h"
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
+#include "RequestDlg.h"
+#include "WorkerPanel.h"
 // d++
 #include <dpp/guild.h>
 // fmt
@@ -17,33 +19,46 @@
 
 AdminQueueButtonPanel::AdminQueueButtonPanel(
 	const std::string& OwnerName,
-	const dpp::snowflake& userID)
+	const dpp::snowflake& userID,
+	const std::string& rID)
 	: dpp::message(), m_userID{ userID }
 {
-
-	m_btnAssignWorker.set_type(dpp::cot_button)
-		.set_label("Assign Worker")
+	// row 1
+	m_btnAssignWorkers.set_type(dpp::cot_button)
+		.set_label("Assign Workers")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_assignworkers:{}", OwnerName, m_userID));
+		.set_id(fmt::format("{}_assignworkers:{}:{}", OwnerName, m_userID, rID));
 
-	m_btnAddWorker.set_type(dpp::cot_button)
-		.set_label("Add Worker")
+	m_btnRefreshPanel.set_type(dpp::cot_button)
+		.set_label("Refresh Panel")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_addworker:{}", OwnerName, m_userID));
+		.set_id(fmt::format("{}_adminrefresh:{}:{}", OwnerName, m_userID, rID));
 
-	m_btnRemoveWorker.set_type(dpp::cot_button)
-		.set_label("Remove Worker")
-		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_removeworker:{}", OwnerName, m_userID));
+	m_btnMarkComplete.set_type(dpp::cot_button)
+		.set_label("Mark Complete")
+		.set_style(dpp::cos_success)
+		.set_id(fmt::format("{}_admincomplete:{}:{}", OwnerName, m_userID, rID));
 
-	m_row.add_component(m_btnAssignWorker)
-		.add_component(m_btnAddWorker)
-		.add_component(m_btnRemoveWorker);
+	m_btnMarkOnHold.set_type(dpp::cot_button)
+		.set_label("Mark On Hold")
+		.set_style(dpp::cos_danger)
+		.set_id(fmt::format("{}_adminhold:{}:{}", OwnerName, m_userID, rID));
 
+	m_row.add_component(m_btnRefreshPanel)
+		.add_component(m_btnAssignWorkers)
+		.add_component(m_btnMarkComplete)
+		.add_component(m_btnMarkOnHold);
+
+	// row 2
 	m_btnShowWorkers.set_type(dpp::cot_button)
 		.set_label("Show Workers")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_showworkers:{}", OwnerName, m_userID));
+		.set_id(fmt::format("{}_showworkers:{}", OwnerName, m_userID, rID));
+
+	m_btnDownloadWorkers.set_type(dpp::cot_button)
+		.set_label("Download Workers")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_downloadworkers:{}", OwnerName, m_userID, rID));
 
 	m_btnArchiveJobs.set_type(dpp::cot_button)
 		.set_label("Archive Completed")
@@ -51,6 +66,7 @@ AdminQueueButtonPanel::AdminQueueButtonPanel(
 		.set_id(fmt::format("{}_archivecomplete:{}", OwnerName, m_userID));
 
 	m_row2.add_component(m_btnShowWorkers)
+		.add_component(m_btnDownloadWorkers)
 		.add_component(m_btnArchiveJobs);
 
 	add_component(m_row);
@@ -67,7 +83,7 @@ void AdminQueueButtonPanel::AddEmbed(const std::string& header, const std::strin
 	add_embed(embed);
 }
 
-void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event, const bool bSendFile)
 {
 	//event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
 	dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
@@ -96,7 +112,7 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 		for (const auto& member : members)
 		{
 			if (role.has_value() && pManager->HasRole(member.second, role))
-				fmt::format_to(std::back_inserter(buffer), "{}\n", utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
+				fmt::format_to(std::back_inserter(buffer), "- {} | {}\n", member.first, utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
 		}
 
 		++count;
@@ -104,7 +120,11 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 
 	dpp::message msg;
 	const std::string response = fmt::to_string(buffer);
-	if (response.size() < 5500)
+	if (bSendFile)
+	{
+		msg.add_file("Worker_List.txt", response);
+	}
+	else if (response.size() < 5500 && !bSendFile)
 	{
 		dpp::embed embed;
 		embed.set_title("Assigned Worker Roles")
@@ -121,19 +141,74 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 	event.reply(msg.set_flags(dpp::m_ephemeral));
 }
 
-void AdminQueueButtonPanel::AssignWorkerButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminQueueButtonPanel::DownloadWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	ShowWorkersButton(id, ctx, event, true);
 }
 
-void AdminQueueButtonPanel::AddWorkerButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminQueueButtonPanel::AssignWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	auto parts = utils::Split(id, ':');
+	const dpp::snowflake worker = parts[1];
+	const std::string rID = parts[2];
+
+	const auto job = ctx.queue->GetJobByID(rID);
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	AssignRequestDlg modal(job);
+	event.dialog(modal);
+	return;
 }
 
-void AdminQueueButtonPanel::RemoveWorkerButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminQueueButtonPanel::MarkCompleteButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	WorkerPanel::CompleteButton(id, ctx, event);
+}
+
+void AdminQueueButtonPanel::MarkOnHoldButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	auto parts = utils::Split(id, ':');
+	const dpp::snowflake worker = parts[1];
+	const std::string rID = parts[2];
+
+	const auto job = ctx.queue->GetJobByID(rID);
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	if ((pManager->CanAssignJob(event, worker, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) &&
+		job->GetStatus() < JobRequest::status::complete) || ctx.debug)
+	{
+		ctx.queue->RequestModify(job->GetID(), [](std::shared_ptr<JobRequest> job)
+			{
+				job->SetStatus(JobRequest::status::hold);
+			});
+
+		const dpp::snowflake customer = job->GetCustomerID();
+		if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
+		{
+			utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
+				fmt::format("Request {} has been placed on hold by {}.", rID, event.command.get_issuing_user().global_name));
+		}
+
+		ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been placed on hold by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
+	}
+	else
+	{
+		event.reply(dpp::message("Could not perform this action.").set_flags(dpp::m_ephemeral));
+	}
+}
+
+void AdminQueueButtonPanel::RefreshButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	/* do nothing */
 }
 
 void AdminQueueButtonPanel::ArchiceCompletedButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
@@ -167,6 +242,7 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 		.add_component(m_btnPingRules);
 
 	// Row 2
+	/*
 	m_btnShowBans.set_type(dpp::cot_button)
 		.set_label("Show Ban List")
 		.set_style(dpp::cos_primary)
@@ -185,6 +261,7 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 	m_row2.add_component(m_btnShowBans)
 		.add_component(m_btnAddBan)
 		.add_component(m_btnRemoveBan);
+	*/
 
 	// Row 3
 	m_btnSendLogs.set_type(dpp::cot_button)
@@ -207,7 +284,7 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 		.add_component(m_btnDeleteData);
 
 	add_component(m_row);
-	add_component(m_row2);
+	//add_component(m_row2);
 	add_component(m_row3);
 }
 

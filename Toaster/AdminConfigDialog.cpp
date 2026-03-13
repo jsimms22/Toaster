@@ -1,5 +1,6 @@
 #include "AdminConfigDialog.h"
 
+#include "BotUtility.h"
 #include "Commands.h"
 #include "GuildSettings.h"
 // std library
@@ -7,6 +8,15 @@
 
 const std::string AdminConfigDialog::modalID = "AdminConfigModal";
 const std::string AdminConfigDialog::modalDesc = "Bot Per Server Config Settings";
+
+AdminConfigDialog::AdminConfigDialog(const std::string& strCommandName, CommandContext& ctx)
+	: dpp::interaction_modal_response(), m_strCommand{ strCommandName }, m_ctx{ ctx }
+{
+	set_custom_id(fmt::format("{}:{}:{}", modalID, m_strCommand, utils::GetEpochTimestamp()));
+	set_title(modalDesc);
+	InitializeControls();
+	AddChildrenComponents();
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
@@ -111,7 +121,7 @@ void AdminConfigDialog::InitializeControls()
 	// For roles
 	else if (m_strCommand == Command_ConfigRoles)
 	{
-		RoleSelect.set_label("Select Role to Set")
+		RoleSelect.set_label("Select Role Type")
 			.set_type(dpp::cot_selectmenu)
 			.add_select_option(dpp::select_option("General Worker", std::to_string(static_cast<int>(GuildSettings::Roles::Ping)), ""))
 			.add_select_option(dpp::select_option("Item Crafter", std::to_string(static_cast<int>(GuildSettings::Roles::Crafter)), ""))
@@ -123,7 +133,7 @@ void AdminConfigDialog::InitializeControls()
 			.add_select_option(dpp::select_option("Manager", std::to_string(static_cast<int>(GuildSettings::Roles::Manager)), ""))
 			.set_id(Component_RoleSelect);
 
-		RoleEdit.set_label("Request Completed Announcements")
+		RoleEdit.set_label("Role ID to be Set")
 			.set_type(dpp::cot_text)
 			.set_placeholder("Role id")
 			.set_min_length(0)

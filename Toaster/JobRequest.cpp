@@ -38,10 +38,10 @@ namespace serial
 std::string JobRequest::PriorityToString(const JobRequest::priority p)
 {
     switch (p) {
-    case JobRequest::priority::low:         return "low";
-    case JobRequest::priority::medium:      return "medium";
-    case JobRequest::priority::high:        return "high";
-    case JobRequest::priority::critical:    return "critical";
+    case JobRequest::priority::low:         return "Low";
+    case JobRequest::priority::medium:      return "Medium";
+    case JobRequest::priority::high:        return "High";
+    case JobRequest::priority::critical:    return "Critical";
     default: throw std::invalid_argument("Unexpected priority enum value");
     }
 }
@@ -51,10 +51,10 @@ std::string JobRequest::PriorityToString(const JobRequest::priority p)
 //---------------------------------------------------------------------------------------------------------------------
 JobRequest::priority JobRequest::StringToPriority(const std::string& str)
 {
-    if (str == "low")       return JobRequest::priority::low;
-    if (str == "medium")    return JobRequest::priority::medium;
-    if (str == "high")      return JobRequest::priority::high;
-    if (str == "critical")  return JobRequest::priority::critical;
+    if (str == "Low")       return JobRequest::priority::low;
+    if (str == "Medium")    return JobRequest::priority::medium;
+    if (str == "High")      return JobRequest::priority::high;
+    if (str == "Critical")  return JobRequest::priority::critical;
     throw std::invalid_argument("Unexpected priority string value");
 }
 
@@ -78,12 +78,12 @@ const char* JobRequest::PriorityToEmoji(const JobRequest::priority p)
 std::string JobRequest::StatusToString(const JobRequest::status s)
 {
     switch (s) {
-    case JobRequest::status::open:      return "open";
-    case JobRequest::status::stalled:   return "stalled";
-    case JobRequest::status::assigned:  return "assigned";
-    case JobRequest::status::active:    return "active";
-    case JobRequest::status::hold:      return "on hold";
-    case JobRequest::status::complete:  return "complete";
+    case JobRequest::status::open:      return "Open";
+    case JobRequest::status::stalled:   return "Stalled";
+    case JobRequest::status::assigned:  return "Assigned";
+    case JobRequest::status::active:    return "Active";
+    case JobRequest::status::hold:      return "On Hold";
+    case JobRequest::status::complete:  return "Complete";
     default: throw std::invalid_argument("Unexpected status enum value");
     }
 }
@@ -93,12 +93,12 @@ std::string JobRequest::StatusToString(const JobRequest::status s)
 //---------------------------------------------------------------------------------------------------------------------
 JobRequest::status JobRequest::StringToStatus(const std::string& str)
 {
-    if (str == "open")      return JobRequest::status::open;
-    if (str == "stalled")   return JobRequest::status::stalled;
-    if (str == "assigned")  return JobRequest::status::assigned;
-    if (str == "active")    return JobRequest::status::active;
-    if (str == "on hold")   return JobRequest::status::hold;
-    if (str == "complete")  return JobRequest::status::complete;
+    if (str == "Open")      return JobRequest::status::open;
+    if (str == "Stalled")   return JobRequest::status::stalled;
+    if (str == "Assigned")  return JobRequest::status::assigned;
+    if (str == "Active")    return JobRequest::status::active;
+    if (str == "On Hold")   return JobRequest::status::hold;
+    if (str == "Complete")  return JobRequest::status::complete;
     throw std::invalid_argument("Unexpected status string value");
 }
 

@@ -47,13 +47,16 @@ public:
     const std::string PrintQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const;
     const std::string PrintPagedQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
     const std::string PrintPagedQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
+    // Print Request Methods
+    const std::string PrintPagedRequest(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
 
     // Queue Size Methods
     const std::size_t GetQueueSize(JobCompare compare) const;
     const std::size_t GetQueueSize() const;
 
     // Retrieve Job Methods
-    std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
+    const std::shared_ptr<const JobRequest> FirstAssignment(JobCompare compare);
+    const std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
     const std::shared_ptr<const JobRequest> GetJobByID(const RequestID rID) const;
     const std::shared_ptr<const JobRequest> GetJobByID(const std::string& rID) const;
 

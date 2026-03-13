@@ -16,6 +16,7 @@
 #include <bsoncxx/document/view.hpp>
 #include <bsoncxx/types.hpp>
 // std library
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <string>
@@ -72,7 +73,13 @@ public:
     void SetCustomerID(const dpp::snowflake& id) { m_idCustomer = id; }
 
     const std::vector<dpp::snowflake>& GetWorkerIDs() const { return m_idWorkerList; }
-    void AddWorkerID(const dpp::snowflake& id) { m_idWorkerList.emplace_back(id); }
+    void AddWorkerID(const dpp::snowflake& id) 
+    {
+        if (m_idWorkerList.end() == std::find(m_idWorkerList.begin(), m_idWorkerList.end(), id))
+        {
+            m_idWorkerList.emplace_back(id);
+        }
+    }
     void RemoveWorkerID(const dpp::snowflake& id) 
     {
         m_idWorkerList.erase(

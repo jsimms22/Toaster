@@ -100,13 +100,16 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
 //---------------------------------------------------------------------------------------------------------------------
 void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event)
 {
+    const std::string id = event.custom_id;
+    auto parts = utils::Split(id, ':');
+
     if (!ctx.queue || 
-        !(event.custom_id == CraftRequestDlg::modalID ||
-          event.custom_id == BuildRequestDlg::modalID ||
-          event.custom_id == ComponentRequestDlg::modalID ||
-          event.custom_id == ResourceRequestDlg::modalID ||
-          event.custom_id == RefineryRequestDlg::modalID ||
-          event.custom_id == HazardousRequestDlg::modalID))
+        !(parts[0] == CraftRequestDlg::modalID ||
+          parts[0] == BuildRequestDlg::modalID ||
+          parts[0] == ComponentRequestDlg::modalID ||
+          parts[0] == ResourceRequestDlg::modalID ||
+          parts[0] == RefineryRequestDlg::modalID ||
+          parts[0] == HazardousRequestDlg::modalID))
     {
         return;
     }
@@ -134,7 +137,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     //-------------------------------------------------------------------------------------------------------------
     // Construct job object based on modal type
     //-------------------------------------------------------------------------------------------------------------
-    if (event.custom_id == CraftRequestDlg::modalID)
+    if (parts[0] == CraftRequestDlg::modalID)
     {
         std::shared_ptr<CraftingJobRequest> jobCraft = std::make_shared<CraftingJobRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobCraft->JobType(), author.id, ctx.guild);
@@ -148,7 +151,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new CRAFTING request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobCraft));
     }
-    else if (event.custom_id == BuildRequestDlg::modalID)
+    else if (parts[0] == BuildRequestDlg::modalID)
     {
         std::shared_ptr<BuildingJobRequest> jobBuild = std::make_shared<BuildingJobRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobBuild->JobType(), author.id, ctx.guild);
@@ -162,7 +165,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobBuild));
     }
-    else if (event.custom_id == ComponentRequestDlg::modalID)
+    else if (parts[0] == ComponentRequestDlg::modalID)
     {
         std::shared_ptr<ComponentJobRequest> jobComp = std::make_shared<ComponentJobRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobComp->JobType(), author.id, ctx.guild);
@@ -174,7 +177,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobComp));
     }
-    else if (event.custom_id == ResourceRequestDlg::modalID)
+    else if (parts[0] == ResourceRequestDlg::modalID)
     {
         std::shared_ptr<ResourceJobRequest> jobRes = std::make_shared<ResourceJobRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobRes->JobType(), author.id, ctx.guild);
@@ -188,7 +191,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRes));
     }
-    else if (event.custom_id == RefineryRequestDlg::modalID)
+    else if (parts[0] == RefineryRequestDlg::modalID)
     {
         std::shared_ptr<RefineryJobRequest> jobRefine = std::make_shared<RefineryJobRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobRefine->JobType(), author.id, ctx.guild);
@@ -202,7 +205,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRefine));
     }
-    else if (event.custom_id == HazardousRequestDlg::modalID)
+    else if (parts[0] == HazardousRequestDlg::modalID)
     {
         std::shared_ptr<HazardousRequest> jobHazard = std::make_shared<HazardousRequest>(event.command.guild_id, author.id);
         jobID = IDGenerator::Generate(jobHazard->JobType(), author.id, ctx.guild);

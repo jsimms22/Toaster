@@ -365,11 +365,12 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     void FilterUserString(std::string& str)
     {
-        const std::vector<char> filterList{
-            '\n', '\r', '\t',               // Newlines, carriage returns, tabs
-            '`', '*', '~', '@', '<', '>',   // Discord formatting characters
-            '|',                            // Potential table formatting
+        const std::vector<char> filterList
+        {
+            '\n', '\r', '\t', '`', '*', '~', '@', '<', '>', '|', '`', '#'
         };
+
+        // I'm purposingly not removing '_' because its fairly common for game handles
 
         for (const auto sym : filterList)
             RemoveChar(str, sym);

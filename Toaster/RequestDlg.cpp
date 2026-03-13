@@ -63,6 +63,18 @@ const std::string DeleteRequestDlg::modalDesc = "Delete Job Request";
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+CraftRequestDlg::CraftRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void CraftRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -131,6 +143,18 @@ void CraftRequestDlg::AddChildrenComponents()
     add_component(ItemQuantityEdit);
     add_component(ItemQualityEdit);
     add_component(PrioritySelect);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+BuildRequestDlg::BuildRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -207,6 +231,18 @@ void BuildRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+ComponentRequestDlg::ComponentRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void ComponentRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -251,6 +287,18 @@ void ComponentRequestDlg::AddChildrenComponents()
     add_component(CitizenHandleEdit);
     add_component(ComponentListEdit);
     add_component(PrioritySelect);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+ResourceRequestDlg::ResourceRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -331,6 +379,18 @@ void ResourceRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+RefineryRequestDlg::RefineryRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void RefineryRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -396,6 +456,18 @@ void RefineryRequestDlg::AddChildrenComponents()
     add_component(ResourceListEdit);
     add_component(RefinerySiteEdit);
     add_component(PrioritySelect);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+HazardousRequestDlg::HazardousRequestDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -472,6 +544,18 @@ void HazardousRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+AssignRequestDlg::AssignRequestDlg(const std::shared_ptr<const JobRequest>& job)
+    : dpp::interaction_modal_response(), m_spJob(job)
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void AssignRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -479,34 +563,34 @@ void AssignRequestDlg::InitializeControls()
         .set_type(dpp::cot_text)
         .set_default_value(ToString(m_spJob->GetID()))
         .set_min_length(0)
-        .set_max_length(128)
+        .set_max_length(16)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
     // Create a combo box component
-    WorkerAssignSelect.set_label("Assign Task")
-        .set_type(dpp::cot_selectmenu)
-        .set_default_value(m_svWorker)
-        .set_id(Component_Assignment)
-        .set_min_values(1)
-        .set_max_values(1);
+    WorkerAssignSelect.set_label("Assign Task To")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Enter Worker ID")
+        .set_min_length(0)
+        .set_max_length(40)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_Assignment);
 
-    for (const auto& [id, name] : m_workers)
-    {
-        dpp::select_option option{name, std::to_string(id), ""};
+    WorkerAssignSelect2.set_label("Assign Additional")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Enter Worker ID 2")
+        .set_min_length(0)
+        .set_max_length(40)
+        .set_text_style(dpp::text_short)
+        .set_id(fmt::format("{}:{}", Component_Assignment, 2));
 
-        if (std::to_string(id) == m_svWorker)
-        {
-            option.set_default(true);
-        }
-
-        WorkerAssignSelect.add_select_option(option);
-    }
-
-    if (m_workers.empty())
-    {
-        WorkerAssignSelect.add_select_option(dpp::select_option("No Workers Available", "0", ""));
-    }
+    WorkerAssignSelect3.set_label("Assign Additional")
+        .set_type(dpp::cot_text)
+        .set_placeholder("Enter Worker ID 3")
+        .set_min_length(0)
+        .set_max_length(40)
+        .set_text_style(dpp::text_short)
+        .set_id(fmt::format("{}:{}", Component_Assignment, 3));
 
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
@@ -528,7 +612,22 @@ void AssignRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
     add_component(WorkerAssignSelect);
+    add_component(WorkerAssignSelect2);
+    add_component(WorkerAssignSelect3);
     add_component(StatusUpdateSelect);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+
+StatusChangeRequestDlg::StatusChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
+    : dpp::interaction_modal_response(), m_spJob(job)
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -542,7 +641,7 @@ void StatusChangeRequestDlg::InitializeControls()
         .set_type(dpp::cot_text)
         .set_default_value(ToString(m_spJob->GetID()))
         .set_min_length(0)
-        .set_max_length(128)
+        .set_max_length(16)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
@@ -571,6 +670,18 @@ void StatusChangeRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+PriorityChangeRequestDlg::PriorityChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
+    : dpp::interaction_modal_response(), m_spJob(job)
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void PriorityChangeRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -578,7 +689,7 @@ void PriorityChangeRequestDlg::InitializeControls()
         .set_type(dpp::cot_text)
         .set_default_value(ToString(m_spJob->GetID()))
         .set_min_length(0)
-        .set_max_length(128)
+        .set_max_length(16)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
@@ -608,6 +719,18 @@ void PriorityChangeRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+EditRequestDlg::EditRequestDlg(const std::shared_ptr<const JobRequest>& job)
+    : dpp::interaction_modal_response(), m_spJob(job)
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void EditRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -615,7 +738,7 @@ void EditRequestDlg::InitializeControls()
         .set_type(dpp::cot_text)
         .set_default_value(ToString(m_spJob->GetID()))
         .set_min_length(0)
-        .set_max_length(128)
+        .set_max_length(16)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 
@@ -815,6 +938,18 @@ void EditRequestDlg::AddChildrenComponents()
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
+DeleteRequestDlg::DeleteRequestDlg(const std::shared_ptr<const JobRequest>& job, const std::string details)
+    : dpp::interaction_modal_response(), m_spJob(job), m_strDetails(details)
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
 void DeleteRequestDlg::InitializeControls()
 {
     // Create a text box component
@@ -822,7 +957,7 @@ void DeleteRequestDlg::InitializeControls()
         .set_type(dpp::cot_text)
         .set_default_value(ToString(m_spJob->GetID()))
         .set_min_length(0)
-        .set_max_length(128)
+        .set_max_length(16)
         .set_text_style(dpp::text_short)
         .set_id(Component_RequestID);
 

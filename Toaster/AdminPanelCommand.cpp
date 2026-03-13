@@ -9,6 +9,7 @@
 #include "AdminButtonPanel.h"
 #include "BotUtility.h"
 #include "JobQueue.h"
+#include "JobRequest.h"
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
 // fmt
@@ -84,6 +85,7 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             return;
         }
     }
+    /*
     else if (id.starts_with(fmt::format("{}_banlist:", this->name)) ||
              id.starts_with(fmt::format("{}_addban:", this->name)) ||
              id.starts_with(fmt::format("{}_removeban:", this->name)))
@@ -104,6 +106,7 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             return;
         }
     }
+    */
     else if (id.starts_with(fmt::format("{}_sendlogs:", this->name)) ||
              id.starts_with(fmt::format("{}_sendqueue:", this->name)) ||
              id.starts_with(fmt::format("{}_deleteguild:", this->name)))
@@ -120,33 +123,50 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         }
         else if (id.starts_with(fmt::format("{}_deleteguild:", this->name)))
         {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
+            AdminBotButtonPanel::DeleteDataButton(id, ctx, event);
             return;
         }
     }
     /*-------- Queue buttons --------*/
-    else if (id.starts_with(fmt::format("{}_showworkers:", this->name)) || 
-             id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
-             id.starts_with(fmt::format("{}_addworker:", this->name)) ||
-             id.starts_with(fmt::format("{}_removeworker:", this->name)) ||
+    else if (id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
+             id.starts_with(fmt::format("{}_adminrefresh:", this->name)) ||
+             id.starts_with(fmt::format("{}_admincomplete:", this->name)) ||
+             id.starts_with(fmt::format("{}_adminhold:", this->name)) ||
+             id.starts_with(fmt::format("{}_showworkers:", this->name)) ||
+             id.starts_with(fmt::format("{}_downloadworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
     {
-        if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
+        if (id.starts_with(fmt::format("{}_assignworkers:", this->name)))
+        {
+            AdminQueueButtonPanel::AssignWorkersButton(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_adminrefresh:", this->name)))
+        {
+            AdminQueueButtonPanel::RefreshButton(id, ctx, event);
+        }
+        else if (id.starts_with(fmt::format("{}_admincomplete:", this->name)))
+        {
+            AdminQueueButtonPanel::MarkCompleteButton(id, ctx, event);
+        }
+        else if (id.starts_with(fmt::format("{}_adminhold:", this->name)))
+        {
+            AdminQueueButtonPanel::MarkOnHoldButton(id, ctx, event);
+        }
+        else if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
         {
             AdminQueueButtonPanel::ShowWorkersButton(id, ctx, event);
             return;
         }
-        else if (id.starts_with(fmt::format("{}_assignworkers:", this->name)))
+        else if (id.starts_with(fmt::format("{}_downloadworkers:", this->name)))
         {
-        }
-        else if (id.starts_with(fmt::format("{}_addworker:", this->name)))
-        {
-        }
-        else if (id.starts_with(fmt::format("{}_removeworker:", this->name)))
-        {
+            AdminQueueButtonPanel::DownloadWorkersButton(id, ctx, event);
+            return;
         }
         else if (id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
         {
+            AdminQueueButtonPanel::ArchiceCompletedButton(id, ctx, event);
+            return;
         }
 
         event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event));
@@ -259,8 +279,14 @@ dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp:
 {
     const dpp::user author = event.command.get_issuing_user();
 
-    AdminQueueButtonPanel queuePanel(this->name, author.id);
+    const auto job = ctx.queue->FirstAssignment([](const std::shared_ptr<const JobRequest> job) -> bool
+        { return job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold; });
+
+    const std::string strID = job ? ToString(job->GetID()) : "";
+
+    AdminQueueButtonPanel queuePanel(this->name, author.id, ToString(job->GetID()));
     queuePanel.AddEmbed("Queue Admin Panel:", CreateQueueEmbed(ctx, event));
+    queuePanel.AddEmbed("Highest Priority Unassigned Job", job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "No unassigned jobs in queue.");
 
     return queuePanel.set_flags(dpp::m_ephemeral);
 }

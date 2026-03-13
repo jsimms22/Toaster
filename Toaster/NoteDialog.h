@@ -16,14 +16,7 @@ class JobRequest;
 class NoteDialog : public dpp::interaction_modal_response
 {
 public:
-	NoteDialog(CommandContext& ctx, const std::shared_ptr<const JobRequest>& job)
-		: dpp::interaction_modal_response(), m_ctx{ ctx }, m_spJob{ job }
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	NoteDialog(CommandContext& ctx, const std::shared_ptr<const JobRequest>& job);
 	~NoteDialog() = default;
 
 	static const std::string modalID;

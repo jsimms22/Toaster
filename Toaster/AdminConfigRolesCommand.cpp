@@ -131,23 +131,24 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
         // These parameters are input that depend on the dialog form's order as defined by the type of the job
         std::string strParam1 = event.components.size() > 0 ? std::get<std::string>(event.components[0].value) : "";
         std::string strParam2 = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
-        
+
         auto is_all_numbers = [](const std::string& s) -> bool {
             return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
                 return std::isdigit(c);
                 });
             };
 
+        utils::FilterWhiteSpace(strParam1);
+        utils::FilterWhiteSpace(strParam2);
+
+        if (!is_all_numbers(strParam2) && !strParam2.empty())
+        {
+            event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
         if (!strParam1.empty() && !strParam2.empty())
         {
-            utils::FilterWhiteSpace(strParam1);
-            utils::FilterWhiteSpace(strParam2);
-
-            if (!is_all_numbers(strParam2))
-            {
-                event.reply(dpp::message("Invalid input for the role id.").set_flags(dpp::m_ephemeral));
-                return;
-            }
 
             try
             {
@@ -158,8 +159,20 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
                 event.reply(dpp::message("Failed to set new role id.").set_flags(dpp::m_ephemeral));
                 return;
             }
-
-            event.reply(dpp::message(CreateReply(ctx, dpp::snowflake(strParam2))).set_flags(dpp::m_ephemeral));
         }
+        else if (!strParam1.empty())
+        {
+            try
+            {
+                ctx.guild->roles[std::stoull(strParam1)] = std::nullopt;
+            }
+            catch (const std::exception)
+            {
+                event.reply(dpp::message("Failed to set new role id.").set_flags(dpp::m_ephemeral));
+                return;
+            }
+        }
+
+        event.reply(dpp::message(CreateReply(ctx, dpp::snowflake(strParam2))).set_flags(dpp::m_ephemeral));
     }
 }

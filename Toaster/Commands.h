@@ -130,28 +130,6 @@ public:
 ///
 /// Provides bot and queue management panels for administrators.
 //---------------------------------------------------------------------------------------------------------------------
-class AdminBotConfigCommand : public ICustomCommand
-{
-public:
-    AdminBotConfigCommand()
-        : ICustomCommand(Command_Admin, "Show the bot configuration dialog.")
-    {
-    }
-
-    virtual ~AdminBotConfigCommand() = default;
-
-    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
-    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
-    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
-    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-/// \class AdminPanelCommand
-/// \brief Displays administrative control panels.
-///
-/// Provides bot and queue management panels for administrators.
-//---------------------------------------------------------------------------------------------------------------------
 class AdminPanelCommand : public ICustomCommand
 {
 public:
@@ -399,13 +377,11 @@ namespace Toaster
         new AdminConfigRolesCommand(),
         new AdminPanelCommand(),
         new WorkerPanelCommand(),
-        //new ShowQueueCommand(),
         new ShowQueueCommand(),
         new ShowQueueSummaryCommand(),
         //new HelpCommand(),
         new CreateRequestCommand(),
         new ModifyRequestCommand(),
-        //new CustomerPanelCommand(),
         new MyRequestsCommand(),
         new ShowRequestCommand()
     };

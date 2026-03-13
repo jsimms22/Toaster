@@ -53,28 +53,51 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
         std::string strParam3 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
         std::string strParam4 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
 
-        if (!strParam1.empty())
+        auto is_all_numbers = [](const std::string& s) -> bool {
+            return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+                return std::isdigit(c);
+                });
+            };
+
+        utils::FilterWhiteSpace(strParam1);
+        utils::FilterWhiteSpace(strParam2);
+        utils::FilterWhiteSpace(strParam3);
+        utils::FilterWhiteSpace(strParam4);
+
+        if (is_all_numbers(strParam1) && !strParam1.empty())
         {
-            utils::FilterWhiteSpace(strParam1);
             ctx.guild->idNewJobChannel = dpp::snowflake(strParam1);
         }
-
-        if (!strParam2.empty())
+        else if (strParam1.empty())
         {
-            utils::FilterWhiteSpace(strParam2);
+            ctx.guild->idNewJobChannel = std::nullopt;
+        }
+
+        if (is_all_numbers(strParam2) && !strParam2.empty())
+        {
             ctx.guild->idUpdateJobChannel = dpp::snowflake(strParam2);
         }
-
-        if (!strParam3.empty())
+        else if (strParam2.empty())
         {
-            utils::FilterWhiteSpace(strParam3);
-            ctx.guild->idDeleteJobChannel = dpp::snowflake(strParam3);
+            ctx.guild->idUpdateJobChannel = std::nullopt;
         }
 
-        if (!strParam4.empty())
+        if (is_all_numbers(strParam3) && !strParam3.empty())
         {
-            utils::FilterWhiteSpace(strParam4);
+            ctx.guild->idDeleteJobChannel = dpp::snowflake(strParam3);
+        }
+        else if (strParam3.empty())
+        {
+            ctx.guild->idDeleteJobChannel = std::nullopt;
+        }
+
+        if (is_all_numbers(strParam4) && !strParam4.empty())
+        {
             ctx.guild->idCompleteJobChannel = dpp::snowflake(strParam4);
+        }
+        else if (strParam4.empty())
+        {
+            ctx.guild->idCompleteJobChannel = std::nullopt;
         }
 
         ctx.guild->SaveGuildSettings(ctx.repo);

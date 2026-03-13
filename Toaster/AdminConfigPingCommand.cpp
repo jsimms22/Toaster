@@ -53,10 +53,27 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
         std::string strParam4 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
         std::string strParam5 = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
 
+        auto is_all_numbers = [](const std::string& s) -> bool {
+            return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+                return std::isdigit(c);
+                });
+            };
+
+        utils::FilterWhiteSpace(strParam1);
+
+        if (!strParam1.empty() && !is_all_numbers(strParam1))
+        {
+            event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
         if (!strParam1.empty())
         {
-            utils::FilterWhiteSpace(strParam1);
             ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = dpp::snowflake(strParam1);
+        }
+        else
+        {
+            ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = std::nullopt;
         }
 
         if (!strParam2.empty())
@@ -64,17 +81,17 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
             ctx.guild->bPingOnNew = strParam2 == "1" ? true : false;
         }
 
-        if (!strParam2.empty())
+        if (!strParam3.empty())
         {
             ctx.guild->bPingOnUpdate = strParam3 == "1" ? true : false;
         }
 
-        if (!strParam2.empty())
+        if (!strParam4.empty())
         {
             ctx.guild->bPingOnDelete = strParam4 == "1" ? true : false;
         }
 
-        if (!strParam2.empty())
+        if (!strParam5.empty())
         {
             ctx.guild->bPingOnComplete = strParam5 == "1" ? true : false;
         }
@@ -87,7 +104,6 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
                     ? fmt::format("<@&{}>", *id)
                     : std::string("*Not Set*");
             };
-
 
         const std::string settings = fmt::format(
             "**General Ping Role:** {}\n"

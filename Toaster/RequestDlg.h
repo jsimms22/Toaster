@@ -22,14 +22,7 @@ class GuildSettings;
 class CraftRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	CraftRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls(); 
-		AddChildrenComponents();
-	}
+	CraftRequestDlg();
 	~CraftRequestDlg() = default;
 
 	static const std::string modalID;
@@ -53,14 +46,7 @@ private:
 class BuildRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	BuildRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	BuildRequestDlg();
 	~BuildRequestDlg() = default;
 
 	static const std::string modalID;
@@ -84,14 +70,7 @@ private:
 class ComponentRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	ComponentRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	ComponentRequestDlg();
 	~ComponentRequestDlg() = default;
 
 	static const std::string modalID;
@@ -113,14 +92,7 @@ private:
 class ResourceRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	ResourceRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	ResourceRequestDlg();
 	~ResourceRequestDlg() = default;
 
 	static const std::string modalID;
@@ -144,14 +116,7 @@ private:
 class RefineryRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	RefineryRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	RefineryRequestDlg();
 	~RefineryRequestDlg() = default;
 
 	static const std::string modalID;
@@ -175,14 +140,7 @@ private:
 class HazardousRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	HazardousRequestDlg()
-		: dpp::interaction_modal_response()
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	HazardousRequestDlg();
 	~HazardousRequestDlg() = default;
 
 	static const std::string modalID;
@@ -206,33 +164,23 @@ private:
 class AssignRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	AssignRequestDlg(const std::shared_ptr<const JobRequest>& job,
-				     const std::vector<std::pair<dpp::snowflake, std::string>>& workers,
-					 const std::string& worker = "")
-		: dpp::interaction_modal_response(), m_spJob(job), m_workers(workers), m_svWorker(worker)
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	AssignRequestDlg(const std::shared_ptr<const JobRequest>& job);
 	~AssignRequestDlg() = default;
 
 	static const std::string modalID;
 	static const std::string modalDesc;
 
-	void BuildWorkerList();
 	void InitializeControls();
 	void AddChildrenComponents();
 
 private:
 	dpp::component JobRequestIDEdit;
 	dpp::component WorkerAssignSelect;
+	dpp::component WorkerAssignSelect2;
+	dpp::component WorkerAssignSelect3;
 	dpp::component StatusUpdateSelect;
 
 	std::shared_ptr<const JobRequest> m_spJob;
-	std::vector<std::pair<dpp::snowflake, std::string>> m_workers;
-	std::string m_svWorker;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -250,14 +198,7 @@ public:
 
 	static const std::vector<StatusOption> StatusList;
 
-	StatusChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
-		: dpp::interaction_modal_response(), m_spJob(job)
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	StatusChangeRequestDlg(const std::shared_ptr<const JobRequest>& job);
 	~StatusChangeRequestDlg() = default;
 
 	static const std::string modalID;
@@ -289,14 +230,7 @@ public:
 
 	static const std::vector<PriorityOption> PriorityList;
 
-	PriorityChangeRequestDlg(const std::shared_ptr<const JobRequest>& job)
-		: dpp::interaction_modal_response(), m_spJob(job)
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	PriorityChangeRequestDlg(const std::shared_ptr<const JobRequest>& job);
 	~PriorityChangeRequestDlg() = default;
 
 	static const std::string modalID;
@@ -319,14 +253,7 @@ private:
 class EditRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	EditRequestDlg(const std::shared_ptr<const JobRequest>& job)
-		: dpp::interaction_modal_response(), m_spJob(job)
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	EditRequestDlg(const std::shared_ptr<const JobRequest>& job);
 	~EditRequestDlg() = default;
 
 	static const std::string modalID;
@@ -366,14 +293,7 @@ private:
 class DeleteRequestDlg : public dpp::interaction_modal_response
 {
 public:
-	DeleteRequestDlg(const std::shared_ptr<const JobRequest>& job, const std::string details)
-		: dpp::interaction_modal_response(), m_spJob(job), m_strDetails(details)
-	{
-		set_custom_id(modalID);
-		set_title(modalDesc);
-		InitializeControls();
-		AddChildrenComponents();
-	}
+	DeleteRequestDlg(const std::shared_ptr<const JobRequest>& job, const std::string details);
 	~DeleteRequestDlg() = default;
 
 	static const std::string modalID;

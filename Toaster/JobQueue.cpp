@@ -276,26 +276,26 @@ const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
     fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Type)\n");
     for (const auto& [type, count] : typeCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", utils::JobTypeToString(type), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", utils::JobTypeToString(type), count);
     }
 
     // Status summary
     fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Status)\n");
     for (const auto& [status, count] : statusCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", JobRequest::StatusToString(status), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::StatusToString(status), count);
     }
 
     // Priority summary
     fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Priority)\n");
     for (const auto& [priority, count] : priorityCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", JobRequest::PriorityToString(priority), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::PriorityToString(priority), count);
     }
 
     // Unassigned summary
     fmt::format_to(std::back_inserter(buffer), "\n### Unassigned Open Jobs\n");
-    fmt::format_to(std::back_inserter(buffer), "**Unassigned:** {}\n", unassignedCounts);
+    fmt::format_to(std::back_inserter(buffer), "- Unassigned: {}\n", unassignedCounts);
 
     // Convert memory_buffer to std::string
     return fmt::to_string(buffer);
@@ -333,28 +333,28 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
     fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Type)\n");
     for (const auto& [type, count] : typeCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", utils::JobTypeToString(type), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", utils::JobTypeToString(type), count);
     }
 
     // Status summary
     fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Status)\n");
     for (const auto& [status, count] : statusCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", JobRequest::StatusToString(status), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::StatusToString(status), count);
     }
 
     // Priority summary
     fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Priority)\n");
     for (const auto& [priority, count] : priorityCounts)
     {
-        fmt::format_to(std::back_inserter(buffer), "**{}:** {}\n", JobRequest::PriorityToString(priority), count);
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::PriorityToString(priority), count);
     }
 
     // Stalled job IDs
     fmt::format_to(std::back_inserter(buffer), "\n### Top 5 Active Job IDs\n");
     for (const auto& id : assignedActiveIDs)
     {
-        fmt::format_to(std::back_inserter(buffer), "{}\n", ToString(id));
+        fmt::format_to(std::back_inserter(buffer), "- {}\n", ToString(id));
     }
 
     // Convert memory_buffer to std::string
@@ -384,7 +384,7 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     fmt::format_to(std::back_inserter(buffer), "\n### Stalled Job ID:\n");
     for (const auto& id : stalledJobs)
     {
-        fmt::format_to(std::back_inserter(buffer), "  {}\n", ToString(id));
+        fmt::format_to(std::back_inserter(buffer), "- {}\n", ToString(id));
     }
 
     // Convert memory_buffer to std::string
@@ -446,6 +446,50 @@ const std::string JobQueue::PrintQueueCompact(dpp::cluster& cluster, const dpp::
     }
 
     // Convert buffer to std::string once at the end
+    return fmt::to_string(buffer);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
+    const dpp::snowflake& idGuild,
+    const std::size_t page,
+    JobCompare compare) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+
+    const std::size_t start_index = page * 1;
+    const std::size_t end_index = start_index + 1;
+
+    std::size_t filtered_index = 0;
+    std::size_t display_pos = 0;
+
+    fmt::memory_buffer buffer;
+    for (const auto& job : m_vQueue)
+    {
+        if (!compare(job))
+            continue;
+
+        // Only count filtered jobs
+        if (filtered_index >= end_index)
+            break;
+
+        if (filtered_index >= start_index)
+        {
+            ++display_pos;
+
+            fmt::format_to(
+                std::back_inserter(buffer),
+                "***Position: {}***\n{}\n",
+                start_index + display_pos,
+                job->PrintJobDetails(cluster, idGuild)
+            );
+        }
+
+        ++filtered_index;
+    }
+
     return fmt::to_string(buffer);
 }
 
@@ -540,7 +584,25 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
+const std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(JobCompare compare)
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+
+    for (std::shared_ptr<JobRequest>& job : m_vQueue)
+    {
+        if (!compare(job))
+            continue;
+
+        return job;
+    }
+
+    return {};
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(const dpp::snowflake& userID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 

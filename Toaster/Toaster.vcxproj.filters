@@ -118,7 +118,12 @@
     <ClCompile Include="MongoJobRepo.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
-    <ClCompile Include="RequestID.cpp" />
+    <ClCompile Include="RequestID.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalButtonPanel.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tinyxml2.h">
@@ -193,9 +198,6 @@
     <ClInclude Include="AdminButtonPanel.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="Commands.h">
-      <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="Database.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
@@ -211,7 +213,15 @@
     <ClInclude Include="MongoJobRepo.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
-    <ClInclude Include="RequestID.h" />
+    <ClInclude Include="RequestID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalButtonPanel.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ThirdParty">

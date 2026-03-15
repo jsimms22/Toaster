@@ -23,6 +23,8 @@ public:
 
 	void AddEmbed(const std::string& header, const std::string& description);
 
+	dpp::component GetPageRow() const { return m_row; }
+
 private:
 	dpp::component m_row;
 	dpp::component m_btnNext;

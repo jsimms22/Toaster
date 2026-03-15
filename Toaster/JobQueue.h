@@ -55,7 +55,7 @@ public:
     const std::size_t GetQueueSize() const;
 
     // Retrieve Job Methods
-    const std::shared_ptr<const JobRequest> FirstAssignment(JobCompare compare);
+    const std::shared_ptr<const JobRequest> FirstAssignment(JobCompare compare, const std::size_t offset = 0);
     const std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
     const std::shared_ptr<const JobRequest> GetJobByID(const RequestID rID) const;
     const std::shared_ptr<const JobRequest> GetJobByID(const std::string& rID) const;
@@ -64,6 +64,7 @@ public:
     void RequestModify(const RequestID rID, JobMutation mutator);
     void RequestAdd(std::shared_ptr<JobRequest> job);
     const bool RequestDelete(const RequestID rID);
+    void ArchiveCompleted(const std::vector<RequestID>& ids, std::uint64_t age);
 
 private:
     // Worker thread methods
@@ -74,6 +75,7 @@ private:
     void AddJobDB(const RequestID rID);
     void UpdateJobDB(const RequestID rID);
     void RemoveJobDB(const RequestID rID);
+    void ArchiveJobsDB(const std::vector<RequestID>& ids);
 
     dpp::snowflake m_guildID;
     std::vector<std::shared_ptr<JobRequest>> m_vQueue;

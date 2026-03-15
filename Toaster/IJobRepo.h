@@ -37,6 +37,7 @@ public:
     virtual void InsertJob(const std::shared_ptr<const JobRequest>& job) = 0;
     virtual void UpdateJob(const std::shared_ptr<const JobRequest>& job) = 0;
     virtual void DeleteJob(const RequestID) = 0;
+    virtual void ArchiveJobs(const std::vector<RequestID>& ids) = 0;
 
     // Guild Settings
     virtual std::vector<dpp::snowflake> GetGuildsWithSettings() = 0;

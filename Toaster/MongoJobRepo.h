@@ -19,6 +19,7 @@ public:
     void InsertJob(const std::shared_ptr<const JobRequest>& job) override;
     void UpdateJob(const std::shared_ptr<const JobRequest>& job) override;
     void DeleteJob(const RequestID id) override;
+    void ArchiveJobs(const std::vector<RequestID>& ids) override;
 
     // Guild Settings
     std::vector<dpp::snowflake> GetGuildsWithSettings() override;
@@ -29,9 +30,12 @@ public:
     void DeleteGuild(const dpp::snowflake& guildID) override;
 
     // Custom Mongo Interfaces
-    void Insert(const std::string& name, bsoncxx::document::view_or_value document);
-    void Update(const std::string& name, bsoncxx::document::view_or_value filter, bsoncxx::document::view_or_value replacement);
-    void Delete(const std::string& name, bsoncxx::document::view_or_value filter);
+    void Insert(const std::string& name, bsoncxx::document::value document);
+    void InsertMany(const std::string& name, const std::vector<bsoncxx::document::value>& documents);
+    void Update(const std::string& name, bsoncxx::document::value filter, bsoncxx::document::value replacement);
+    void Delete(const std::string& name, bsoncxx::document::value filter);
+    void DeleteMany(const std::string& name, bsoncxx::document::value filter);
+    void ArchiveMany(const std::string& src, const std::string& dst, bsoncxx::document::value filter);
 
 protected:
     // Worker Thread
@@ -40,8 +44,10 @@ protected:
     void DatabaseWorker(std::stop_token stopToken) override;
 
 private:
+    mongocxx::collection* GetCollection(const std::string& name);
     void CreateIndexes();
 
     mongocxx::collection m_jobsCollection;
-    mongocxx::collection m_guildsCollection;
+    mongocxx::collection m_guildsCollection; 
+    mongocxx::collection m_archiveCollection;
 };

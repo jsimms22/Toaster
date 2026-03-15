@@ -52,6 +52,9 @@ public:
 	// Slow Down
 	std::chrono::seconds announcement_cooldown{ 0 };
 
+	// Open request cap
+	std::uint8_t requestLimitPerUser = 15;
+
 	// Ping Rules
 	bool bPingOnNew			{ true };
 	bool bPingOnUpdate		{ false };

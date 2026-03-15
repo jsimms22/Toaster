@@ -85,7 +85,7 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
 
         // Edit the original message
-        event.edit_original_response(SendPanel(ctx, event, author.id).set_flags(dpp::m_ephemeral));
+        event.edit_original_response(SendPanel(ctx, event, author.id, 0 /* page */).set_flags(dpp::m_ephemeral));
     }
 }
 
@@ -136,7 +136,7 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         const dpp::snowflake user = parts[1];
 
         // Edit the original message
-        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user).set_flags(dpp::m_ephemeral));
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user, 0).set_flags(dpp::m_ephemeral));
 
         return;
     }
@@ -158,7 +158,7 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         const dpp::snowflake user = parts[1];
         
         // Edit the original message
-        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user).set_flags(dpp::m_ephemeral));
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user, 0).set_flags(dpp::m_ephemeral));
 
         return;
     }
@@ -172,9 +172,25 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         GeneralUserPanel::ShowNotesButton(id, ctx, event);
         return;
     }
+    /*-------- Page (Queue) buttons --------*/
+    else if (id.starts_with(fmt::format("{}_usernext:", Option_Overview)) ||
+             id.starts_with(fmt::format("{}_userprev:", Option_Overview)))
+    {
+        // Deconstruct custom id for state information
+        const auto parts = utils::Split(id, ':');
+        const dpp::snowflake user = parts[1];
+        const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user, page).set_flags(dpp::m_ephemeral));
+        return;
+    }
 }
 
-dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const dpp::snowflake& user) const
+dpp::message WorkerPanelCommand::SendPanel(
+    CommandContext& ctx, 
+    const dpp::interaction_create_t& event, 
+    const dpp::snowflake& user,
+    const std::size_t page) const
 {
     // Return early if queue is empty
     const std::string header = "Worker Summary Report";
@@ -190,9 +206,13 @@ dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::inter
 
     // Construct the actual info panel
     const std::string summary = ctx.queue->PrintQueueWorkerSummary(ctx.cluster, user);
+    const dpp::user author = event.command.get_issuing_user();
 
-    // Return early if no active job assignment
-    const auto& job = ctx.queue->FirstAssignment(user);
+    // Retrieve the job
+    const auto compare = [user](const std::shared_ptr<const JobRequest> job) -> bool
+        { return job->IsWorker(user) && job->GetStatus() < JobRequest::status::complete; };
+    const auto job = ctx.queue->FirstAssignment(compare, page);
+    const std::size_t size = ctx.queue->GetQueueSize(compare);
     if (!job)
     {
         dpp::embed overview;
@@ -200,7 +220,7 @@ dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::inter
                 .set_description(!summary.empty() ? summary : "No job data in the active queue.")
                 .set_color(0x3498db);
         dpp::embed top;
-        top.set_title("Top Assigment (by priority)")
+        top.set_title("Assigned Job (Page 1 of 1)")
             .set_description("No active requests or jobs currently assigned to you.")
             .set_color(0x3498db);
 
@@ -211,8 +231,9 @@ dpp::message WorkerPanelCommand::SendPanel(CommandContext& ctx, const dpp::inter
     const std::string strJobID = ToString(job->GetID());
 
     WorkerPanel panel(Option_Overview, user, strJobID, job->IsWorker(user));
+    panel.AddPageRow(page, size);
     panel.AddEmbed(header, summary);
-    panel.AddEmbed("Top Assigment (by priority)", priority);
+    panel.AddEmbed(fmt::format("Assigned Job (Page {} of {})", page + 1, size), priority);
 
     return panel;
 }

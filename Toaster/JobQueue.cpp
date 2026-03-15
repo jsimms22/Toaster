@@ -23,7 +23,7 @@
 #include <iterator>
 #include <stdexcept>
 
-const std::size_t JobQueue::JOBS_PER_QUEUE_PAGE{ 6 };
+const std::size_t JobQueue::JOBS_PER_QUEUE_PAGE{ 5 };
 const std::size_t JobQueue::JOBS_PER_DETAIL_PAGE{ 3 };
 
 namespace
@@ -130,6 +130,50 @@ void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
+void JobQueue::ArchiveCompleted(const std::vector<RequestID>& ids, std::uint64_t age)
+{
+    if (ids.empty())
+        return;
+
+    const std::uint64_t now = utils::GetEpochTimestamp();
+    const std::uint64_t cutoff = now - age;
+
+    std::vector<RequestID> archiveIDs;
+
+    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+    for (const auto& id : ids)
+    {
+        for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
+        {
+            auto& job = *itr;
+
+            if (!job || job->GetID() != id)
+                continue;
+
+            if (job->GetLastEditTime() < cutoff)
+            {
+                archiveIDs.push_back(id);
+
+                itr->reset();
+                m_vQueue.erase(itr);
+            }
+
+            break;
+        }
+    }
+
+    //std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+
+    lock.unlock();
+
+    if (!archiveIDs.empty())
+        m_repo->ArchiveJobs(archiveIDs);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
 void JobQueue::AddJobDB(const RequestID rID)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -153,6 +197,17 @@ void JobQueue::UpdateJobDB(const RequestID rID)
 void JobQueue::RemoveJobDB(const RequestID rID)
 {
     m_repo->DeleteJob(rID);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void JobQueue::ArchiveJobsDB(const std::vector<RequestID>& ids)
+{
+    if (ids.empty())
+        return;
+
+    m_repo->ArchiveJobs(ids);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -410,7 +465,7 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 
         fmt::format_to(
             std::back_inserter(buffer),
-            "***Position: {}***\n{}\n",
+            "### Position: {}\n{}\n",
             position,
             job->PrintJobDetails(cluster, idGuild)
         );
@@ -439,7 +494,7 @@ const std::string JobQueue::PrintQueueCompact(dpp::cluster& cluster, const dpp::
 
         fmt::format_to(
             std::back_inserter(buffer),
-            "***Position: {}***\n{}\n",
+            "### --------- Position: {} ---------\n{}\n",
             position,
             job->PrintJobDetailsCompact(cluster, idGuild)
         );
@@ -468,6 +523,8 @@ const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        ++display_pos;
+        
         if (!compare(job))
             continue;
 
@@ -477,11 +534,9 @@ const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
 
         if (filtered_index >= start_index)
         {
-            ++display_pos;
-
             fmt::format_to(
                 std::back_inserter(buffer),
-                "***Position: {}***\n{}\n",
+                "### --------- Position: {} ---------\n{}\n",
                 start_index + display_pos,
                 job->PrintJobDetails(cluster, idGuild)
             );
@@ -512,6 +567,8 @@ const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        ++display_pos;
+
         if (!compare(job))
             continue;
 
@@ -521,11 +578,9 @@ const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
 
         if (filtered_index >= start_index)
         {
-            ++display_pos;
-
             fmt::format_to(
                 std::back_inserter(buffer),
-                "***Position: {}***\n{}\n",
+                "### --------- Position: {} ---------\n{}\n",
                 start_index + display_pos,
                 job->PrintJobDetails(cluster, idGuild)
             );
@@ -556,6 +611,8 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        ++display_pos;
+
         if (!compare(job))
             continue;
 
@@ -565,11 +622,10 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
 
         if (filtered_index >= start_index)
         {
-            ++display_pos;
 
             fmt::format_to(
                 std::back_inserter(buffer),
-                "***Position: {}***\n{}\n",
+                "### --------- Position: {} ---------\n{}\n",
                 start_index + display_pos,
                 job->PrintJobDetailsCompact(cluster, idGuild)
             );
@@ -584,16 +640,20 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(JobCompare compare)
+const std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(JobCompare compare, const std::size_t offset)
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
+    std::size_t counter = 0;
     for (std::shared_ptr<JobRequest>& job : m_vQueue)
     {
         if (!compare(job))
             continue;
 
-        return job;
+        ++counter;
+
+        if (counter > offset)
+            return job;
     }
 
     return {};

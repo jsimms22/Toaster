@@ -132,9 +132,9 @@ std::string HazardousRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::
 
     return fmt::format(
         "{}"
-        "**Threat Level**: {}\n"
-        "**Retrieval Zone**: {}\n"
-        "**Hazardous Item List**: \n{}\n",
+        "Threat Level: {}\n"
+        "Retrieval Zone: {}\n"
+        "Hazardous Item List: {}",
         base,
         ThreatToString(m_threat),
         m_strHazItemZone,

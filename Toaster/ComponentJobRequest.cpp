@@ -57,7 +57,7 @@ std::string ComponentJobRequest::PrintJobDetails(dpp::cluster& cluster, const dp
 
     return fmt::format(
         "{}"
-        "**Component List**: \n{}\n",
+        "Component List: {}",
         base,
         m_strComponentList);
 }

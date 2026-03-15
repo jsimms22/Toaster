@@ -21,56 +21,56 @@ AdminQueueButtonPanel::AdminQueueButtonPanel(
 	const std::string& OwnerName,
 	const dpp::snowflake& userID,
 	const std::string& rID)
-	: dpp::message(), m_userID{ userID }
+	: dpp::message(), m_userID{ userID }, m_ownerName{OwnerName}
 {
-	// row 1
-	m_btnAssignWorkers.set_type(dpp::cot_button)
-		.set_label("Assign Workers")
-		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_assignworkers:{}:{}", OwnerName, m_userID, rID));
-
+	// row 2
 	m_btnRefreshPanel.set_type(dpp::cot_button)
 		.set_label("Refresh Panel")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_adminrefresh:{}:{}", OwnerName, m_userID, rID));
+		.set_id(fmt::format("{}_queuerefresh:{}:{}", m_ownerName, m_userID, rID));
+
+	m_btnAssignWorkers.set_type(dpp::cot_button)
+		.set_label("Assign Workers")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_assignworkers:{}:{}", m_ownerName, m_userID, rID));
 
 	m_btnMarkComplete.set_type(dpp::cot_button)
 		.set_label("Mark Complete")
 		.set_style(dpp::cos_success)
-		.set_id(fmt::format("{}_admincomplete:{}:{}", OwnerName, m_userID, rID));
+		.set_id(fmt::format("{}_admincomplete:{}:{}", m_ownerName, m_userID, rID));
 
 	m_btnMarkOnHold.set_type(dpp::cot_button)
 		.set_label("Mark On Hold")
 		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("{}_adminhold:{}:{}", OwnerName, m_userID, rID));
+		.set_id(fmt::format("{}_adminhold:{}:{}", m_ownerName, m_userID, rID));
 
-	m_row.add_component(m_btnRefreshPanel)
+	m_row2.add_component(m_btnRefreshPanel)
 		.add_component(m_btnAssignWorkers)
 		.add_component(m_btnMarkComplete)
 		.add_component(m_btnMarkOnHold);
 
-	// row 2
+	// row 3
 	m_btnShowWorkers.set_type(dpp::cot_button)
 		.set_label("Show Workers")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_showworkers:{}", OwnerName, m_userID, rID));
+		.set_id(fmt::format("{}_showworkers:{}", m_ownerName, m_userID, rID));
 
 	m_btnDownloadWorkers.set_type(dpp::cot_button)
 		.set_label("Download Workers")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_downloadworkers:{}", OwnerName, m_userID, rID));
+		.set_id(fmt::format("{}_downloadworkers:{}", m_ownerName, m_userID, rID));
 
 	m_btnArchiveJobs.set_type(dpp::cot_button)
 		.set_label("Archive Completed")
 		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("{}_archivecomplete:{}", OwnerName, m_userID));
+		.set_id(fmt::format("{}_archivecomplete:{}", m_ownerName, m_userID));
 
-	m_row2.add_component(m_btnShowWorkers)
+	m_row3.add_component(m_btnShowWorkers)
 		.add_component(m_btnDownloadWorkers)
 		.add_component(m_btnArchiveJobs);
 
-	add_component(m_row);
 	add_component(m_row2);
+	add_component(m_row3);
 }
 
 void AdminQueueButtonPanel::AddEmbed(const std::string& header, const std::string& description)
@@ -81,6 +81,32 @@ void AdminQueueButtonPanel::AddEmbed(const std::string& header, const std::strin
 		.set_color(0x3498db);
 
 	add_embed(embed);
+}
+
+void AdminQueueButtonPanel::AddPageRow(const std::size_t page, const std::size_t size)
+{
+	const auto lastPage = size <= 1 ? 0 : (size - 1) / 1;
+
+	const std::size_t prevPage = page > 0 ? page - 1 : 0;
+	const std::size_t nextPage = page < lastPage ? page + 1 : lastPage;
+
+	if (prevPage != nextPage)
+	{
+		m_btnPrev.set_type(dpp::cot_button)
+			.set_label("Prev")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_adminnext:{}", m_ownerName, prevPage));
+
+		m_btnNext.set_type(dpp::cot_button)
+			.set_label("Next")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_adminprev:{}", m_ownerName, nextPage));
+
+		m_pagerow.add_component(m_btnPrev)
+				 .add_component(m_btnNext);
+
+		add_component(m_pagerow);
+	}
 }
 
 void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event, const bool bSendFile)
@@ -222,6 +248,11 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 	: dpp::message(), m_userID{ userID }
 {
 	// Row 1
+	m_btnRefreshPanel.set_type(dpp::cot_button)
+		.set_label("Refresh Panel")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_botrefresh:{}", OwnerName, m_userID));
+
 	m_btnChangeRole.set_type(dpp::cot_button)
 		.set_label("Change Role")
 		.set_style(dpp::cos_primary)
@@ -237,7 +268,8 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_pingrules:{}", OwnerName, m_userID));
 
-	m_row.add_component(m_btnChangeRole)
+	m_row.add_component(m_btnRefreshPanel)
+		.add_component(m_btnChangeRole)
 		.add_component(m_btnChangeChannel)
 		.add_component(m_btnPingRules);
 

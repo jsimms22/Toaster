@@ -131,9 +131,9 @@ std::string RefineryJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp
 
     return fmt::format(
         "{}"
-        "**Resource Type**: {}\n"
-        "**Resource List**:\n{}\n"
-        "**Refinery Site**: {}\n",
+        "Resource Type: {}\n"
+        "Resource List:{}\n"
+        "Refinery Site: {}",
         base,
         RefineryJobRequest::StateToString(m_eResourceState),
         m_strResourceList,

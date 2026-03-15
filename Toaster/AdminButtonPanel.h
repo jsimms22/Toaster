@@ -19,7 +19,7 @@ public:
 	virtual ~AdminQueueButtonPanel() = default;
 
 	void AddEmbed(const std::string& header, const std::string& description);
-
+	void AddPageRow(const std::size_t page, const std::size_t size);
 
 	static void AssignWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
 	static void RefreshButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
@@ -31,10 +31,14 @@ public:
 	static void ArchiceCompletedButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
 
 protected:
-	dpp::component m_row;
+	dpp::component m_pagerow;
 	dpp::component m_row2;
+	dpp::component m_row3;
+	// page row
+	dpp::component m_btnNext;
+	dpp::component m_btnPrev;
 
-	// Row 1
+	// Row 2
 	dpp::component m_btnRefreshPanel;
 	dpp::component m_btnAssignWorkers;
 	dpp::component m_btnMarkComplete;
@@ -46,6 +50,7 @@ protected:
 	dpp::component m_btnArchiveJobs;
 
 	dpp::snowflake m_userID;
+	std::string m_ownerName;
 };
 
 class AdminBotButtonPanel :public dpp::message
@@ -80,6 +85,7 @@ protected:
 	dpp::component m_row3;
 
 	// Row 1
+	dpp::component m_btnRefreshPanel;
 	dpp::component m_btnChangeRole;
 	dpp::component m_btnChangeChannel;
 	dpp::component m_btnPingRules;

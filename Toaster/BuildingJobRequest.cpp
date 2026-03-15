@@ -110,9 +110,9 @@ std::string BuildingJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp
 
     return fmt::format(
         "{}"
-        "**Building Designation**: {}\n"
-        "**Building Zone**: {}\n"
-        "**Building Requirements**: \n{}\n",
+        "Building Designation: {}\n"
+        "Building Zone: {}\n"
+        "Building Requirements: {}",
         base,
         m_strBldgDesignation,
         m_strBldgZone,

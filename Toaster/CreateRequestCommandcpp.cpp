@@ -49,10 +49,22 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
 
     const auto pManager = PermissionsMgr::GetInstance();
-    if (!pManager->CanCreateJob(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
+    dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+    if (!pManager->CanCreateJob(event, author.id, guild, ctx.guild) && !ctx.debug)
     {
         // Permission denied
         event.reply(dpp::message("You do not have permissions to create requests.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to create a request with command {}.", author.global_name, strCmdID));
+        return;
+    }
+    
+    // Eventually this will be dynamic
+    if (!pManager->CanAccessAdminPanel(event, author.id, guild, ctx.guild) &&
+        ctx.guild->requestLimitPerUser <= ctx.queue->GetQueueSize([user = author.id](const std::shared_ptr<const JobRequest> job) -> bool
+                                                                  { return job->GetCustomerID() == user && job->GetStatus() < JobRequest::status::hold; }))
+    {
+        // Too many requests in queue
+        event.reply(dpp::message("You currently have too many requests in queue. Current capacity is 15 open per user. Completed or On Hold does not influence this cap.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to create a request with command {}.", author.global_name, strCmdID));
         return;
     }

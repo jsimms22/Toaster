@@ -377,14 +377,14 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
     }
 
     return fmt::format(
-        "**ID**: {}\n"
-        "**Created**: <t:{}:F>\n"
-        "**Last Edit**: <t:{}:F>\n"
-        "**Priority**: {}\n"
-        "**Status**: {}\n"
-        "**Customer**: {}\n"
-        "**Game Handle**: {}\n"
-        "**Assigned**: {}\n",
+        "ID: **{}**\n"
+        "Created: <t:{}:F>\n"
+        "Last Edit: <t:{}:F>\n"
+        "Priority: {}\n"
+        "Status: {}\n"
+        "Customer: {}\n"
+        "Game Handle: {}\n"
+        "Assigned: {}\n",
         ToString(m_id),
         m_timeCreated,
         m_timeLastEdit,
@@ -417,13 +417,13 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
     }
 
     return fmt::format(
-        "**ID**: {}\n"
-        "**Created**: <t:{}:F>\n"
-        "**Priority**: {}\n"
-        "**Status**: {}\n"
-        "**Customer**: {}\n"
-        "**Game Handle**: {}\n"
-        "**Assigned**: {}\n",
+        "ID: **{}**\n"
+        "Created: <t:{}:F>\n"
+        "Priority: {}\n"
+        "Status: {}\n"
+        "Customer: {}\n"
+        "Game Handle: {}\n"
+        "Assigned: {}\n",
         ToString(m_id),
         m_timeCreated,
         PriorityToString(m_eJobPriority),

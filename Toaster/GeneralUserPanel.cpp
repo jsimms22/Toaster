@@ -15,27 +15,27 @@ GeneralUserPanel::GeneralUserPanel(
 	const std::string& OwnerName,
 	const dpp::snowflake& userID,
 	const std::string& jobID)
-	: dpp::message(), m_userID{ userID }, m_jobID{ jobID }
+	: dpp::message(), m_userID{ userID }, m_jobID{ jobID }, m_ownerName{OwnerName}
 {
 	m_btnEdit.set_type(dpp::cot_button)
 		.set_label("Edit")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_edit:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_edit:{}:{}", m_ownerName, m_userID, m_jobID));
 
 	m_btnNote.set_type(dpp::cot_button)
 		.set_label("Add Note")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_note:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_note:{}:{}", m_ownerName, m_userID, m_jobID));
 
 	m_btnDelete.set_type(dpp::cot_button)
 		.set_label("Delete")
 		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("{}_delete:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_delete:{}:{}", m_ownerName, m_userID, m_jobID));
 
 	m_btnShowNotes.set_type(dpp::cot_button)
 		.set_label("Show Job Notes")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_allnotes:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_allnotes:{}:{}", m_ownerName, m_userID, m_jobID));
 }
 
 void GeneralUserPanel::AddEmbed(const std::string& header, const std::string& description)
@@ -48,6 +48,41 @@ void GeneralUserPanel::AddEmbed(const std::string& header, const std::string& de
 	add_embed(embed);
 }
 
+void GeneralUserPanel::AddPageRow(const std::size_t page, const std::size_t size)
+{
+	const auto lastPage = size <= 1 ? 0 : (size - 1) / 1;
+
+	const std::size_t prevPage = page > 0 ? page - 1 : 0;
+	const std::size_t nextPage = page < lastPage ? page + 1 : lastPage;
+
+	if (prevPage != nextPage)
+	{
+		m_btnPrev.set_type(dpp::cot_button)
+			.set_label("Prev")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_usernext:{}:{}", m_ownerName, m_userID, prevPage));
+
+		m_btnNext.set_type(dpp::cot_button)
+			.set_label("Next")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_userprev:{}:{}", m_ownerName, m_userID, nextPage));
+
+		m_pagerow.add_component(m_btnPrev)
+			.add_component(m_btnNext);
+
+		add_component(m_pagerow);
+	}
+}
+
+void GeneralUserPanel::AddCustomButton(const dpp::component btn, const std::size_t row)
+{
+	switch (row)
+	{
+		case 1: m_row.add_component(btn); return;
+		case 2: m_row2.add_component(btn); return;
+		default: return;
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 /// \brief 

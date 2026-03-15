@@ -97,7 +97,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         m_debug
     };
 
-    for (auto cmd : Toaster::BotCommands)
+    for (const auto& cmd : Toaster::BotCommands)
     {
         cmd->ExecuteCommand(ctx, event);
     }
@@ -143,7 +143,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         m_debug
     };
 
-    for (auto cmd : Toaster::BotCommands)
+    for (const auto& cmd : Toaster::BotCommands)
     {
         cmd->ExecuteInteraction(ctx, event);
     }
@@ -189,7 +189,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         m_debug
     };
 
-    for (auto cmd : Toaster::BotCommands)
+    for (const auto& cmd : Toaster::BotCommands)
     {
         cmd->ExecuteFormSubmit(ctx, event);
     }
@@ -235,7 +235,7 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
         m_debug
     };
 
-    for (auto cmd : Toaster::BotCommands)
+    for (const auto& cmd : Toaster::BotCommands)
     {
         cmd->ExecuteButtonClick(ctx, event);
     }

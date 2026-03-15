@@ -136,9 +136,9 @@ std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp
 
     return fmt::format(
         "{}"
-        "**Resource Type**: {}\n"
-        "**Resource List**: \n{}\n"
-        "**Expected Quality**: {}\n",
+        "Resource Type: {}\n"
+        "Resource List: {}\n"
+        "Expected Quality: {}",
         base,
         StateToString(m_eResourceState),
         m_strResourceList,

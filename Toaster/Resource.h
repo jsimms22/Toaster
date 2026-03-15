@@ -114,6 +114,11 @@ constexpr const char* Option_Status				{ "status" };
 constexpr const char* Option_Priority			{ "priority" };
 constexpr const char* Option_Delete				{ "delete" };
 constexpr const char* Option_Note				{ "note" };
+
+// Command Options for Command_ModifyRequest
+constexpr const char* Option_HelpCustomer		{ "helpcustomer" };
+constexpr const char* Option_HelpWorker			{ "helpworker" };
+constexpr const char* Option_HelpAdmin			{ "helpadmin" };
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
 
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/

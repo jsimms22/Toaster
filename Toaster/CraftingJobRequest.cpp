@@ -110,9 +110,9 @@ std::string CraftingJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp
 
     return fmt::format(
         "{}"
-        "**Item Description**: {}\n"
-        "**Item Quantity**: {}\n"
-        "**Expected Quality**: {}\n",
+        "Item Description: {}\n"
+        "Item Quantity: {}\n"
+        "Expected Quality: {}",
         base,
         m_strItemDesc,
         m_strQuantity,

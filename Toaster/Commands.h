@@ -15,6 +15,7 @@
 #include <dpp/dispatcher.h>
 #include <dpp/snowflake.h>
 // std library
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -153,7 +154,7 @@ private:
     dpp::message CreateBotPanel(CommandContext& ctx, const dpp::interaction_create_t& event) const;
 
     const std::string CreateQueueEmbed(CommandContext& ctx, const dpp::interaction_create_t& event) const;
-    dpp::message CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event) const;
+    dpp::message CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::size_t page) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -179,7 +180,11 @@ public:
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
 
 private:
-    dpp::message SendPanel(CommandContext& ctx, const dpp::interaction_create_t& event, const dpp::snowflake& user) const;
+    dpp::message SendPanel(
+        CommandContext& ctx, 
+        const dpp::interaction_create_t& event, 
+        const dpp::snowflake& user,
+        const std::size_t page) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -349,8 +354,12 @@ class HelpCommand : public ICustomCommand
 {
 public:
     HelpCommand()
-        : ICustomCommand(Command_Help, "List all available commands for the bot.")
+        : ICustomCommand(Command_Help, "Displays help documentation for customers, workers, or managers.")
     {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Cmd, "Select the help doc to view.", true)
+            .add_choice(dpp::command_option_choice("Customer Help Page", Option_HelpCustomer))
+            .add_choice(dpp::command_option_choice("Worker Help Page", Option_HelpWorker))
+            .add_choice(dpp::command_option_choice("Manager Help Page", Option_HelpAdmin)));
     }
 
     virtual ~HelpCommand() = default;
@@ -379,7 +388,7 @@ namespace Toaster
         new WorkerPanelCommand(),
         new ShowQueueCommand(),
         new ShowQueueSummaryCommand(),
-        //new HelpCommand(),
+        new HelpCommand(),
         new CreateRequestCommand(),
         new ModifyRequestCommand(),
         new MyRequestsCommand(),

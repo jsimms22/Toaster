@@ -12,6 +12,7 @@
 #include "JobRequest.h"
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
+#include "PaginationPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -50,7 +51,7 @@ void AdminPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inter
     {
         // acknowledge immediately to avoid timing out
         event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
-        event.edit_original_response(CreateQueuePanel(ctx,event));
+        event.edit_original_response(CreateQueuePanel(ctx, event, 0 /* page */));
     }
 }
 
@@ -65,11 +66,20 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
     const std::string id = event.custom_id; // "admin_type:workerid:"
 
     /*-------- Bot buttons --------*/ 
-    if (id.starts_with(fmt::format("{}_changerole:", this->name)) ||
+    if (id.starts_with(fmt::format("{}_botrefresh:", this->name)) ||
+        id.starts_with(fmt::format("{}_changerole:", this->name)) ||
         id.starts_with(fmt::format("{}_channelrules:", this->name)) ||
-        id.starts_with(fmt::format("{}_pingrules:", this->name)))
+        id.starts_with(fmt::format("{}_pingrules:", this->name)) || 
+        id.starts_with(fmt::format("{}_sendlogs:", this->name)) ||
+        id.starts_with(fmt::format("{}_sendqueue:", this->name)) ||
+        id.starts_with(fmt::format("{}_deleteguild:", this->name)))
     {
-        if (id.starts_with(fmt::format("{}_changerole:", this->name)))
+        if (id.starts_with(fmt::format("{}_botrefresh:", this->name)))
+        {
+            AdminQueueButtonPanel::RefreshButton(id, ctx, event);
+            // do not return
+        }
+        else if (id.starts_with(fmt::format("{}_changerole:", this->name)))
         {
             AdminBotButtonPanel::ChangeRoleButton(id, ctx, event);
             return;
@@ -84,34 +94,7 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             AdminBotButtonPanel::PingRulesButton(id, ctx, event);
             return;
         }
-    }
-    /*
-    else if (id.starts_with(fmt::format("{}_banlist:", this->name)) ||
-             id.starts_with(fmt::format("{}_addban:", this->name)) ||
-             id.starts_with(fmt::format("{}_removeban:", this->name)))
-    {
-        if (id.starts_with(fmt::format("{}_banlist:", this->name)))
-        {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
-            return;
-        }
-        else if (id.starts_with(fmt::format("{}_addban:", this->name)))
-        {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
-            return;
-        }
-        else if (id.starts_with(fmt::format("{}_removeban:", this->name)))
-        {
-            event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
-            return;
-        }
-    }
-    */
-    else if (id.starts_with(fmt::format("{}_sendlogs:", this->name)) ||
-             id.starts_with(fmt::format("{}_sendqueue:", this->name)) ||
-             id.starts_with(fmt::format("{}_deleteguild:", this->name)))
-    {
-        if (id.starts_with(fmt::format("{}_sendlogs:", this->name)))
+        else if (id.starts_with(fmt::format("{}_sendlogs:", this->name)))
         {
             AdminBotButtonPanel::SendLogsButton(id, ctx, event);
             return;
@@ -126,32 +109,38 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             AdminBotButtonPanel::DeleteDataButton(id, ctx, event);
             return;
         }
+
+        event.reply(dpp::ir_update_message, CreateBotPanel(ctx, event));
+        return;
     }
     /*-------- Queue buttons --------*/
-    else if (id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
-             id.starts_with(fmt::format("{}_adminrefresh:", this->name)) ||
+    else if (id.starts_with(fmt::format("{}_queuerefresh:", this->name)) || 
+             id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_admincomplete:", this->name)) ||
              id.starts_with(fmt::format("{}_adminhold:", this->name)) ||
              id.starts_with(fmt::format("{}_showworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_downloadworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
     {
-        if (id.starts_with(fmt::format("{}_assignworkers:", this->name)))
+        if (id.starts_with(fmt::format("{}_queuerefresh:", this->name)))
+        {
+            AdminQueueButtonPanel::RefreshButton(id, ctx, event);
+            // do not return
+        }
+        else if (id.starts_with(fmt::format("{}_assignworkers:", this->name)))
         {
             AdminQueueButtonPanel::AssignWorkersButton(id, ctx, event);
             return;
         }
-        else if (id.starts_with(fmt::format("{}_adminrefresh:", this->name)))
-        {
-            AdminQueueButtonPanel::RefreshButton(id, ctx, event);
-        }
         else if (id.starts_with(fmt::format("{}_admincomplete:", this->name)))
         {
             AdminQueueButtonPanel::MarkCompleteButton(id, ctx, event);
+            // do not return
         }
         else if (id.starts_with(fmt::format("{}_adminhold:", this->name)))
         {
             AdminQueueButtonPanel::MarkOnHoldButton(id, ctx, event);
+            // do not return
         }
         else if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
         {
@@ -169,7 +158,18 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             return;
         }
 
-        event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event));
+        event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event, 0));
+        return;
+    }
+    /*-------- Page (Queue) buttons --------*/
+    else if (id.starts_with(fmt::format("{}_adminnext:", this->name)) ||
+             id.starts_with(fmt::format("{}_adminprev:", this->name)))
+    {
+        // Deconstruct custom id for state information
+        const auto parts = utils::Split(id, ':');
+        const std::size_t page = parts[1] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[1]) : 0;
+
+        event.reply(dpp::ir_update_message, CreateQueuePanel(ctx, event, page));
         return;
     }
 }
@@ -217,30 +217,33 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
         };
 
     const std::string settings = fmt::format(
-        "## Channel Announcements\n"
-        "**New Job:** {}\n"
-        "**Update Job:** {}\n"
-        "**Delete Job:** {}\n"
-        "**Complete Job:** {}\n\n"
+        "### Channel Announcements\n"
+        "- New Job: {}\n"
+        "- Update Job: {}\n"
+        "- Delete Job: {}\n"
+        "- Complete Job: {}\n"
 
-        "## Cooldown\n"
-        "**Announcement Cooldown:** {} seconds\n\n"
+        "### Cooldown\n"
+        "- Announcement Cooldown: {} seconds\n"
 
-        "## Ping Rules\n"
-        "**On New:** {}\n"
-        "**On Update:** {}\n"
-        "**On Delete:** {}\n"
-        "**On Complete:** {}\n\n"
+        "### Per Customer Settings\n"
+        "- Max Open Requests: {} requests\n"
 
-        "## Roles\n"
-        "**General Ping Role:** {}\n"
-        "**Crafter:** {}\n"
-        "**Builder:** {}\n"
-        "**Component:** {}\n"
-        "**Gatherer:** {}\n"
-        "**Refiner:** {}\n"
-        "**Hazmat:** {}\n"
-        "**Manager:** {}\n",
+        "### Ping Rules\n"
+        "- On New: {}\n"
+        "- On Update: {}\n"
+        "- On Delete: {}\n"
+        "- On Complete: {}\n"
+
+        "### Roles\n"
+        "- General Ping Role: {}\n"
+        "- Crafter: {}\n"
+        "- Builder: {}\n"
+        "- Component: {}\n"
+        "- Gatherer: {}\n"
+        "- Refiner: {}\n"
+        "- Hazmat: {}\n"
+        "- Manager: {}",
 
         FormatChannel(ctx.guild->idNewJobChannel),
         FormatChannel(ctx.guild->idUpdateJobChannel),
@@ -248,6 +251,8 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
         FormatChannel(ctx.guild->idCompleteJobChannel),
 
         ctx.guild->announcement_cooldown.count(),
+
+        ctx.guild->requestLimitPerUser,
 
         ctx.guild->bPingOnNew ? "Enabled" : "Disabled",
         ctx.guild->bPingOnUpdate ? "Enabled" : "Disabled",
@@ -275,18 +280,23 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
 /// 
 /// \return Returns a message object to send back to the user.
 //---------------------------------------------------------------------------------------------------------------------
-dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event) const
+dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::size_t page) const
 {
     const dpp::user author = event.command.get_issuing_user();
 
-    const auto job = ctx.queue->FirstAssignment([](const std::shared_ptr<const JobRequest> job) -> bool
-        { return job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold; });
-
+    // Retrieve the job
+    const auto compare = [](const std::shared_ptr<const JobRequest> job) -> bool 
+                         { return job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold; };
+    const auto job = ctx.queue->FirstAssignment(compare, page);
+    const std::size_t size = ctx.queue->GetQueueSize(compare);
+    
+    // Construct the admin panel
     const std::string strID = job ? ToString(job->GetID()) : "";
-
     AdminQueueButtonPanel queuePanel(this->name, author.id, ToString(job->GetID()));
+    queuePanel.AddPageRow(page, size);
     queuePanel.AddEmbed("Queue Admin Panel:", CreateQueueEmbed(ctx, event));
-    queuePanel.AddEmbed("Highest Priority Unassigned Job", job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "No unassigned jobs in queue.");
+    queuePanel.AddEmbed(fmt::format("Unassigned Job (Page {} of {})", page + 1, size), 
+                        job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "No unassigned jobs in queue.");
 
     return queuePanel.set_flags(dpp::m_ephemeral);
 }

@@ -1,5 +1,6 @@
 #include "Resource.h"
 
+#include "Commands.h"
 #include "BotUtility.h"
 #include "Toaster.h"
 #include "TinyXmlDatabase.h"
@@ -39,7 +40,7 @@ auto main() -> int
     log = std::make_shared<spdlog::async_logger>("logs", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(log);
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
-    log->set_level(spdlog::level::level_enum::debug);
+    log->set_level(spdlog::level::level_enum::info);
 
     const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN") };
     const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
@@ -131,6 +132,7 @@ auto main() -> int
         Sleep(50);
     }
 
+    std::for_each(Toaster::BotCommands.begin(), Toaster::BotCommands.end(), [](ICustomCommand* cmd) { delete cmd; });
     database.disconnect();
 
     return 0;

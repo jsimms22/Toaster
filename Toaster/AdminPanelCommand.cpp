@@ -292,10 +292,10 @@ dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp:
     
     // Construct the admin panel
     const std::string strID = job ? ToString(job->GetID()) : "";
-    AdminQueueButtonPanel queuePanel(this->name, author.id, ToString(job->GetID()));
+    AdminQueueButtonPanel queuePanel(this->name, author.id, strID);
     queuePanel.AddPageRow(page, size);
     queuePanel.AddEmbed("Queue Admin Panel:", CreateQueueEmbed(ctx, event));
-    queuePanel.AddEmbed(fmt::format("Unassigned Job (Page {} of {})", page + 1, size), 
+    queuePanel.AddEmbed(fmt::format("Unassigned Job (Page {} of {})", page + 1, size == 0 ? 1 : size), 
                         job ? job->PrintJobDetails(ctx.cluster, event.command.guild_id) : "No unassigned jobs in queue.");
 
     return queuePanel.set_flags(dpp::m_ephemeral);

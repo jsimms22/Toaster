@@ -123,10 +123,9 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster, 
                                                               event.command.guild_id, 
                                                               page,
-                                                              [](const std::shared_ptr<const JobRequest> job) -> bool 
-                                                              { return job->GetStatus() == JobRequest::status::stalled; });
-        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool 
-                                                        { return job->GetStatus() == JobRequest::status::stalled; });
+                                                              false,
+                                                              [](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetStatus() == JobRequest::status::stalled; });
+        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetStatus() == JobRequest::status::stalled; });
         const std::string header = "Stalled Job Report";
 
         PaginationPanel panel(ctx, Button_Stalled, static_cast<int>(JobRequest::status::stalled), page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
@@ -159,10 +158,10 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
                                                               event.command.guild_id,
                                                               page,
-                                                              [](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
-        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool
-                                                         { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
+                                                              false, // default off  
+                                                              [](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetWorkerIDs().empty(); });
+        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool 
+            { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
         const std::string header = "Unassigned Job Report";
 
         PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
@@ -187,10 +186,9 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
                                                               event.command.guild_id,
                                                               page,
-                                                              [](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetStatus() == JobRequest::status::stalled; });
-        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool 
-                                                        { return job->GetStatus() == JobRequest::status::stalled; });
+                                                              false, // default off  
+                                                              [](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetStatus() == JobRequest::status::stalled; });
+        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetStatus() == JobRequest::status::stalled; });
         const std::string header = "Stalled Job Report";
 
         PaginationPanel panel(ctx, Button_Stalled, static_cast<int>(JobRequest::status::stalled), page, size, JobQueue::JOBS_PER_DETAIL_PAGE);
@@ -212,10 +210,11 @@ void ShowQueueSummaryCommand::ExecuteButtonClick(CommandContext& ctx, const dpp:
         const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
                                                               event.command.guild_id,
                                                               page,
+                                                              false, // default off  
                                                               [](const std::shared_ptr<const JobRequest> job) -> bool
                                                               { return job->GetWorkerIDs().empty(); });
-        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool
-                                                         { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
+        const std::size_t size = ctx.queue->GetQueueSize([](const std::shared_ptr<const JobRequest> job) -> bool 
+            { return job->GetWorkerIDs().empty() && job->GetStatus() != JobRequest::status::complete; });
         const std::string header = "Unassigned Job Report";
 
         PaginationPanel panel(ctx, Button_Unassigned, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE);

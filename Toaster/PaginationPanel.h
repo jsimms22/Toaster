@@ -29,6 +29,7 @@ private:
 	dpp::component m_row;
 	dpp::component m_btnNext;
 	dpp::component m_btnPrev;
+	//dpp::component m_btnShowComplete;
 
 	std::size_t m_page;
 	std::size_t m_lastPage;

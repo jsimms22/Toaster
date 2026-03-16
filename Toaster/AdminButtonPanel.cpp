@@ -375,6 +375,7 @@ void AdminBotButtonPanel::SendQueueButton(const std::string& id, CommandContext&
 {
 	std::string queue = ctx.queue->PrintQueue(ctx.cluster,
 		event.command.guild_id,
+		true,
 		[](const std::shared_ptr<const JobRequest> job) -> bool { return true; });
 
 	utils::RemoveChar(queue, '*');

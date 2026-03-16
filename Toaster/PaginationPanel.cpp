@@ -33,6 +33,7 @@ PaginationPanel::PaginationPanel(
 
 		m_row.add_component(m_btnPrev)
 			.add_component(m_btnNext);
+			//.add_component(m_btnShowComplete);
 
 		add_component(m_row);
 	}

@@ -449,16 +449,20 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const
+const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bShowComplete, JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
-    std::size_t position = 0;
+    std::size_t display_pos = 0;
 
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
-        ++position;
+        // This will consider completed tasks, even if they are not being shown
+        ++display_pos;
+
+        if (!bShowComplete && job->GetStatus() == JobRequest::status::complete)
+            continue;
 
         if (!compare(job))
             continue;
@@ -466,7 +470,7 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
         fmt::format_to(
             std::back_inserter(buffer),
             "### Position: {}\n{}\n",
-            position,
+            display_pos,
             job->PrintJobDetails(cluster, idGuild)
         );
     }
@@ -478,16 +482,24 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobQueue::PrintQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const
+const std::string JobQueue::PrintQueueCompact(
+    dpp::cluster& cluster, 
+    const dpp::snowflake& idGuild, 
+    const bool bShowComplete, 
+    JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
-    std::size_t position = 0;
+    std::size_t display_pos = 0;
 
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
-        ++position;
+        // This will consider completed tasks, even if they are not being shown
+        ++display_pos;
+
+        if (!bShowComplete && job->GetStatus() == JobRequest::status::complete)
+            continue;
 
         if (!compare(job))
             continue;
@@ -495,7 +507,7 @@ const std::string JobQueue::PrintQueueCompact(dpp::cluster& cluster, const dpp::
         fmt::format_to(
             std::back_inserter(buffer),
             "### --------- Position: {} ---------\n{}\n",
-            position,
+            display_pos,
             job->PrintJobDetailsCompact(cluster, idGuild)
         );
     }
@@ -507,9 +519,11 @@ const std::string JobQueue::PrintQueueCompact(dpp::cluster& cluster, const dpp::
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
+const std::string JobQueue::PrintPagedRequest(
+    dpp::cluster& cluster,
     const dpp::snowflake& idGuild,
     const std::size_t page,
+    const bool bShowComplete,
     JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
@@ -523,7 +537,11 @@ const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        // This will consider completed tasks, even if they are not being shown
         ++display_pos;
+
+        if (!bShowComplete && job->GetStatus() == JobRequest::status::complete)
+            continue;
         
         if (!compare(job))
             continue;
@@ -537,7 +555,7 @@ const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
             fmt::format_to(
                 std::back_inserter(buffer),
                 "### --------- Position: {} ---------\n{}\n",
-                start_index + display_pos,
+                display_pos,
                 job->PrintJobDetails(cluster, idGuild)
             );
         }
@@ -551,10 +569,12 @@ const std::string JobQueue::PrintPagedRequest(dpp::cluster& cluster,
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
-                                            const dpp::snowflake& idGuild,
-                                            const std::size_t page,
-                                            JobCompare compare) const
+const std::string JobQueue::PrintPagedQueue(
+    dpp::cluster& cluster,
+    const dpp::snowflake& idGuild,
+    const std::size_t page,
+    const bool bShowComplete,
+    JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
@@ -567,7 +587,11 @@ const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        // This will consider completed tasks, even if they are not being shown
         ++display_pos;
+
+        if (!bShowComplete && job->GetStatus() == JobRequest::status::complete)
+            continue;
 
         if (!compare(job))
             continue;
@@ -581,7 +605,7 @@ const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
             fmt::format_to(
                 std::back_inserter(buffer),
                 "### --------- Position: {} ---------\n{}\n",
-                start_index + display_pos,
+                display_pos,
                 job->PrintJobDetails(cluster, idGuild)
             );
         }
@@ -595,10 +619,12 @@ const std::string JobQueue::PrintPagedQueue(dpp::cluster& cluster,
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
-                                                   const dpp::snowflake& idGuild,
-                                                   const std::size_t page,
-                                                   JobCompare compare) const
+const std::string JobQueue::PrintPagedQueueCompact(
+    dpp::cluster& cluster,
+    const dpp::snowflake& idGuild,
+    const std::size_t page, 
+    const bool bShowComplete,
+    JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
@@ -611,7 +637,11 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
     fmt::memory_buffer buffer;
     for (const auto& job : m_vQueue)
     {
+        // This will consider completed tasks, even if they are not being shown
         ++display_pos;
+
+        if (!bShowComplete && job->GetStatus() == JobRequest::status::complete)
+            continue;
 
         if (!compare(job))
             continue;
@@ -626,7 +656,7 @@ const std::string JobQueue::PrintPagedQueueCompact(dpp::cluster& cluster,
             fmt::format_to(
                 std::back_inserter(buffer),
                 "### --------- Position: {} ---------\n{}\n",
-                start_index + display_pos,
+                display_pos,
                 job->PrintJobDetailsCompact(cluster, idGuild)
             );
         }

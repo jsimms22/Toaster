@@ -63,10 +63,9 @@ void ShowQueueCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inter
     const std::string result = ctx.queue->PrintPagedQueueCompact(ctx.cluster,
                                                                  event.command.guild_id,
                                                                  page,
-                                                                 [type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                                 { return job->GetStatus() != JobRequest::status::complete && job->SupportsType(type); });
-    const std::size_t size = ctx.queue->GetQueueSize([type](const std::shared_ptr<const JobRequest> job) -> bool 
-                                                    { return job->GetStatus() != JobRequest::status::complete && job->SupportsType(type); });
+                                                                 true, // default to true
+                                                                 [type](const std::shared_ptr<const JobRequest> job) -> bool { return job->SupportsType(type); });
+    const std::size_t size = ctx.queue->GetQueueSize([type](const std::shared_ptr<const JobRequest> job) -> bool { return job->SupportsType(type); });
     const std::string header = "Request Queue";
 
     PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_QUEUE_PAGE);
@@ -92,15 +91,15 @@ void ShowQueueCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button
         const auto parts = utils::Split(id, ':');
         const std::size_t type = std::stoul(parts[1]);
         const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        //const bool bShowComplete = std::stoull(parts[4]);
 
         // Construct the actual info panel
         const std::string result = ctx.queue->PrintPagedQueueCompact(ctx.cluster,
                                                                      event.command.guild_id,
                                                                      page,
-                                                                     [type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                                     { return job->GetStatus() != JobRequest::status::complete && job->SupportsType(type); });
-        const std::size_t size = ctx.queue->GetQueueSize([type](const std::shared_ptr<const JobRequest> job) -> bool 
-                                                        { return job->GetStatus() != JobRequest::status::complete && job->SupportsType(type); });
+                                                                     true, // default to true
+                                                                     [type](const std::shared_ptr<const JobRequest> job) -> bool { return job->SupportsType(type); });
+        const std::size_t size = ctx.queue->GetQueueSize([type](const std::shared_ptr<const JobRequest> job) -> bool { return job->SupportsType(type); });
         const std::string header = "Request Queue";
 
         PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_QUEUE_PAGE);

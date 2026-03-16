@@ -55,10 +55,9 @@ void MyRequestsCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inte
     const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
                                                           event.command.guild_id,
                                                           page,
-                                                          [user, type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                          { return job->GetCustomerID() == user && job->SupportsType(type); });
-    const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                    { return job->GetCustomerID() == user && job->SupportsType(type); });
+                                                          true, // default true
+                                                          [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
+    const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
     const std::string header = "Your Requests"; 
 
     PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
@@ -86,15 +85,15 @@ void MyRequestsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         const std::size_t type = std::stoul(parts[1]);
         const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
         const dpp::snowflake user = parts[3];
+        //const bool bShowComplete = std::stoull(parts[4]);
 
         // Construct the actual info panel
         const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
                                                               event.command.guild_id,
                                                               page,
-                                                              [user, type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->GetCustomerID() == user && job->SupportsType(type); });
-        const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool
-                                                        { return job->GetCustomerID() == user && job->SupportsType(type); });
+                                                              true, // default true
+                                                              [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
+        const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
         const std::string header = "Your Requests";
 
         PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);

@@ -43,12 +43,12 @@ public:
     const std::string PrintQueueSummary(dpp::cluster& cluster) const;
 
     // Print Queue Methods
-    const std::string PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const;
-    const std::string PrintQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const;
-    const std::string PrintPagedQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
-    const std::string PrintPagedQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
+    const std::string PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bShowComplete, JobCompare compare) const;
+    const std::string PrintQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bShowComplete, JobCompare compare) const;
+    const std::string PrintPagedQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
+    const std::string PrintPagedQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
     // Print Request Methods
-    const std::string PrintPagedRequest(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, JobCompare compare) const;
+    const std::string PrintPagedRequest(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
 
     // Queue Size Methods
     const std::size_t GetQueueSize(JobCompare compare) const;

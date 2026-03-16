@@ -710,15 +710,20 @@ const std::shared_ptr<const JobRequest> JobQueue::FirstAssignment(const dpp::sno
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::size_t JobQueue::GetQueueSize(JobCompare compare) const
+const std::size_t JobQueue::GetQueueSize(const bool bShowComplete, JobCompare compare) const
 {
     std::shared_lock<std::shared_mutex> lock(m_mtxShared);
 
     return std::count_if(
         m_vQueue.begin(),
         m_vQueue.end(),
-        [compare](const auto& job) {
-            return compare(job);
+        [bShowComplete, compare](const auto& job) {
+            bool bRet = compare(job);
+            if (!bShowComplete)
+            {
+                bRet &= job->GetStatus() != JobRequest::status::complete;
+            }
+            return bRet;
         }
     );
 }

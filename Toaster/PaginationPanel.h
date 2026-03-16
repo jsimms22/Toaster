@@ -17,6 +17,7 @@ public:
 		const std::size_t page,
 		const std::size_t size,
 		const std::size_t itemsPerPage,
+		const bool m_bShowComplete,
 		const dpp::snowflake& user = 0);
 
 	virtual ~PaginationPanel() = default;
@@ -29,11 +30,12 @@ private:
 	dpp::component m_row;
 	dpp::component m_btnNext;
 	dpp::component m_btnPrev;
-	//dpp::component m_btnShowComplete;
+	dpp::component m_btnShowComplete;
 
 	std::size_t m_page;
 	std::size_t m_lastPage;
 	std::size_t m_type;
 	std::size_t m_size;
+	bool m_bShowComplete = false;
 };
 

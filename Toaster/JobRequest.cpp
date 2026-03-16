@@ -381,7 +381,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         "Created: <t:{}:F>\n"
         "Last Edit: <t:{}:F>\n"
         "Priority: {}\n"
-        "Status: {}\n"
+        "Status: **{}**\n"
         "Customer: {}\n"
         "Game Handle: {}\n"
         "Assigned: {}\n",
@@ -420,7 +420,7 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
         "ID: **{}**\n"
         "Created: <t:{}:F>\n"
         "Priority: {}\n"
-        "Status: {}\n"
+        "Status: **{}**\n"
         "Customer: {}\n"
         "Game Handle: {}\n"
         "Assigned: {}\n",

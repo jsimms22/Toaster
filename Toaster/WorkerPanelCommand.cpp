@@ -63,18 +63,14 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 
         // Construct the actual info panel
         const std::size_t page = 0;
+        const bool bShowComplete = true;
 
-        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
-                                                              event.command.guild_id,
-                                                              page,
-                                                              true, // default on   
-                                                              [worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->IsWorker(worker); });
-        const std::size_t size = ctx.queue->GetQueueSize([worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool
-            { return job->IsWorker(worker); });
+        auto compare = [worker = author.id](const std::shared_ptr<const JobRequest> job) -> bool { return job->IsWorker(worker); };
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster, event.command.guild_id, page, bShowComplete, compare);
+        const std::size_t size = ctx.queue->GetQueueSize(bShowComplete, compare);
         const std::string header = "Your Assignments";
 
-        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, author.id);
+        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, bShowComplete, author.id);
         panel.AddEmbed(header, size != 0 ? result : "No requests or jobs currently assigned to you.");
 
         // Edit the original message
@@ -101,29 +97,42 @@ void WorkerPanelCommand::ExecuteInteraction(CommandContext& ctx, const dpp::inte
 //---------------------------------------------------------------------------------------------------------------------
 void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
-    const std::string id = event.custom_id; 
+    const std::string id = event.custom_id;
+    auto parts = utils::Split(id, ':');
+    if (parts[0] == fmt::format("{}_pageshow", Option_AllAssignments))
+    {
+        parts[4] = parts[4] == "true" ? "false" : "true";
+    }
 
-    if (id.starts_with(fmt::format("{}:", Option_AllAssignments)))
+    if (parts[0] == fmt::format("{}_pagenext", Option_AllAssignments) ||
+        parts[0] == fmt::format("{}_pageprev", Option_AllAssignments) ||
+        parts[0] == fmt::format("{}_pageshow", Option_AllAssignments))
     {
         // Decompose custom id for state information
-        auto parts = utils::Split(id, ':');
         const std::size_t type = std::stoul(parts[1]);
-        const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
         const dpp::snowflake user = parts[3];
-        //const bool bShowComplete = std::stoull(parts[4]);
+        const bool bShowComplete = parts[4] == "true" ? true : false;
 
         // Construct the actual info panel
-        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
-                                                              event.command.guild_id,
-                                                              page,
-                                                              true, // default on  
-                                                              [worker = user](const std::shared_ptr<const JobRequest> job) -> bool
-                                                              { return job->IsWorker(worker); });
-        const std::size_t size = ctx.queue->GetQueueSize([worker = user](const std::shared_ptr<const JobRequest> job) -> bool
-                                                        { return job->IsWorker(worker); });
+        auto compare = [worker = user](const std::shared_ptr<const JobRequest> job) -> bool { return job->IsWorker(worker); };
+        const std::size_t size = ctx.queue->GetQueueSize(bShowComplete, compare);
+
+        if (size != 0)
+        {
+            const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+            if (page > lastPage)
+                page = lastPage;
+        }
+        else
+        {
+            page = 0;
+        }
+
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster, event.command.guild_id, page, bShowComplete, compare);
         const std::string header = "Your Assignments";
 
-        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
+        PaginationPanel panel(ctx, Option_AllAssignments, 0, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, bShowComplete, user);
         panel.AddEmbed(header, size != 0 ? result : "No requests or jobs currently assigned to you.");
 
         // Edit the original message
@@ -214,7 +223,7 @@ dpp::message WorkerPanelCommand::SendPanel(
     // Retrieve the job
     const auto compare = [user](const std::shared_ptr<const JobRequest> job) -> bool { return job->IsWorker(user) && job->GetStatus() < JobRequest::status::complete; };
     const auto job = ctx.queue->FirstAssignment(compare, page);
-    const std::size_t size = ctx.queue->GetQueueSize(compare);
+    const std::size_t size = ctx.queue->GetQueueSize(true, compare);
     if (!job)
     {
         dpp::embed overview;

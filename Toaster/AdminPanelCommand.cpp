@@ -288,7 +288,7 @@ dpp::message AdminPanelCommand::CreateQueuePanel(CommandContext& ctx, const dpp:
     const auto compare = [](const std::shared_ptr<const JobRequest> job) -> bool 
                          { return job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold; };
     const auto job = ctx.queue->FirstAssignment(compare, page);
-    const std::size_t size = ctx.queue->GetQueueSize(compare);
+    const std::size_t size = ctx.queue->GetQueueSize(true, compare);
     
     // Construct the admin panel
     const std::string strID = job ? ToString(job->GetID()) : "";

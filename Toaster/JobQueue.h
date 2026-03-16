@@ -51,7 +51,7 @@ public:
     const std::string PrintPagedRequest(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
 
     // Queue Size Methods
-    const std::size_t GetQueueSize(JobCompare compare) const;
+    const std::size_t GetQueueSize(const bool bShowComplete, JobCompare compare) const;
     const std::size_t GetQueueSize() const;
 
     // Retrieve Job Methods

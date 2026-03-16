@@ -11,8 +11,9 @@ PaginationPanel::PaginationPanel(
 	const std::size_t page,
 	const std::size_t size,
 	const std::size_t itemsPerPage,
+	const bool bShowComplete,
 	const dpp::snowflake& user)
-	: dpp::message(), m_type{ type }, m_page{ page }, m_size{ size }
+	: dpp::message(), m_type{ type }, m_page{ page }, m_size{ size }, m_bShowComplete{ bShowComplete }
 {
 	m_lastPage = m_size <= 1 ? 0 : (m_size - 1) / itemsPerPage;
 
@@ -24,16 +25,26 @@ PaginationPanel::PaginationPanel(
 		m_btnPrev.set_type(dpp::cot_button)
 			.set_label("Prev")
 			.set_style(dpp::cos_primary)
-			.set_id(fmt::format("{}:{}:{}:{}", OwnerName, m_type, prevPage, user));
+			.set_id(fmt::format("{}_pagenext:{}:{}:{}:{}", OwnerName, m_type, prevPage, user, m_bShowComplete));
 
 		m_btnNext.set_type(dpp::cot_button)
 			.set_label("Next")
 			.set_style(dpp::cos_primary)
-			.set_id(fmt::format("{}:{}:{}:{}", OwnerName, m_type, nextPage, user));
+			.set_id(fmt::format("{}_pageprev:{}:{}:{}:{}", OwnerName, m_type, nextPage, user, m_bShowComplete));
+
+		m_btnShowComplete.set_type(dpp::cot_button)
+			.set_label(m_bShowComplete ? "Hide Completed" : "Show Completed")
+			.set_style(m_bShowComplete ? dpp::cos_secondary :dpp::cos_primary)
+			.set_id(fmt::format("{}_pageshow:{}:{}:{}:{}", OwnerName, m_type, m_page, user, m_bShowComplete));
+
 
 		m_row.add_component(m_btnPrev)
 			.add_component(m_btnNext);
-			//.add_component(m_btnShowComplete);
+
+		if (OwnerName != Button_Unassigned && OwnerName != Button_Stalled)
+		{
+			m_row.add_component(m_btnShowComplete);
+		}
 
 		add_component(m_row);
 	}
@@ -48,4 +59,3 @@ void PaginationPanel::AddEmbed(const std::string& header, const std::string& des
 
 	add_embed(embed);
 }
-

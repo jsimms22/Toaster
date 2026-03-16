@@ -60,8 +60,7 @@ void CreateRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     
     // Eventually this will be dynamic
     if (!pManager->CanAccessAdminPanel(event, author.id, guild, ctx.guild) &&
-        ctx.guild->requestLimitPerUser <= ctx.queue->GetQueueSize([user = author.id](const std::shared_ptr<const JobRequest> job) -> bool
-                                                                  { return job->GetCustomerID() == user && job->GetStatus() < JobRequest::status::hold; }))
+        ctx.guild->requestLimitPerUser <= ctx.queue->GetQueueSize(true, [user = author.id](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->GetStatus() < JobRequest::status::hold; }))
     {
         // Too many requests in queue
         event.reply(dpp::message("You currently have too many requests in queue. Current capacity is 15 open per user. Completed or On Hold does not influence this cap.").set_flags(dpp::m_ephemeral));

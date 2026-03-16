@@ -52,15 +52,14 @@ void MyRequestsCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inte
     const std::size_t type = utils::CmdStringToJobType(strCmdID);
     const dpp::snowflake user = event.command.get_issuing_user().id;
     const std::size_t page = 0;
-    const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
-                                                          event.command.guild_id,
-                                                          page,
-                                                          true, // default true
-                                                          [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
-    const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
+    const bool bShowComplete = true;
+
+    auto compare = [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); };
+    const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster, event.command.guild_id, page, bShowComplete, compare);
+    const std::size_t size = ctx.queue->GetQueueSize(bShowComplete, compare);
     const std::string header = "Your Requests"; 
 
-    PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
+    PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, bShowComplete, user);
     panel.AddEmbed(header, size != 0 ? result : "You have no job requests of this type in queue.");
 
     // Edit the original message
@@ -77,26 +76,41 @@ void MyRequestsCommand::ExecuteInteraction(CommandContext& ctx,  const dpp::inte
 void MyRequestsCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)
 {
     const std::string id = event.custom_id;
+    auto parts = utils::Split(id, ':');
+    if (parts[0] == fmt::format("{}_pageshow", this->name))
+    {
+        parts[4] = parts[4] == "true" ? "false" : "true";
+    }
 
-    if (id.starts_with(fmt::format("{}:", this->name)))
+    if (parts[0] == fmt::format("{}_pagenext", this->name) ||
+        parts[0] == fmt::format("{}_pageprev", this->name) ||
+        parts[0] == fmt::format("{}_pageshow", this->name))
     {
         // Decompose custom id for state information
-        const auto parts = utils::Split(id, ':');
         const std::size_t type = std::stoul(parts[1]);
-        const std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
         const dpp::snowflake user = parts[3];
-        //const bool bShowComplete = std::stoull(parts[4]);
+        const bool bShowComplete = parts[4] == "true" ? true : false;
 
         // Construct the actual info panel
-        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster,
-                                                              event.command.guild_id,
-                                                              page,
-                                                              true, // default true
-                                                              [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
-        const std::size_t size = ctx.queue->GetQueueSize([user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); });
+        auto compare = [user, type](const std::shared_ptr<const JobRequest> job) -> bool { return job->GetCustomerID() == user && job->SupportsType(type); };
+        const std::size_t size = ctx.queue->GetQueueSize(bShowComplete, compare);
+
+        if (size != 0)
+        {
+            const std::size_t lastPage = (size - 1) / JobQueue::JOBS_PER_DETAIL_PAGE;
+            if (page > lastPage)
+                page = lastPage;
+        }
+        else
+        {
+            page = 0;
+        }
+
+        const std::string result = ctx.queue->PrintPagedQueue(ctx.cluster, event.command.guild_id, page, bShowComplete, compare);
         const std::string header = "Your Requests";
 
-        PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, user);
+        PaginationPanel panel(ctx, this->name, type, page, size, JobQueue::JOBS_PER_DETAIL_PAGE, bShowComplete, user);
         panel.AddEmbed(header, size != 0 ? result : "You have no job requests of this type in queue.");
 
         // Edit the original message

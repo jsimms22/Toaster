@@ -157,6 +157,26 @@ private:
     dpp::message CreateQueuePanel(CommandContext& ctx, const dpp::interaction_create_t& event, const std::size_t page) const;
 };
 
+class AdminSignUpBoard : public ICustomCommand
+{
+public:
+    AdminSignUpBoard()
+        : ICustomCommand(Command_WorkerSignUp, "Post a billboard in a channel to allow users to sign up for worker roles.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Specify the channel id to post in.", true));
+    }
+
+    virtual ~AdminSignUpBoard() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override {}
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override;
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+private:
+
+};
+
 //---------------------------------------------------------------------------------------------------------------------
 /// \class WorkerPanelCommand
 /// \brief Displays assignment panels for workers.
@@ -384,6 +404,7 @@ namespace Toaster
         new AdminConfigChannelsCommand(),
         new AdminConfigPingCommand(),
         new AdminConfigRolesCommand(),
+        new AdminSignUpBoard(),
         new AdminPanelCommand(),
         new WorkerPanelCommand(),
         new ShowQueueCommand(),

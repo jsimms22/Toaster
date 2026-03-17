@@ -66,6 +66,7 @@ constexpr const char* Component_RoleEdit		{ "roleedit" };
 constexpr const char* Command_ConfigChannels	{ "admin_configchannels" };
 constexpr const char* Command_ConfigPing		{ "admin_configping" };
 constexpr const char* Command_ConfigRoles		{ "admin_configroles" };
+constexpr const char* Command_WorkerSignUp		{ "admin_worker_signup" };
 /*----------------------------ADMIN COMMAND IDS---------------------------------*/
 
 /*-------------------------------COMMAND IDS------------------------------------*/

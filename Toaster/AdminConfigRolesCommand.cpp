@@ -68,8 +68,21 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
         return;
     }
 
+    auto is_all_numbers = [](const std::string& s) -> bool {
+        return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+            return std::isdigit(c);
+            });
+        };
+
     utils::FilterWhiteSpace(strRoleID);
-    dpp::snowflake selectedRole = std::stoull(strRoleID);
+
+    if (!is_all_numbers(strRoleID) && !strRoleID.empty())
+    {
+        event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
+    dpp::snowflake selectedRole{ strRoleID };
 
     auto SetRole = [&ctx, &event, &selectedRole](GuildSettings::Roles roleEnum, const std::string& label)
         {
@@ -149,7 +162,6 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
 
         if (!strParam1.empty() && !strParam2.empty())
         {
-
             try
             {
                 ctx.guild->roles[std::stoull(strParam1)] = dpp::snowflake(strParam2);

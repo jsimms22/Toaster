@@ -10,8 +10,10 @@
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
+#include <stop_token>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -27,7 +29,7 @@ class ToasterBot final
 {
 public:
 	ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const std::shared_ptr<IJobRepo>& repo, const bool bDebug = false);
-	~ToasterBot() = default;
+	~ToasterBot();
 
 	// Bot event handlers
 	void onReady(const dpp::ready_t& event);
@@ -38,8 +40,13 @@ public:
 	void onFormSubmit(const dpp::form_submit_t& event);
 
 private:
-	mutable std::shared_mutex m_mtxShared;
+	mutable std::shared_mutex m_mtxGuildShared;
+	mutable std::shared_mutex m_mtxQueueShared;
 	bool m_debug = false;
+
+	// Archival worker
+	std::jthread m_worker;
+	void ArchivalLoop(std::stop_token stopToken);
 
 	// Discord details
 	dpp::cluster& m_cluster;

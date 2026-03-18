@@ -86,6 +86,9 @@ public:
 	// increment by +1 for number of job types
 	std::array<std::atomic<std::int32_t>, JOB_PLACEHOLDER> g_counter;
 
+	// archival age
+	std::chrono::hours archival_age{ 48 };
+
 	// Utility
 	bool HasAnnouncementChannel() const 
 	{ 

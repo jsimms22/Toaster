@@ -18,6 +18,7 @@
 #include "tinyxml2.h"
 // std library
 #include <chrono>
+#include <iterator>
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief Constructor
@@ -26,6 +27,16 @@ ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const st
     : m_cluster(cluster), m_clusterId(clusterId), m_iShardCount{ 0 }, m_repo{ repo }, m_debug{ bDebug }
 {
     LoadDatabase();
+
+    m_worker = std::jthread([this](std::stop_token st) { ArchivalLoop(st); });
+}
+
+ToasterBot::~ToasterBot()
+{
+    if (m_worker.joinable())
+    {
+        m_worker.request_stop();
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -264,7 +275,7 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
 //---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& guildID)
 {
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+    std::unique_lock<std::shared_mutex> lock(m_mtxQueueShared);
 
     auto it = m_spQueue.find(guildID);
     if (it != m_spQueue.end())
@@ -282,6 +293,8 @@ std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& gui
 //---------------------------------------------------------------------------------------------------------------------
 std::shared_ptr<GuildSettings> ToasterBot::GetOrCreateSettings(const dpp::snowflake& guildID)
 {
+    std::unique_lock<std::shared_mutex> lock(m_mtxGuildShared);
+
     auto it = g_settings.find(guildID);
     if (it != g_settings.end())
         return it->second;
@@ -313,5 +326,41 @@ void ToasterBot::LoadDatabase()
         auto setting = std::make_shared<GuildSettings>(guild);
         auto bResult = m_repo->LoadGuildSettings(setting);
         g_settings.emplace(guild, setting);
+    }
+}
+
+void ToasterBot::ArchivalLoop(std::stop_token stopToken)
+{
+    while (!stopToken.stop_requested())
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(300));
+
+        if (stopToken.stop_requested()) 
+            return;
+
+        std::vector<std::pair<std::shared_ptr<JobQueue>, uint64_t>> work;
+
+        {
+            std::shared_lock<std::shared_mutex> lock(m_mtxGuildShared);
+
+            for (const auto& [guildId, queue] : m_spQueue)
+            {
+                const auto it = g_settings.find(guildId);
+                if (it == g_settings.cend() || !it->second)
+                    continue;
+
+                const std::uint64_t threshold = static_cast<std::chrono::seconds>(it->second->archival_age).count();
+                work.emplace_back(queue, threshold);
+            }
+        }
+
+        {
+            std::shared_lock<std::shared_mutex> lock(m_mtxQueueShared);
+            for (auto& [queue, age] : work)
+            {
+                queue->ArchiveCompleted(age);
+            }
+        }
+
     }
 }

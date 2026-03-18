@@ -19,7 +19,6 @@
 #include "tinyxml2.h"
 // std library
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 #include <stdexcept>
 
@@ -130,42 +129,33 @@ void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::ArchiveCompleted(const std::vector<RequestID>& ids, std::uint64_t age)
+void JobQueue::ArchiveCompleted(std::uint64_t age)
 {
-    if (ids.empty())
-        return;
-
     const std::uint64_t now = utils::GetEpochTimestamp();
     const std::uint64_t cutoff = now - age;
 
     std::vector<RequestID> archiveIDs;
 
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared);
-
-    for (const auto& id : ids)
     {
-        for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
+        std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+        for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); )
         {
             auto& job = *itr;
 
-            if (!job || job->GetID() != id)
-                continue;
-
-            if (job->GetLastEditTime() < cutoff)
+            if (job &&
+                job->GetStatus() == JobRequest::status::complete &&
+                job->GetLastEditTime() < cutoff)
             {
-                archiveIDs.push_back(id);
-
-                itr->reset();
-                m_vQueue.erase(itr);
+                archiveIDs.push_back(job->GetID());
+                itr = m_vQueue.erase(itr);
             }
-
-            break;
+            else
+            {
+                ++itr;
+            }
         }
     }
-
-    //std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
-
-    lock.unlock();
 
     if (!archiveIDs.empty())
         m_repo->ArchiveJobs(archiveIDs);

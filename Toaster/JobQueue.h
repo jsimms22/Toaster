@@ -7,6 +7,7 @@
 #include <dpp/cluster.h>
 #include <dpp/snowflake.h>
 // std library
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <memory>
@@ -64,7 +65,7 @@ public:
     void RequestModify(const RequestID rID, JobMutation mutator);
     void RequestAdd(std::shared_ptr<JobRequest> job);
     const bool RequestDelete(const RequestID rID);
-    void ArchiveCompleted(const std::vector<RequestID>& ids, std::uint64_t age);
+    void ArchiveCompleted(std::uint64_t age);
 
 private:
     // Worker thread methods

@@ -3,6 +3,7 @@
 /// \brief
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
+#include "Toaster.h"
 // d++
 #include <dpp/cluster.h>
 #include <dpp/snowflake.h>
@@ -65,12 +66,14 @@ public:
     void RequestModify(const RequestID rID, JobMutation mutator);
     void RequestAdd(std::shared_ptr<JobRequest> job);
     const bool RequestDelete(const RequestID rID);
-    void ArchiveCompleted(std::uint64_t age);
 
 private:
     // Worker thread methods
     std::shared_ptr<JobRequest> GetJobByID_NoLock(const RequestID rID) const;
     std::shared_ptr<JobRequest> GetJobByID_NoLock(const std::string& rID) const;
+
+    // Automatic processes
+    void AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stalledAge);
 
     // Mongo Database Methods
     void AddJobDB(const RequestID rID);
@@ -83,6 +86,8 @@ private:
     mutable std::shared_mutex m_mtxShared;
 
     std::shared_ptr<IJobRepo> m_repo;
+
+    friend ToasterBot;
 };
 
 

@@ -129,12 +129,14 @@ void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::ArchiveCompleted(std::uint64_t age)
+void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stalledAge)
 {
     const std::uint64_t now = utils::GetEpochTimestamp();
-    const std::uint64_t cutoff = now - age;
+    const std::uint64_t archiveCutoff = now - archivalAge;
+    const std::uint64_t stalledCutoff = now - stalledAge;
 
     std::vector<RequestID> archiveIDs;
+    std::vector<RequestID> stalledIDs;
 
     {
         std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -142,13 +144,27 @@ void JobQueue::ArchiveCompleted(std::uint64_t age)
         for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); )
         {
             auto& job = *itr;
+            if (!job)
+            {
+                ++itr;
+                continue;
+            }
 
-            if (job &&
-                job->GetStatus() == JobRequest::status::complete &&
-                job->GetLastEditTime() < cutoff)
+            /* Check if job needs to be archived */
+            if (job->GetStatus() == JobRequest::status::complete &&
+                job->GetLastEditTime() < archiveCutoff)
             {
                 archiveIDs.push_back(job->GetID());
                 itr = m_vQueue.erase(itr);
+                // Do not iterate after deleting
+            }
+            /* Check if job needs to be updated as stalled */
+            else if ((job->GetStatus() == JobRequest::status::open ||
+                job->GetStatus() == JobRequest::status::assigned) &&
+                job->GetLastEditTime() < stalledCutoff)
+            {
+                stalledIDs.push_back(job->GetID());
+                ++itr;
             }
             else
             {
@@ -159,6 +175,17 @@ void JobQueue::ArchiveCompleted(std::uint64_t age)
 
     if (!archiveIDs.empty())
         m_repo->ArchiveJobs(archiveIDs);
+    
+    if (!stalledIDs.empty())
+    {
+        for (const auto id : stalledIDs)
+        {
+            RequestModify(id, [](const std::shared_ptr<JobRequest> job)
+                {
+                    job->SetStatus(JobRequest::status::stalled);
+                });
+        }
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -421,12 +448,15 @@ const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
     {
         if (job->GetStatus() == JobRequest::status::stalled)
             stalledJobs.push_back(job->GetID());
+
+        if (stalledJobs.size() >= 5)
+            break;
     }
 
     fmt::memory_buffer buffer;
 
     // Stalled job IDs
-    fmt::format_to(std::back_inserter(buffer), "\n### Stalled Job ID:\n");
+    fmt::format_to(std::back_inserter(buffer), "\n### Highest Priority Stalled Jobs:\n");
     for (const auto& id : stalledJobs)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}\n", ToString(id));

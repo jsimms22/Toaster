@@ -46,7 +46,7 @@ private:
 
 	// Archival worker
 	std::jthread m_worker;
-	void ArchivalLoop(std::stop_token stopToken);
+	void AutomatedBotTasks(std::stop_token stopToken);
 
 	// Discord details
 	dpp::cluster& m_cluster;

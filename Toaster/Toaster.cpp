@@ -28,7 +28,7 @@ ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const st
 {
     LoadDatabase();
 
-    m_worker = std::jthread([this](std::stop_token st) { ArchivalLoop(st); });
+    m_worker = std::jthread([this](std::stop_token st) { AutomatedBotTasks(st); });
 }
 
 ToasterBot::~ToasterBot()
@@ -329,8 +329,14 @@ void ToasterBot::LoadDatabase()
     }
 }
 
-void ToasterBot::ArchivalLoop(std::stop_token stopToken)
+void ToasterBot::AutomatedBotTasks(std::stop_token stopToken)
 {
+    struct cutoffs
+    {
+        std::uint64_t archive;
+        std::uint64_t stalled;
+    };
+
     while (!stopToken.stop_requested())
     {
         std::this_thread::sleep_for(std::chrono::seconds(300));
@@ -338,7 +344,7 @@ void ToasterBot::ArchivalLoop(std::stop_token stopToken)
         if (stopToken.stop_requested()) 
             return;
 
-        std::vector<std::pair<std::shared_ptr<JobQueue>, uint64_t>> work;
+        std::vector<std::pair<std::shared_ptr<JobQueue>, cutoffs>> work;
 
         {
             std::shared_lock<std::shared_mutex> lock(m_mtxGuildShared);
@@ -349,18 +355,18 @@ void ToasterBot::ArchivalLoop(std::stop_token stopToken)
                 if (it == g_settings.cend() || !it->second)
                     continue;
 
-                const std::uint64_t threshold = static_cast<std::chrono::seconds>(it->second->archival_age).count();
-                work.emplace_back(queue, threshold);
+                const std::uint64_t archiveAge = static_cast<std::chrono::seconds>(it->second->archival_age).count();
+                const std::uint64_t stalledAge = static_cast<std::chrono::seconds>(it->second->stalled_age).count();
+                work.emplace_back(queue, cutoffs{ archiveAge, stalledAge });
             }
         }
 
         {
             std::shared_lock<std::shared_mutex> lock(m_mtxQueueShared);
-            for (auto& [queue, age] : work)
+            for (auto& [queue, cutoff] : work)
             {
-                queue->ArchiveCompleted(age);
+                queue->AutomatedQueueScan(cutoff.archive, cutoff.stalled);
             }
         }
-
     }
 }

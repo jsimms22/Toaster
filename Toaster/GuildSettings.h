@@ -88,6 +88,7 @@ public:
 
 	// archival age
 	std::chrono::hours archival_age{ 48 };
+	std::chrono::hours stalled_age{ 96 };
 
 	// Utility
 	bool HasAnnouncementChannel() const 

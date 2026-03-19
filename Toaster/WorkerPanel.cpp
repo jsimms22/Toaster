@@ -18,17 +18,23 @@ WorkerPanel::WorkerPanel(
     const bool bIsWorker)
 	: GeneralUserPanel(OwnerName, userID, jobID)
 {
+    m_btnRefreshPanel.set_type(dpp::cot_button)
+        .set_label("Refresh Panel")
+        .set_style(dpp::cos_primary)
+        .set_id(fmt::format("{}_refresh:{}:{}", m_ownerName, m_userID, m_jobID));
+
 	m_btnComplete.set_type(dpp::cot_button)
 		.set_label("Complete")
 		.set_style(dpp::cos_success)
-		.set_id(fmt::format("{}_complete:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_complete:{}:{}", m_ownerName, m_userID, m_jobID));
 
 	m_btnAssign.set_type(dpp::cot_button)
 		.set_label(bIsWorker ? "Unassign Me" : "Assign Me")
 		.set_style(bIsWorker ? dpp::cos_primary : dpp::cos_success)
-		.set_id(fmt::format("{}_unassign:{}:{}", OwnerName, m_userID, m_jobID));
+		.set_id(fmt::format("{}_unassign:{}:{}", m_ownerName, m_userID, m_jobID));
 
-	m_row.add_component(m_btnComplete)
+	m_row.add_component(m_btnRefreshPanel)
+        .add_component(m_btnComplete)
 		.add_component(m_btnEdit)
 		.add_component(m_btnAssign)
 		.add_component(m_btnDelete);

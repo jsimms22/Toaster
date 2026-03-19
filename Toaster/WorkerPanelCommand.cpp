@@ -140,7 +140,18 @@ void WorkerPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         return;
     }
 
-    if (id.starts_with(fmt::format("{}_complete:", Option_Overview)))
+    if (id.starts_with(fmt::format("{}_refresh:", Option_Overview)))
+    {
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, user, 0).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_complete:", Option_Overview)))
     {
         WorkerPanel::CompleteButton(id, ctx, event);
 

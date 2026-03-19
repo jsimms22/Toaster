@@ -20,6 +20,7 @@ public:
 	static void UnassignButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
 
 private:
+	dpp::component m_btnRefreshPanel;
 	dpp::component m_btnComplete;
 	dpp::component m_btnAssign;
 };

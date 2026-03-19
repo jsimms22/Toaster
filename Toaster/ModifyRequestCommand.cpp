@@ -546,7 +546,18 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
 {
     const std::string id = event.custom_id; // "modify_type:workerid:rID"
 
-    if (id.starts_with(fmt::format("{}_complete:", this->name)))
+    if (id.starts_with(fmt::format("{}_refresh:", this->name)))
+    {
+        auto parts = utils::Split(id, ':');
+        dpp::snowflake user = parts[1];
+        const std::string rID = parts[2];
+        const auto job = ctx.queue->GetJobByID(rID);
+
+        // Edit the original message
+        event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
+        return;
+    }
+    else if (id.starts_with(fmt::format("{}_complete:", this->name)))
     {
         WorkerPanel::CompleteButton(id, ctx, event);
 

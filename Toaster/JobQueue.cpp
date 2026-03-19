@@ -347,25 +347,76 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 //---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-
     std::map<std::size_t, std::size_t> typeCounts;
     std::map<JobRequest::status, std::size_t> statusCounts;
-    std::map<JobRequest::priority, std::size_t> priorityCounts;
-    std::size_t unassignedCounts{ 0 };
+    std::map<dpp::snowflake, std::size_t> workerstats;
+    std::map<std::size_t, std::size_t> completedCounts;
 
-    // Collect counts
-    for (const auto& job : m_vQueue)
+    // Collect queue counts
     {
-        typeCounts[job->JobType()]++;
-        statusCounts[job->GetStatus()]++;
-        priorityCounts[job->GetPriority()]++;
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        for (const auto& job : m_vQueue)
+        {
+            typeCounts[job->JobType()]++;
+            statusCounts[job->GetStatus()]++;
+            if (job->GetStatus() == JobRequest::status::complete)
+            {
+                completedCounts[job->JobType()]++;
+                for (const auto& worker : job->GetWorkerIDs())
+                {
+                    if (worker == 0)
+                        continue;
 
-        if (job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold)
-            ++unassignedCounts;
+                    workerstats[worker]++;
+                }
+            }
+        }
+    }
+
+    // Collect archive counts
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxArchive);
+        for (const auto& job : m_vArchived)
+        {
+            completedCounts[job->JobType()]++;
+            for (const auto& worker : job->GetWorkerIDs())
+            {
+                if (worker == 0)
+                    continue;
+
+                workerstats[worker]++;
+            }
+        }
     }
 
     fmt::memory_buffer buffer;
+
+    // Completion summary
+    fmt::format_to(std::back_inserter(buffer), "### Jobs Completed (By Type)\n");
+    for (const auto& [type, count] : completedCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", utils::JobTypeToString(type), count);
+    }
+
+    // Top 3 workers by job count
+    {
+        // Move map into vector for sorting
+        std::vector<std::pair<dpp::snowflake, std::size_t>> workers{ workerstats.begin(), workerstats.end() };
+
+        // Sort descending by count
+        std::sort(workers.begin(), workers.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+
+        fmt::format_to(std::back_inserter(buffer), "### Top Workers (Job Completion)\n");
+
+        const std::size_t limit = std::min<std::size_t>(3, workers.size());
+        for (std::size_t i = 0; i < limit; ++i)
+        {
+            const auto& [workerId, count] = workers[i];
+            std::string label = (workerId == 0) ? "Unassigned" : fmt::format("<@{}>", workerId);
+
+            fmt::format_to( std::back_inserter(buffer), "- {}: {}\n", label, count);
+        }
+    }
 
     // Type summary
     fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Type)\n");
@@ -375,22 +426,11 @@ const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
     }
 
     // Status summary
-    fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Status)\n");
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Status)\n");
     for (const auto& [status, count] : statusCounts)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::StatusToString(status), count);
     }
-
-    // Priority summary
-    fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Priority)\n");
-    for (const auto& [priority, count] : priorityCounts)
-    {
-        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::PriorityToString(priority), count);
-    }
-
-    // Unassigned summary
-    fmt::format_to(std::back_inserter(buffer), "\n### Unassigned Open Jobs\n");
-    fmt::format_to(std::back_inserter(buffer), "- Unassigned: {}\n", unassignedCounts);
 
     // Convert memory_buffer to std::string
     return fmt::to_string(buffer);
@@ -401,28 +441,52 @@ const std::string JobQueue::PrintQueueAdminSummary(dpp::cluster& cluster) const
 //---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const dpp::snowflake& worker) const
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-
+    std::map<std::size_t, std::size_t> completedCounts;
     std::map<std::size_t, std::size_t> typeCounts;
     std::map<JobRequest::status, std::size_t> statusCounts;
     std::map<JobRequest::priority, std::size_t> priorityCounts;
     std::vector<RequestID> assignedActiveIDs;
 
     // Collect counts
-    for (const auto& job : m_vQueue)
     {
-        if (!job->IsWorker(worker))
-            continue;
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        for (const auto& job : m_vQueue)
+        {
+            if (!job->IsWorker(worker))
+                continue;
 
-        typeCounts[job->JobType()]++;
-        statusCounts[job->GetStatus()]++;
-        priorityCounts[job->GetPriority()]++;
+            if (job->GetStatus() == JobRequest::status::complete)
+                completedCounts[job->JobType()]++;
 
-        if (job->GetStatus() < JobRequest::status::hold && assignedActiveIDs.size() < 5)
-            assignedActiveIDs.push_back(job->GetID());
+            typeCounts[job->JobType()]++;
+            statusCounts[job->GetStatus()]++;
+            priorityCounts[job->GetPriority()]++;
+
+            if (job->GetStatus() < JobRequest::status::hold && assignedActiveIDs.size() < 5)
+                assignedActiveIDs.push_back(job->GetID());
+        }
+    }
+
+    // Collect archive counts
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxArchive);
+        for (const auto& job : m_vArchived)
+        {
+            if (!job->IsWorker(worker))
+                continue;
+
+            completedCounts[job->JobType()]++;
+        }
     }
 
     fmt::memory_buffer buffer;
+
+    // Completion summary
+    fmt::format_to(std::back_inserter(buffer), "### Jobs Completed (By Type)\n");
+    for (const auto& [type, count] : completedCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", utils::JobTypeToString(type), count);
+    }
 
     // Type summary
     fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Type)\n");
@@ -432,21 +496,21 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
     }
 
     // Status summary
-    fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Status)\n");
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Status)\n");
     for (const auto& [status, count] : statusCounts)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::StatusToString(status), count);
     }
 
     // Priority summary
-    fmt::format_to(std::back_inserter(buffer), "\n### Jobs in Queue (By Priority)\n");
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Priority)\n");
     for (const auto& [priority, count] : priorityCounts)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::PriorityToString(priority), count);
     }
 
     // Stalled job IDs
-    fmt::format_to(std::back_inserter(buffer), "\n### Top 5 Active Job IDs\n");
+    fmt::format_to(std::back_inserter(buffer), "### Top 5 Active Job IDs\n");
     for (const auto& id : assignedActiveIDs)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}\n", ToString(id));
@@ -461,32 +525,67 @@ const std::string JobQueue::PrintQueueWorkerSummary(dpp::cluster& cluster, const
 //---------------------------------------------------------------------------------------------------------------------
 const std::string JobQueue::PrintQueueSummary(dpp::cluster& cluster) const
 {
-    const std::string strAdminPortion = PrintQueueAdminSummary(cluster);
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+    //const std::string strAdminPortion = PrintQueueAdminSummary(cluster);
 
+    std::map<std::size_t, std::size_t> typeCounts;
+    std::map<JobRequest::status, std::size_t> statusCounts;
+    std::map<JobRequest::priority, std::size_t> priorityCounts;
+    std::size_t unassignedCounts{ 0 };
     std::vector<RequestID> stalledJobs;
 
     // Collect counts
-    for (const auto& job : m_vQueue)
     {
-        if (job->GetStatus() == JobRequest::status::stalled)
-            stalledJobs.push_back(job->GetID());
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        for (const auto& job : m_vQueue)
+        {
+            typeCounts[job->JobType()]++;
+            statusCounts[job->GetStatus()]++;
+            priorityCounts[job->GetPriority()]++;
 
-        if (stalledJobs.size() >= 5)
-            break;
+            if (job->GetWorkerIDs().empty() && job->GetStatus() < JobRequest::status::hold)
+                ++unassignedCounts;
+
+            if (job->GetStatus() == JobRequest::status::stalled && stalledJobs.size() <= 5)
+                stalledJobs.push_back(job->GetID());
+        }
     }
 
     fmt::memory_buffer buffer;
 
+    // Type summary
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Type)\n");
+    for (const auto& [type, count] : typeCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", utils::JobTypeToString(type), count);
+    }
+
+    // Status summary
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Status)\n");
+    for (const auto& [status, count] : statusCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::StatusToString(status), count);
+    }
+
+    // Priority summary
+    fmt::format_to(std::back_inserter(buffer), "### Jobs in Queue (By Priority)\n");
+    for (const auto& [priority, count] : priorityCounts)
+    {
+        fmt::format_to(std::back_inserter(buffer), "- {}: {}\n", JobRequest::PriorityToString(priority), count);
+    }
+
+    // Unassigned summary
+    fmt::format_to(std::back_inserter(buffer), "### Unassigned Open Jobs\n");
+    fmt::format_to(std::back_inserter(buffer), "- Unassigned: {}\n", unassignedCounts);
+
     // Stalled job IDs
-    fmt::format_to(std::back_inserter(buffer), "\n### Highest Priority Stalled Jobs:\n");
+    fmt::format_to(std::back_inserter(buffer), "### Highest Priority Stalled Jobs:\n");
     for (const auto& id : stalledJobs)
     {
         fmt::format_to(std::back_inserter(buffer), "- {}\n", ToString(id));
     }
 
     // Convert memory_buffer to std::string
-    return strAdminPortion + fmt::to_string(buffer);
+    return fmt::to_string(buffer);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -512,7 +611,7 @@ const std::string JobQueue::PrintQueue(dpp::cluster& cluster, const dpp::snowfla
 
         fmt::format_to(
             std::back_inserter(buffer),
-            "### Position: {}\n{}\n",
+            "### --------- Position: {} ---------\n{}\n",
             display_pos,
             job->PrintJobDetails(cluster, idGuild)
         );
@@ -710,6 +809,38 @@ const std::string JobQueue::PrintPagedQueueCompact(
     return fmt::to_string(buffer);
 }
 
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::string JobQueue::PrintArchive(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_mtxArchive);
+
+    std::size_t display_pos = 0;
+
+    fmt::memory_buffer buffer;
+    for (const auto& job : m_vArchived)
+    {
+        if (!compare(job))
+            continue;
+
+        fmt::format_to(
+            std::back_inserter(buffer),
+            "### --------- Archived Request: {} ---------\n{}\n\n",
+            m_vArchived.size() - display_pos,
+            job->PrintJobDetails(cluster, idGuild)
+        );
+
+        // This will consider completed tasks, even if they are not being shown
+        ++display_pos;
+    }
+
+    // Convert buffer to std::string once at the end
+    return fmt::to_string(buffer);
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
@@ -778,4 +909,13 @@ const std::size_t JobQueue::GetQueueSize() const
 {
     std::shared_lock lock(m_mtxShared);
     return m_vQueue.size();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+const std::size_t JobQueue::GetArchiveSize() const
+{
+    std::shared_lock lock(m_mtxArchive);
+    return m_vArchived.size();
 }

@@ -38,12 +38,10 @@ public:
 
     // For Managers and Workers
     const std::string PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
-
     // Queue Summary Methods
     const std::string PrintQueueAdminSummary(dpp::cluster& cluster) const; 
     const std::string PrintQueueWorkerSummary(dpp::cluster& cluster, const dpp::snowflake& worker) const;
     const std::string PrintQueueSummary(dpp::cluster& cluster) const;
-
     // Print Queue Methods
     const std::string PrintQueue(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bShowComplete, JobCompare compare) const;
     const std::string PrintQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bShowComplete, JobCompare compare) const;
@@ -51,10 +49,13 @@ public:
     const std::string PrintPagedQueueCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
     // Print Request Methods
     const std::string PrintPagedRequest(dpp::cluster& cluster, const dpp::snowflake& idGuild, const std::size_t page, const bool bShowComplete, JobCompare compare) const;
-
     // Queue Size Methods
     const std::size_t GetQueueSize(const bool bShowComplete, JobCompare compare) const;
     const std::size_t GetQueueSize() const;
+
+    // Archive Methods
+    const std::string PrintArchive(dpp::cluster& cluster, const dpp::snowflake& idGuild, JobCompare compare) const;
+    const std::size_t GetArchiveSize() const;
 
     // Retrieve Job Methods
     const std::shared_ptr<const JobRequest> FirstAssignment(JobCompare compare, const std::size_t offset = 0);

@@ -120,7 +120,8 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
              id.starts_with(fmt::format("{}_adminhold:", this->name)) ||
              id.starts_with(fmt::format("{}_showworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_downloadworkers:", this->name)) ||
-             id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
+             id.starts_with(fmt::format("{}_downloadarchive:", this->name)) ||
+             id.starts_with(fmt::format("{}_reopenarchive:", this->name)))
     {
         if (id.starts_with(fmt::format("{}_queuerefresh:", this->name)))
         {
@@ -152,9 +153,14 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             AdminQueueButtonPanel::DownloadWorkersButton(id, ctx, event);
             return;
         }
-        else if (id.starts_with(fmt::format("{}_archivecomplete:", this->name)))
+        else if (id.starts_with(fmt::format("{}_downloadarchive:", this->name)))
         {
-            AdminQueueButtonPanel::ArchiceCompletedButton(id, ctx, event);
+            AdminQueueButtonPanel::DownloadArchiveButton(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_reopenarchive:", this->name)))
+        {
+            AdminQueueButtonPanel::ReopenArchiveButton(id, ctx, event);
             return;
         }
 

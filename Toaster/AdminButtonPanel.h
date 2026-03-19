@@ -28,7 +28,8 @@ public:
 
 	static void ShowWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event, const bool bSendFile = false);
 	static void DownloadWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
-	static void ArchiceCompletedButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
+	static void DownloadArchiveButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
+	static void ReopenArchiveButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event);
 
 protected:
 	dpp::component m_pagerow;
@@ -47,7 +48,8 @@ protected:
 	// Row 3
 	dpp::component m_btnShowWorkers;
 	dpp::component m_btnDownloadWorkers;
-	dpp::component m_btnArchiveJobs;
+	dpp::component m_btnDownloadArchive;
+	dpp::component m_btnReopenArchived;
 
 	dpp::snowflake m_userID;
 	std::string m_ownerName;

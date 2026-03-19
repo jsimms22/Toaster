@@ -60,14 +60,20 @@ AdminQueueButtonPanel::AdminQueueButtonPanel(
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_downloadworkers:{}", m_ownerName, m_userID, rID));
 
-	m_btnArchiveJobs.set_type(dpp::cot_button)
-		.set_label("Archive Completed")
-		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("{}_archivecomplete:{}", m_ownerName, m_userID));
+	m_btnDownloadArchive.set_type(dpp::cot_button)
+		.set_label("Download Archive")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_downloadarchive:{}", m_ownerName, m_userID));
+
+	m_btnReopenArchived.set_type(dpp::cot_button)
+		.set_label("Reopen Archived Job")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_reopenarchive:{}", m_ownerName, m_userID));
 
 	m_row3.add_component(m_btnShowWorkers)
 		.add_component(m_btnDownloadWorkers)
-		.add_component(m_btnArchiveJobs);
+		.add_component(m_btnDownloadArchive)
+		.add_component(m_btnReopenArchived);
 
 	add_component(m_row2);
 	add_component(m_row3);
@@ -134,11 +140,26 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 	std::size_t count = 0;
 	for (const auto& role : ctx.guild->roles)
 	{
-		fmt::format_to(std::back_inserter(buffer), "### {}\n", roleNames[count]);
-		for (const auto& member : members)
+		if (bSendFile)
 		{
-			if (role.has_value() && pManager->HasRole(member.second, role))
-				fmt::format_to(std::back_inserter(buffer), "- {} | {}\n", member.first, utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
+			fmt::format_to(std::back_inserter(buffer), "### {}\n", roleNames[count]);
+			for (const auto& member : members)
+			{
+				if (role.has_value() && pManager->HasRole(member.second, role))
+					fmt::format_to(std::back_inserter(buffer), "- {} | {}\n", member.first, utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
+			}
+		}
+		else
+		{
+			fmt::format_to(std::back_inserter(buffer), "### {}\n", roleNames[count]);
+			for (const auto& member : members)
+			{
+				if (role.has_value() && pManager->HasRole(member.second, role))
+				{
+					std::string label = fmt::format("<@{}>", member.first);
+					fmt::format_to(std::back_inserter(buffer), "- {}\n", label);
+				}
+			}
 		}
 
 		++count;
@@ -237,7 +258,22 @@ void AdminQueueButtonPanel::RefreshButton(const std::string& id, CommandContext&
 	/* do nothing */
 }
 
-void AdminQueueButtonPanel::ArchiceCompletedButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminQueueButtonPanel::DownloadArchiveButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	std::string queue = ctx.queue->PrintArchive(ctx.cluster,
+		event.command.guild_id,
+		[](const std::shared_ptr<const JobRequest> job) -> bool { return true; });
+
+	utils::RemoveChar(queue, '*');
+
+	event.reply(
+		dpp::message()
+		.set_flags(dpp::m_ephemeral)
+		.add_file(fmt::format("archive_{}.txt", event.command.guild_id), queue)
+	);
+}
+
+void AdminQueueButtonPanel::ReopenArchiveButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
 	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
 }
@@ -381,7 +417,7 @@ void AdminBotButtonPanel::SendQueueButton(const std::string& id, CommandContext&
 	utils::RemoveChar(queue, '*');
 
 	event.reply(
-		dpp::message("Functionality coming soon...")
+		dpp::message()
 		.set_flags(dpp::m_ephemeral)
 		.add_file(fmt::format("queue_{}.txt", event.command.guild_id), queue)
 	);

@@ -8,6 +8,8 @@
 #include "MongoJobRepo.h"
 // d++
 #include <dpp/dpp.h>
+#include <dpp/intents.h>
+#include <dpp/message.h>
 // spdlog
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
@@ -22,6 +24,9 @@
 #include <string>
 
 // URL Encoding guidelines for mongodb: https://www.mongodb.com/docs/atlas/troubleshoot-connection/#special-characters-in-connection-string-password
+
+std::string CacheString(dpp::cache_policy_setting_t cache);
+std::string IntentsString(uint64_t intents);
 
 auto main() -> int
 {
@@ -49,8 +54,10 @@ auto main() -> int
 
     // Create an instance and establish our MongoDB connection
     MongoDatabase database;
+    database.SetLogger(log);
     database.connect(fmt::format("mongodb+srv://{}:{}@{}", DB_USER, DB_PASS, DB_CLUSTER));
     std::shared_ptr<MongoJobRepo> jobRepo = std::make_shared<MongoJobRepo>(database.GetDB());
+    jobRepo->SetLogger(log);
 
     std::uint8_t counter{ 0 };
     while (true)
@@ -69,6 +76,26 @@ auto main() -> int
         dpp::cluster bot{ BOT_TOKEN };
         bot.intents = dpp::intents::i_message_content | dpp::intents::i_default_intents | dpp::i_guild_members;
         bot.cache_policy = cp;
+
+        if (log) {
+            log->info("{}",
+                fmt::format(
+                    "Initializing bot with the following cache policy:\n"
+                    "User caching:     {}\n"
+                    "Emoji caching:    {}\n"
+                    "Role caching:     {}\n"
+                    "Channel caching:  {}\n"
+                    "Guild caching:    {}\n"
+                    "Intents:          {}",
+                    CacheString(cp.user_policy),
+                    CacheString(cp.emoji_policy),
+                    CacheString(cp.role_policy),
+                    CacheString(cp.channel_policy),
+                    CacheString(cp.guild_policy),
+                    IntentsString(bot.intents)
+                )
+            );
+        }
 
         if (!(&bot))
         {
@@ -110,6 +137,7 @@ auto main() -> int
             });
 
         ToasterBot toaster(bot, 0, jobRepo, false);
+        toaster.SetLogger(log);
 
         // Register our custom event handlers
         bot.on_message_create([&toaster](const dpp::message_create_t& event) { toaster.onMessage(event); });
@@ -118,6 +146,9 @@ auto main() -> int
         bot.on_button_click([&toaster](const dpp::button_click_t& event) { toaster.onButtonClick(event); });
         bot.on_form_submit([&toaster](const dpp::form_submit_t& event) { toaster.onFormSubmit(event); });
         bot.on_ready([&toaster](const dpp::ready_t& event) { toaster.onReady(event); });
+
+        if (log)
+            log->info("{}", "Registered D++ callbacks for slash commands.");
 
         try
         {
@@ -136,4 +167,52 @@ auto main() -> int
     database.disconnect();
 
     return 0;
+}
+
+std::string CacheString(dpp::cache_policy_setting_t cache) {
+    switch (cache)
+    {
+    case dpp::cp_none: return "none";
+    case dpp::cp_aggressive: return "cp_aggressive";
+    case dpp::cp_lazy: return "cp_lazy";
+    default: return "unknown";
+    }
+}
+
+std::string IntentsString(uint64_t intents) {
+    fmt::memory_buffer buf;
+    bool first = true;
+
+    auto append = [&](std::string_view name) {
+        if (!first) {
+            fmt::format_to(std::back_inserter(buf), " | ");
+        }
+        fmt::format_to(std::back_inserter(buf), "{}", name);
+        first = false;
+        };
+
+    if (intents & dpp::intents::i_message_content)
+        append("message_content");
+
+    if (intents & dpp::intents::i_default_intents)
+        append("default_intents");
+
+    if (intents & dpp::i_guild_members)
+        append("guild_members");
+
+    // Optional extras
+    if (intents & dpp::i_guilds)
+        append("guilds");
+
+    if (intents & dpp::i_guild_messages)
+        append("guild_messages");
+
+    if (intents & dpp::i_direct_messages)
+        append("direct_messages");
+
+    if (first) {
+        return "none";
+    }
+
+    return fmt::to_string(buf);
 }

@@ -6,6 +6,8 @@
 // d++
 #include <dpp/cluster.h>
 #include <dpp/dispatcher.h>
+// spdlog
+#include <spdlog/spdlog.h>
 // std library
 #include <cstdlib>
 #include <cstdint>
@@ -39,6 +41,9 @@ public:
 	void onInteractionCreate(const dpp::interaction_create_t& event);
 	void onFormSubmit(const dpp::form_submit_t& event);
 
+	// Logger
+	void SetLogger(std::shared_ptr<spdlog::logger> log) { m_logger = log; };
+
 private:
 	mutable std::shared_mutex m_mtxGuildShared;
 	mutable std::shared_mutex m_mtxQueueShared;
@@ -64,5 +69,8 @@ private:
 	// Database
 	std::shared_ptr<IJobRepo> m_repo;
 	void LoadDatabase();
+
+	// logger
+	std::shared_ptr<spdlog::logger> m_logger;
 };
 

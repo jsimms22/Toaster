@@ -34,7 +34,9 @@ MongoJobRepo::MongoJobRepo(mongocxx::database db)
 void MongoJobRepo::StartWorker()
 {
     if (m_worker.joinable())
+    {
         return;
+    }
 
     m_worker = std::jthread([this](std::stop_token st) { DatabaseWorker(st); });
 }
@@ -51,7 +53,9 @@ void MongoJobRepo::DatabaseWorker(std::stop_token stopToken)
         m_cv.wait(lock, [this, &stopToken] { return !m_mutations.empty() || stopToken.stop_requested(); });
 
         if (stopToken.stop_requested() && m_mutations.empty())
+        {
             break;
+        }
 
         Mutation mutation = std::move(m_mutations.front());
         m_mutations.pop();
@@ -87,6 +91,11 @@ void MongoJobRepo::InsertJob(const std::shared_ptr<const JobRequest>& job)
             mongoRepo->Insert("job_queue", doc);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'InsertJob' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -104,6 +113,11 @@ void MongoJobRepo::UpdateJob(const std::shared_ptr<const JobRequest>& job)
             mongoRepo->Update("job_queue", filter, doc);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'UpdateJob' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -120,6 +134,11 @@ void MongoJobRepo::DeleteJob(const RequestID rID)
             mongoRepo->Delete("job_queue", filter);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'DeleteJob' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -145,8 +164,14 @@ void MongoJobRepo::ArchiveJobs(const std::vector<RequestID>& ids)
                     kvp("$in", ids_array)
                 ))
             );
+
             mongoRepo->ArchiveMany("job_queue", "job_archive", filter);
         });
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'ArchiveMany' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -162,6 +187,11 @@ void MongoJobRepo::InsertGuild(const std::shared_ptr<const GuildSettings>& setti
             mongoRepo->Insert("guild_settings", doc);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'InsertGuild' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -178,6 +208,11 @@ void MongoJobRepo::UpdateGuild(const dpp::snowflake& guildID, const std::shared_
             mongoRepo->Update("guild_settings", filter, doc);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'UpdateGuild' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -194,6 +229,11 @@ void MongoJobRepo::DeleteGuild(const dpp::snowflake& guildID)
             mongoRepo->Delete("guild_settings", filter);
         }
     );
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'DeleteGuild' job to database mutation queue.");
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -212,6 +252,11 @@ std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithJobs()
         {
             guilds.emplace_back(val.get_int64().value);
         }
+    }
+
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Found {} guild(s) with jobs in the database.", guilds.size()));
     }
 
     return guilds;
@@ -243,7 +288,11 @@ std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(const dpp::snowf
         {
             continue;
         }
+    }
 
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Bootstrapped {} job(s) associated with guild {}.", jobs.size(), guildID));
     }
 
     return jobs;
@@ -267,6 +316,11 @@ std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithSettings()
         }
     }
 
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Found settings associated with {} guild(s) in the database.", guilds.size()));
+    }
+
     return guilds;
 }
 
@@ -288,6 +342,11 @@ bool MongoJobRepo::LoadGuildSettings(const std::shared_ptr<GuildSettings>& setti
         bResult = true;
     }
 
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Bootstrapped persistent settings associated with guild {}.", settings->GetGuildID()));
+    }
+
     return bResult;
 }
 
@@ -302,6 +361,12 @@ void MongoJobRepo::CreateIndexes()
     {
         m_jobsCollection.create_index(make_document(kvp("_guild", 1)));
         m_archiveCollection.create_index(make_document(kvp("_guild", 1)));
+
+        if (m_logger)
+        {
+            m_logger->info("{}", "Created database indexes.");
+        }
+
     }
     catch (const std::exception& e)
     {
@@ -316,7 +381,9 @@ void MongoJobRepo::Insert(const std::string& name, bsoncxx::document::value docu
 {
     auto col = GetCollection(name);
     if (!col)
+    {
         return;
+    }
 
     col->insert_one(document.view());
 }
@@ -327,7 +394,9 @@ void MongoJobRepo::Insert(const std::string& name, bsoncxx::document::value docu
 void MongoJobRepo::InsertMany(const std::string& name, const std::vector<bsoncxx::document::value>& documents)
 {
     if (documents.empty())
+    {
         return;
+    }
 
     std::vector<bsoncxx::document::view> views;
     views.reserve(documents.size());
@@ -337,7 +406,9 @@ void MongoJobRepo::InsertMany(const std::string& name, const std::vector<bsoncxx
 
     auto col = GetCollection(name);
     if (!col)
+    {
         return;
+    }
 
     col->insert_many(views);
 }
@@ -349,7 +420,9 @@ void MongoJobRepo::Update(const std::string& name, bsoncxx::document::value filt
 {
     auto col = GetCollection(name);
     if (!col)
+    {
         return;
+    }
 
     col->replace_one(filter.view(), replacement.view());
 }
@@ -361,7 +434,9 @@ void MongoJobRepo::Delete(const std::string& name, bsoncxx::document::value filt
 {
     auto col = GetCollection(name);
     if (!col)
+    {
         return;
+    }
 
     col->delete_one(filter.view());
 }
@@ -373,7 +448,9 @@ void MongoJobRepo::DeleteMany(const std::string& name, bsoncxx::document::value 
 {
     auto col = GetCollection(name);
     if (!col)
+    {
         return;
+    }
 
     col->delete_many(filter.view());
 }
@@ -387,7 +464,9 @@ void MongoJobRepo::ArchiveMany(const std::string& src, const std::string& dst, b
     auto dstCol = GetCollection(dst);
 
     if (!srcCol || !dstCol)
+    {
         return;
+    }
 
     std::vector<bsoncxx::document::value> docs;
     std::vector<std::int64_t> ids;
@@ -406,7 +485,9 @@ void MongoJobRepo::ArchiveMany(const std::string& src, const std::string& dst, b
     }
 
     if (docs.empty())
+    {
         return;
+    }
 
     InsertMany(dst, docs);
 
@@ -434,13 +515,19 @@ void MongoJobRepo::ArchiveMany(const std::string& src, const std::string& dst, b
 mongocxx::collection* MongoJobRepo::GetCollection(const std::string& name)
 {
     if (name == m_jobsCollection.name())
+    {
         return &m_jobsCollection;
+    }
 
     if (name == m_guildsCollection.name())
+    {
         return &m_guildsCollection;
+    }
 
     if (name == m_archiveCollection.name())
+    {
         return &m_archiveCollection;
+    }
 
     return nullptr;
 }

@@ -27,7 +27,6 @@ ToasterBot::ToasterBot(dpp::cluster& cluster, const uint32_t clusterId, const st
     : m_cluster(cluster), m_clusterId(clusterId), m_iShardCount{ 0 }, m_repo{ repo }, m_debug{ bDebug }
 {
     LoadDatabase();
-
     m_worker = std::jthread([this](std::stop_token st) { AutomatedBotTasks(st); });
 }
 
@@ -64,7 +63,9 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
     if (!event.msg.author.id) 
     {
         m_cluster.log(dpp::ll_error, fmt::format("Message dropped. No author '{}'.", event.msg.content));
-        return;
+        {
+            return;
+        }
     } 
     else if (event.msg.author.id == m_cluster.me.id) 
     {
@@ -129,7 +130,7 @@ void ToasterBot::onSlashCommand(const dpp::slashcommand_t& event)
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed SLASHCOMMAND '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
+    m_cluster.log(dpp::ll_info, fmt::format("Processed SLASHCOMMAND '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().global_name));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -175,7 +176,7 @@ void ToasterBot::onInteractionCreate(const dpp::interaction_create_t& event)
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed INTERACTION '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().id));
+    m_cluster.log(dpp::ll_info, fmt::format("Processed INTERACTION '{}' for USER '{}'.", event.command.get_command_name(), event.command.get_issuing_user().global_name));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -221,7 +222,7 @@ void ToasterBot::onFormSubmit(const dpp::form_submit_t& event)
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed FORM_SUBMIT '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
+    m_cluster.log(dpp::ll_info, fmt::format("Processed FORM_SUBMIT '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().global_name));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -267,7 +268,7 @@ void ToasterBot::onButtonClick(const dpp::button_click_t& event)
         );
     }
 
-    m_cluster.log(dpp::ll_info, fmt::format("TOASTER processed BUTTON_CLICK '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().id));
+    m_cluster.log(dpp::ll_info, fmt::format("Processed BUTTON_CLICK '{}' for USER '{}'.", event.custom_id, event.command.get_issuing_user().global_name));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -279,7 +280,14 @@ std::shared_ptr<JobQueue> ToasterBot::GetOrCreateQueue(const dpp::snowflake& gui
 
     auto it = m_spQueue.find(guildID);
     if (it != m_spQueue.end())
+    {
         return it->second;
+    }
+
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Unable to find existing queue for guild {}. Creating new queue.", guildID));
+    }
 
     // Create a new queue for this guild
     auto queue = std::make_shared<JobQueue>(guildID, m_repo);
@@ -297,7 +305,14 @@ std::shared_ptr<GuildSettings> ToasterBot::GetOrCreateSettings(const dpp::snowfl
 
     auto it = g_settings.find(guildID);
     if (it != g_settings.end())
+    {
         return it->second;
+    }
+
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Unable to find existing settings for guild {}. Creating default settings.", guildID));
+    }
 
     // Create default settings if none exist, then update database with defaults
     auto settings = std::make_shared<GuildSettings>(guildID);
@@ -342,7 +357,14 @@ void ToasterBot::AutomatedBotTasks(std::stop_token stopToken)
         std::this_thread::sleep_for(std::chrono::seconds(300));
 
         if (stopToken.stop_requested()) 
+        {
             return;
+        }
+
+        if (m_logger)
+        {
+            m_logger->info("{}", "Automated worker thread beginning queue scans.");
+        }
 
         std::vector<std::pair<std::shared_ptr<JobQueue>, cutoffs>> work;
 
@@ -367,6 +389,11 @@ void ToasterBot::AutomatedBotTasks(std::stop_token stopToken)
             {
                 queue->AutomatedQueueScan(cutoff.archive, cutoff.stalled);
             }
+        }
+
+        if (m_logger)
+        {
+            m_logger->info("{}", "Automated worker thread ending queue scans.");
         }
     }
 }

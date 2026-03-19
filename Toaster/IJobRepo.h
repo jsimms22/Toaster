@@ -1,6 +1,8 @@
 #pragma once
 // dpp
 #include <dpp/snowflake.h>
+// spdlog
+#include <spdlog/spdlog.h>
 // std library
 #include <condition_variable>
 #include <functional>
@@ -47,6 +49,9 @@ public:
     virtual void UpdateGuild(const dpp::snowflake& guildID, const std::shared_ptr<const GuildSettings>& settings) = 0;
     virtual void DeleteGuild(const dpp::snowflake& guildID) = 0;
 
+    // Logger
+    void SetLogger(std::shared_ptr<spdlog::logger> log) { m_logger = log; };
+
 protected:
     // Worker Thread
     virtual void StartWorker() = 0;
@@ -57,5 +62,8 @@ protected:
     std::mutex m_mtxMutQueue;
     std::condition_variable m_cv;
     std::jthread m_worker;
+
+    // logger
+    std::shared_ptr<spdlog::logger> m_logger;
 };
 

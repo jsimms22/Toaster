@@ -1,5 +1,8 @@
 #pragma once
 
+// spdlog
+#include <spdlog/spdlog.h>
+// std library
 #include <string>
 #include <map>
 #include <vector>
@@ -19,4 +22,11 @@ public:
 
     // Optional: commit/save (useful for XML)
     virtual bool flush() = 0;
+
+    // Logger
+    void SetLogger(std::shared_ptr<spdlog::logger> log) { m_logger = log; };
+
+protected:
+    // logger
+    std::shared_ptr<spdlog::logger> m_logger;
 };

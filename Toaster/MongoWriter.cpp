@@ -40,13 +40,17 @@ bool MongoDatabase::connect(const std::string& connectionString)
 
         const auto ping_cmd = make_document(kvp("ping", 1));
         m_db.run_command(ping_cmd.view());
-        std::cout << "Pinged your deployment. You successfully connected to MongoDB!" << std::endl;
+
+        if (m_logger)
+            m_logger->info("{}", "Connected to MongoDB cluster.");
 
         return true;
     }
     catch (const std::exception& e)
     {
-        std::cout << "Exception: " << e.what() << std::endl;
+        if (m_logger)
+            m_logger->error("{}", fmt::format("Caught exception while connecting to the database: {}", e.what()));
+
         return false;
     }
 }

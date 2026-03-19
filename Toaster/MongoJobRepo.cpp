@@ -15,6 +15,7 @@
 // std library
 #include <cstdint>
 #include <cstdlib>
+#include <unordered_set>
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
@@ -241,18 +242,29 @@ void MongoJobRepo::DeleteGuild(const dpp::snowflake& guildID)
 //---------------------------------------------------------------------------------------------------------------------
 std::vector<dpp::snowflake> MongoJobRepo::GetGuildsWithJobs()
 {
-    std::vector<dpp::snowflake> guilds;
+    std::unordered_set<dpp::snowflake> guildSet;
 
     auto cursor = m_jobsCollection.distinct("_guild", {});
-
     for (auto&& doc : cursor)
     {
         auto&& val_elem = doc["values"];
         for (auto&& val : val_elem.get_array().value)
         {
-            guilds.emplace_back(val.get_int64().value);
+            guildSet.insert(val.get_int64().value);
         }
     }
+
+    cursor = m_archiveCollection.distinct("_guild", {});
+    for (auto&& doc : cursor)
+    {
+        auto&& val_elem = doc["values"];
+        for (auto&& val : val_elem.get_array().value)
+        {
+            guildSet.insert(val.get_int64().value);
+        }
+    }
+
+    std::vector<dpp::snowflake> guilds(guildSet.begin(), guildSet.end());
 
     if (m_logger)
     {
@@ -293,6 +305,42 @@ std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadJobs(const dpp::snowf
     if (m_logger)
     {
         m_logger->info("{}", fmt::format("Bootstrapped {} job(s) associated with guild {}.", jobs.size(), guildID));
+    }
+
+    return jobs;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+std::vector<std::shared_ptr<JobRequest>> MongoJobRepo::LoadArchived(const dpp::snowflake& guildID)
+{
+    using namespace bsoncxx::builder::basic;
+
+    std::vector<std::shared_ptr<JobRequest>> jobs;
+
+    auto filter = make_document(kvp("_guild", static_cast<int64_t>(guildID)));
+
+    auto cursor = m_archiveCollection.find(filter.view());
+
+    for (auto&& doc : cursor)
+    {
+        if (doc.find("job_type") != doc.end() && doc["job_type"].type() == bsoncxx::type::k_int32)
+        {
+            std::size_t type = doc["job_type"].get_int32().value;
+            auto job = JobRequestFactory::Create(type, guildID);
+            job->ReadAttributesBSON(doc);
+            jobs.push_back(job);
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    if (m_logger)
+    {
+        m_logger->info("{}", fmt::format("Bootstrapped {} archived job(s) associated with guild {}.", jobs.size(), guildID));
     }
 
     return jobs;

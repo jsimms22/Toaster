@@ -15,6 +15,7 @@ public:
     // Job Queue
     std::vector<dpp::snowflake> GetGuildsWithJobs() override;
     std::vector<std::shared_ptr<JobRequest>> LoadJobs(const dpp::snowflake& guildID) override;
+    std::vector<std::shared_ptr<JobRequest>> LoadArchived(const dpp::snowflake& guildID) override;
 
     void InsertJob(const std::shared_ptr<const JobRequest>& job) override;
     void UpdateJob(const std::shared_ptr<const JobRequest>& job) override;

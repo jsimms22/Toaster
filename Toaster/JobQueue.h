@@ -82,8 +82,12 @@ private:
     void ArchiveJobsDB(const std::vector<RequestID>& ids);
 
     dpp::snowflake m_guildID;
+    // Active queue
     std::vector<std::shared_ptr<JobRequest>> m_vQueue;
     mutable std::shared_mutex m_mtxShared;
+    // Archived completed requests
+    std::vector<std::shared_ptr<JobRequest>> m_vArchived;
+    mutable std::shared_mutex m_mtxArchive;
 
     std::shared_ptr<IJobRepo> m_repo;
 

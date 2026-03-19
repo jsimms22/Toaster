@@ -36,6 +36,11 @@ namespace
 
         return a->GetPriority() > b->GetPriority();  // Higher priority comes first
     }
+
+    bool CompareEditTime(const std::shared_ptr<const JobRequest>& a, const std::shared_ptr<const JobRequest>& b)
+    {
+        return a->GetLastEditTime() < b->GetLastEditTime();
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -46,6 +51,9 @@ JobQueue::JobQueue(const dpp::snowflake& guildID, std::shared_ptr<IJobRepo> repo
 {
     m_vQueue = m_repo->LoadJobs(m_guildID);
     std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+
+    m_vArchived = m_repo->LoadArchived(m_guildID);
+    std::sort(m_vArchived.begin(), m_vArchived.end(), CompareEditTime);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -137,6 +145,7 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
 
     std::vector<RequestID> archiveIDs;
     std::vector<RequestID> stalledIDs;
+    std::vector<std::shared_ptr<JobRequest>> toArchive;
 
     {
         std::unique_lock<std::shared_mutex> lock(m_mtxShared);
@@ -155,7 +164,13 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
                 job->GetLastEditTime() < archiveCutoff)
             {
                 archiveIDs.push_back(job->GetID());
+
+                // Move to local container for now, move to archive later under lock
+                toArchive.push_back(std::move(job));
+
+                // Remove from queue
                 itr = m_vQueue.erase(itr);
+
                 // Do not iterate after deleting
             }
             /* Check if job needs to be updated as stalled */
@@ -185,6 +200,14 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
                     job->SetStatus(JobRequest::status::stalled);
                 });
         }
+    }
+
+    if (!toArchive.empty())
+    {
+        std::unique_lock<std::shared_mutex> lock(m_mtxArchive);
+        m_vArchived.insert(m_vArchived.begin(),
+            std::make_move_iterator(toArchive.begin()),
+            std::make_move_iterator(toArchive.end()));
     }
 }
 

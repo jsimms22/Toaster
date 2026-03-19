@@ -35,6 +35,7 @@ public:
     // Job Queue
     virtual std::vector<dpp::snowflake> GetGuildsWithJobs() = 0;
     virtual std::vector<std::shared_ptr<JobRequest>> LoadJobs(const dpp::snowflake& guild) = 0;
+    virtual std::vector<std::shared_ptr<JobRequest>> LoadArchived(const dpp::snowflake& guildID) = 0;
 
     virtual void InsertJob(const std::shared_ptr<const JobRequest>& job) = 0;
     virtual void UpdateJob(const std::shared_ptr<const JobRequest>& job) = 0;

@@ -233,6 +233,8 @@
     <ClCompile Include="ShowQueueCommand.cpp" />
     <ClCompile Include="ShowQueueSummaryCommand.cpp" />
     <ClCompile Include="ShowRequestCommand.cpp" />
+    <ClCompile Include="ShowWorkersCommand.cpp" />
+    <ClCompile Include="ShowWorkersPanel.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="BotUtility.cpp" />
     <ClCompile Include="Toaster.cpp" />
@@ -268,6 +270,7 @@
     <ClInclude Include="RequestID.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceJobRequest.h" />
+    <ClInclude Include="ShowWorkersPanel.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="BotUtility.h" />
     <ClInclude Include="Toaster.h" />

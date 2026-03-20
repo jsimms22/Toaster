@@ -337,6 +337,28 @@ private:
 };
 
 //---------------------------------------------------------------------------------------------------------------------
+/// \class ShowRequestCommand
+/// \brief Displays detailed information about a specific request.
+//---------------------------------------------------------------------------------------------------------------------
+class ShowWorkersCommand : public ICustomCommand
+{
+public:
+    ShowWorkersCommand()
+        : ICustomCommand(Command_ShowWorkers, "Displays workers with active roles.")
+    {
+    }
+
+    virtual ~ShowWorkersCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override;
+
+private:
+};
+
+//---------------------------------------------------------------------------------------------------------------------
 /// \class ModifyRequestCommand
 /// \brief Modifies an existing job request (edit, assign, update status, etc.).
 //---------------------------------------------------------------------------------------------------------------------
@@ -408,6 +430,7 @@ namespace Toaster
         new AdminPanelCommand(),
         new WorkerPanelCommand(),
         new ShowQueueCommand(),
+        new ShowWorkersCommand(),
         new ShowQueueSummaryCommand(),
         new HelpCommand(),
         new CreateRequestCommand(),

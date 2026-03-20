@@ -8,6 +8,8 @@
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
 #include "RequestDlg.h"
+#include "Resource.h"
+#include "ShowWorkersPanel.h"
 #include "WorkerPanel.h"
 // d++
 #include <dpp/guild.h>
@@ -117,48 +119,48 @@ void AdminQueueButtonPanel::AddPageRow(const std::size_t page, const std::size_t
 
 void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event, const bool bSendFile)
 {
-	//event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+	if (!guild) return;
+
+	const auto pManager = PermissionsMgr::GetInstance();
+	const auto& members = guild->members;
+	const auto role = ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)];
+
+	fmt::memory_buffer buffer;
+	fmt::format_to(std::back_inserter(buffer), "### {}\n", GuildSettings::RoleNames[static_cast<std::size_t>(GuildSettings::Roles::Ping)]);
+	for (const auto& member : members)
+	{
+		if (role.has_value() && pManager->HasRole(member.second, role))
+		{
+			std::string label = fmt::format("<@{}>", member.first);
+			fmt::format_to(std::back_inserter(buffer), "- {}\n", label);
+		}
+	}
+
+	ShowWorkersPanel workerlist{ Command_ShowWorkers, ctx.guild };
+	workerlist.AddEmbed("Assigned Worker Roles", fmt::to_string(buffer));
+
+	event.reply(workerlist.set_flags(dpp::m_ephemeral));
+}
+
+void AdminQueueButtonPanel::DownloadWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
 	dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
 	if (!guild) return;
 
 	const auto pManager = PermissionsMgr::GetInstance();
 	const auto& members = guild->members;
 
-	// Role display names in enum order
-	constexpr std::array<const char*, 8> roleNames{
-		"General Worker Role",
-		"Item Crafter",
-		"Base Builder",
-		"Component Dealer",
-		"Resource Gatherer",
-		"Refinery Worker",
-		"Hazardous Materials Collector",
-		"Manager"
-	};
-
 	fmt::memory_buffer buffer;
 	std::size_t count = 0;
 	for (const auto& role : ctx.guild->roles)
 	{
-		if (bSendFile)
+		fmt::format_to(std::back_inserter(buffer), "### {}\n", GuildSettings::RoleNames[count]);
+		for (const auto& member : members)
 		{
-			fmt::format_to(std::back_inserter(buffer), "### {}\n", roleNames[count]);
-			for (const auto& member : members)
+			if (role.has_value() && pManager->HasRole(member.second, role))
 			{
-				if (role.has_value() && pManager->HasRole(member.second, role))
-					fmt::format_to(std::back_inserter(buffer), "- {} | {}\n", member.first, utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
-			}
-		}
-		else
-		{
-			fmt::format_to(std::back_inserter(buffer), "### {}\n", roleNames[count]);
-			for (const auto& member : members)
-			{
-				if (role.has_value() && pManager->HasRole(member.second, role))
-				{
-					std::string label = fmt::format("<@{}>", member.first);
-					fmt::format_to(std::back_inserter(buffer), "- {}\n", label);
-				}
+				fmt::format_to(std::back_inserter(buffer), "- {} | {}\n", member.first, utils::FindPreferredNameByID(ctx.cluster, member.first, guild->id));
 			}
 		}
 
@@ -167,30 +169,9 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 
 	dpp::message msg;
 	const std::string response = fmt::to_string(buffer);
-	if (bSendFile)
-	{
-		msg.add_file("Worker_List.txt", response);
-	}
-	else if (response.size() < 5500 && !bSendFile)
-	{
-		dpp::embed embed;
-		embed.set_title("Assigned Worker Roles")
-			.set_description(fmt::to_string(buffer))
-			.set_color(0x3498db);
-
-		msg.add_embed(embed);
-	}
-	else
-	{
-		msg.add_file("Worker_List.txt", response);
-	}
+	msg.add_file("Worker_List.txt", response);
 
 	event.reply(msg.set_flags(dpp::m_ephemeral));
-}
-
-void AdminQueueButtonPanel::DownloadWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
-{
-	ShowWorkersButton(id, ctx, event, true);
 }
 
 void AdminQueueButtonPanel::AssignWorkersButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
@@ -333,12 +314,12 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 
 	// Row 3
 	m_btnSendLogs.set_type(dpp::cot_button)
-		.set_label("Send Logs")
+		.set_label("Download Logs")
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_sendlogs:{}", OwnerName, m_userID));
 
 	m_btnSendQueue.set_type(dpp::cot_button)
-		.set_label("Send Queue")
+		.set_label("Download Queue")
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_sendqueue:{}", OwnerName, m_userID));
 

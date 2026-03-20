@@ -99,10 +99,21 @@ std::string CreateWorkerHelp()
         "Shows a summarized overview of the current queue."
         " There are buttons to view currently unassigned or stalled jobs.\n\n"
 
+        "**/show_workers**\n"
+        "Displays lists of members who currently have worker roles assigned.\n\n"
+
         "**/worker_panel**\n"
         "Displays your worker assignment portal. Panels:\n"
         "- Assignment Overview\n"
-        "- All Assignments\n"
+        "- All Assignments\n\n"
+
+        "**/modify_request**\n"
+        "Workers have full control over requests in the queue. Available actions:\n"
+        "- Edit Job\n"
+        "- Assign Worker\n"
+        "- Update Status\n"
+        "- Change Priority\n"
+        "- Delete Job\n"
 
         "### Available Worker Roles You Can Sign Up For:\n"
         "Workers typically specialize in one or more job categories.\n"
@@ -151,7 +162,9 @@ std::string CreateAdminHelp()
         "### Worker Commands (also available):\n"
         "/show_queue\n"
         "/summary_queue\n"
+        "/show_workers\n"
         "/worker_panel\n"
+        "/modify_request\n"
 
         "### Manager Tools:\n"
 
@@ -159,14 +172,6 @@ std::string CreateAdminHelp()
         "Opens the administrative portal. Panels:\n"
         "- Bot Panel\n"
         "- Queue Panel\n\n"
-
-        "**/modify_request**\n"
-        "Managers have full control over requests in the queue. Available actions:\n"
-        "- Edit Job\n"
-        "- Assign Worker\n"
-        "- Update Status\n"
-        "- Change Priority\n"
-        "- Delete Job\n\n"
 
         "**/config_roles**\n"
         "Assign or update the Discord roles used by the system. Roles include:\n"

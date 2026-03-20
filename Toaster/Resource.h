@@ -79,6 +79,7 @@ constexpr const char* Command_ShowRequest		{ "show_request" };
 constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue			{ "show_queue" };
 constexpr const char* Command_SummaryQueue		{ "show_summary" };
+constexpr const char* Command_ShowWorkers		{ "show_workers" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/

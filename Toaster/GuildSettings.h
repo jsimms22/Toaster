@@ -36,6 +36,9 @@ public:
 		Manager = 7
 	};
 
+	// Role display names in enum order
+	static const std::array<const char*, 8> RoleNames;
+
 	GuildSettings(const dpp::snowflake& guildID)
 		: m_idGuild{ guildID }
 	{

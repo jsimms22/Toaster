@@ -43,6 +43,18 @@ namespace
     }
 }
 
+const std::array<const char*, 8> GuildSettings::RoleNames
+{
+    "General Worker",
+    "Item Crafter",
+    "Base Builder",
+    "Component Dealer",
+    "Resource Gatherer",
+    "Refinery Worker",
+    "Hazardous Materials Collector",
+    "Manager"
+};
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------

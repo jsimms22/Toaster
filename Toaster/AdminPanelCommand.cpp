@@ -69,6 +69,12 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
     if (id.starts_with(fmt::format("{}_botrefresh:", this->name)) ||
         id.starts_with(fmt::format("{}_changerole:", this->name)) ||
         id.starts_with(fmt::format("{}_channelrules:", this->name)) ||
+        id.starts_with(fmt::format("{}_changecooldown:", this->name)) ||
+        // row 2
+        id.starts_with(fmt::format("{}_changemaxrequests:", this->name)) ||
+        id.starts_with(fmt::format("{}_changearchive:", this->name)) ||
+        id.starts_with(fmt::format("{}_changestalled:", this->name)) ||
+        // row 3
         id.starts_with(fmt::format("{}_pingrules:", this->name)) || 
         id.starts_with(fmt::format("{}_sendlogs:", this->name)) ||
         id.starts_with(fmt::format("{}_sendqueue:", this->name)) ||
@@ -94,6 +100,28 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
             AdminBotButtonPanel::PingRulesButton(id, ctx, event);
             return;
         }
+        else if (id.starts_with(fmt::format("{}_changecooldown:", this->name)))
+        {
+            AdminBotButtonPanel::ChangeCooldown(id, ctx, event);
+            return;
+        }
+        // row 2
+        else if (id.starts_with(fmt::format("{}_changemaxrequests:", this->name)))
+        {
+            AdminBotButtonPanel::ChangeMaxOpenRequests(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_changearchive:", this->name)))
+        {
+            AdminBotButtonPanel::ChangeArchiveThreshold(id, ctx, event);
+            return;
+        }
+        else if (id.starts_with(fmt::format("{}_changestalled:", this->name)))
+        {
+            AdminBotButtonPanel::ChangeStallThreshold(id, ctx, event);
+            return;
+        }
+        // row 3
         else if (id.starts_with(fmt::format("{}_sendlogs:", this->name)))
         {
             AdminBotButtonPanel::SendLogsButton(id, ctx, event);
@@ -118,6 +146,8 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
              id.starts_with(fmt::format("{}_assignworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_admincomplete:", this->name)) ||
              id.starts_with(fmt::format("{}_adminhold:", this->name)) ||
+             id.starts_with(fmt::format("{}_admindelete:", this->name)) ||
+             // row 2
              id.starts_with(fmt::format("{}_showworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_downloadworkers:", this->name)) ||
              id.starts_with(fmt::format("{}_downloadarchive:", this->name)) ||
@@ -142,6 +172,11 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         {
             AdminQueueButtonPanel::MarkOnHoldButton(id, ctx, event);
             // do not return
+        }
+        else if (id.starts_with(fmt::format("{}_admindelete:", this->name)))
+        {
+            AdminQueueButtonPanel::AdminDelete(id, ctx, event);
+            return;
         }
         else if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
         {
@@ -235,6 +270,15 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
         "### Per Customer Settings\n"
         "- Max Open Requests: {} requests\n"
 
+        "### Automated Queue Settings\n"
+        "- Auto-Archive Threshold: {} hours\n"
+        "- Auto-Stalled Threshold: {} hours\n\n"
+
+        "**Note:** The bot will conduct scans every so often. These scans handle certain automated tasks for managers:\n"
+        "- Searches for **Completed** job requests that have not been edited for some amount of time and adds them to the archive.\n"
+        "- Searches for jobs in **Open** or **Assigned** status. If they have not been edited for some amount of time the bot relabels them as **Stalled**.\n"
+        "- If the 'Last Edit' timestamp is older than the set thresholds, the bot will apply these actions automatically.\n"
+
         "### Ping Rules\n"
         "- On New: {}\n"
         "- On Update: {}\n"
@@ -259,6 +303,9 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
         ctx.guild->announcement_cooldown.count(),
 
         ctx.guild->requestLimitPerUser,
+
+        ctx.guild->archival_age.count(),
+        ctx.guild->stalled_age.count(),
 
         ctx.guild->bPingOnNew ? "Enabled" : "Disabled",
         ctx.guild->bPingOnUpdate ? "Enabled" : "Disabled",

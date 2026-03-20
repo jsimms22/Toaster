@@ -87,6 +87,8 @@ void ComponentJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszCompList }])
+    if (auto elem = doc[serial::pszCompList]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strComponentList = std::string{ elem.get_string().value };
+    }
 }

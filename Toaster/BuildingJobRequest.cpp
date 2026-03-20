@@ -91,14 +91,20 @@ void BuildingJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszBuildDesignation }])
+    if (auto elem = doc[serial::pszBuildDesignation]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strBldgDesignation = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszBuildRequirements }])
+    if (auto elem = doc[serial::pszBuildRequirements]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strBldgRequires = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszBuildZone }])
+    if (auto elem = doc[serial::pszBuildZone]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strBldgZone = std::string{ elem.get_string().value };
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

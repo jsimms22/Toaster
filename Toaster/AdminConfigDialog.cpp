@@ -141,6 +141,30 @@ void AdminConfigDialog::InitializeControls()
 			.set_text_style(dpp::text_short)
 			.set_id(Component_RoleEdit);
 	}
+	else if (m_strCommand == Command_AutomatedArchive)
+	{
+		ArchiveThresholdEdit.set_label("Automated Archive Threshold (hours)")
+			.set_type(dpp::cot_text)
+			.set_placeholder("Archive threshold...")
+			.set_min_length(0)
+			.set_max_length(4)
+			.set_text_style(dpp::text_short)
+			.set_id(Component_ArchiveEdit);
+
+		ArchiveThresholdEdit.set_default_value(std::to_string(m_ctx.guild->archival_age.count()));
+	}
+	else if (m_strCommand == Command_AutomatedStalled)
+	{
+		ArchiveStalledEdit.set_label("Automated Stalled Threshold (hours)")
+			.set_type(dpp::cot_text)
+			.set_placeholder("Stalled threshold...")
+			.set_min_length(0)
+			.set_max_length(4)
+			.set_text_style(dpp::text_short)
+			.set_id(Component_StalledEdit);
+
+		ArchiveStalledEdit.set_default_value(std::to_string(m_ctx.guild->stalled_age.count()));
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -170,5 +194,13 @@ void AdminConfigDialog::AddChildrenComponents()
 	{
 		add_component(RoleSelect);
 		add_component(RoleEdit);
+	}
+	else if (m_strCommand == Command_AutomatedArchive)
+	{
+		add_component(ArchiveThresholdEdit);
+	}
+	else if (m_strCommand == Command_AutomatedStalled)
+	{
+		add_component(ArchiveStalledEdit);
 	}
 }

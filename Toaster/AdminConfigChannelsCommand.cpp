@@ -6,6 +6,8 @@
 #include "PermissionsMgr.h"
 // fmt
 #include <fmt/format.h>
+// std library
+#include <chrono>
 #include <string>
 
 void AdminConfigChannelsCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event)
@@ -109,7 +111,6 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
                     : std::string("*Not Set*");
             };
 
-
         const std::string settings = fmt::format("**New Job:** {}\n"
                                                 "**Update Job:** {}\n"
                                                 "**Delete Job:** {}\n"
@@ -121,6 +122,52 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
 
         dpp::embed embed;
         embed.set_title("Channel Announcement Settings")
+            .set_description(settings)
+            .set_color(0x3498db);
+
+        event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+    }
+    // Covering down for these options so I don't need to create another command
+    else if (strDialogOwner == Command_AutomatedArchive ||
+             strDialogOwner == Command_AutomatedStalled)
+    {
+        const dpp::user author = event.command.get_issuing_user();
+        // These parameters are input that depend on the dialog form's order as defined by the type of the job
+        std::string strParam1 = event.components.size() > 0 ? std::get<std::string>(event.components[0].value) : "";
+
+        auto is_all_numbers = [](const std::string& s) -> bool {
+            return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+                return std::isdigit(c);
+                });
+            };
+
+        utils::FilterWhiteSpace(strParam1);
+        if (!is_all_numbers(strParam1) && !strParam1.empty())
+        {
+            event.reply(dpp::message("Invalid input. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        if (strDialogOwner == Command_AutomatedArchive)
+        {
+            ctx.guild->archival_age = static_cast<std::chrono::hours>(std::stoull(strParam1));
+        }
+        else if (strDialogOwner == Command_AutomatedStalled)
+        {
+            ctx.guild->stalled_age = static_cast<std::chrono::hours>(std::stoull(strParam1));
+        }
+
+        ctx.guild->SaveGuildSettings(ctx.repo);
+
+        const std::string settings = fmt::format(
+            "**Auto-Archive Age Threshold:** {} hour(s)\n"
+            "**Auto-Stalled Age Threshold:** {} hour(s)\n\n",
+            ctx.guild->archival_age.count(),
+            ctx.guild->stalled_age.count()
+        );
+
+        dpp::embed embed;
+        embed.set_title("Automated Queue Settings")
             .set_description(settings)
             .set_color(0x3498db);
 

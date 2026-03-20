@@ -49,6 +49,10 @@ private:
 	dpp::component RoleSelect;
 	dpp::component RoleEdit;
 
+	// Automated task settings
+	dpp::component ArchiveThresholdEdit;
+	dpp::component ArchiveStalledEdit;
+
 	CommandContext m_ctx;
 	std::string m_strCommand;
 };

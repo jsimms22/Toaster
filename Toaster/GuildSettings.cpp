@@ -339,7 +339,13 @@ bsoncxx::builder::basic::document GuildSettings::WriteAttributesBSON() const
         kvp("DeleteJobChannel", static_cast<std::int64_t>(idDeleteJobChannel.value_or(0))),
         kvp("CompleteJobChannel", static_cast<std::int64_t>(idCompleteJobChannel.value_or(0))),
         // Cooldown
-        kvp("Cooldown", announcement_cooldown.count()),
+        kvp("Cooldown", static_cast<std::int64_t>(announcement_cooldown.count())),
+        // Max Requests Per User
+        kvp("MaxRequestsPerUser", static_cast<std::int32_t>(requestLimitPerUser)),
+        // Archival Threshold Age
+        kvp("ArchiveThreshold", static_cast<std::int64_t>(archival_age.count())),
+        // Stalled Threshold Age
+        kvp("StalledThreshold", static_cast<std::int64_t>(stalled_age.count())),
         // New Job Counter
         kvp("JobCounter", [&]() {
             bsoncxx::builder::basic::array a;
@@ -371,82 +377,95 @@ bsoncxx::builder::basic::document GuildSettings::WriteAttributesBSON() const
 //---------------------------------------------------------------------------------------------------------------------
 void GuildSettings::ReadAttributesBSON(const bsoncxx::document::view& doc)
 {
-    if (auto elem = doc["_id"])
-        m_idGuild = static_cast<std::uint64_t>(doc["_id"].get_int64().value);
+    // _id
+    if (auto elem = doc["_id"]; elem && elem.type() == bsoncxx::type::k_int64)
+        m_idGuild = static_cast<std::uint64_t>(elem.get_int64().value);
 
     // Channel IDs
-    if (auto elem = doc["NewJobChannel"])
-        idNewJobChannel = ReadOptionalId(doc["NewJobChannel"]);
+    if (auto elem = doc["NewJobChannel"]; elem && elem.type() != bsoncxx::type::k_null)
+        idNewJobChannel = ReadOptionalId(elem);
 
-    if (auto elem = doc["UpdateJobChannel"])
-        idUpdateJobChannel = ReadOptionalId(doc["UpdateJobChannel"]);
+    if (auto elem = doc["UpdateJobChannel"]; elem && elem.type() != bsoncxx::type::k_null)
+        idUpdateJobChannel = ReadOptionalId(elem);
 
-    if (auto elem = doc["DeleteJobChannel"])
-        idDeleteJobChannel = ReadOptionalId(doc["DeleteJobChannel"]);
+    if (auto elem = doc["DeleteJobChannel"]; elem && elem.type() != bsoncxx::type::k_null)
+        idDeleteJobChannel = ReadOptionalId(elem);
 
-    if (auto elem = doc["CompleteJobChannel"])
-        idCompleteJobChannel = ReadOptionalId(doc["CompleteJobChannel"]);
+    if (auto elem = doc["CompleteJobChannel"]; elem && elem.type() != bsoncxx::type::k_null)
+        idCompleteJobChannel = ReadOptionalId(elem);
 
     // Cooldown
-    if (auto elem = doc["Cooldown"])
-        announcement_cooldown = static_cast<std::chrono::seconds>(elem.get_int64().value);
+    if (auto elem = doc["Cooldown"]; elem && elem.type() == bsoncxx::type::k_int64)
+        announcement_cooldown = std::chrono::seconds(elem.get_int64().value);
+
+    // Max Requests Per User
+    if (auto elem = doc["MaxRequestsPerUser"]; elem && elem.type() == bsoncxx::type::k_int32)
+        requestLimitPerUser = static_cast<std::uint32_t>(elem.get_int32().value);
+
+    // Archival Threshold Age
+    if (auto elem = doc["ArchiveThreshold"]; elem && elem.type() == bsoncxx::type::k_int64)
+        archival_age = std::chrono::hours(elem.get_int64().value);
+
+    // Stalled Threshold Age
+    if (auto elem = doc["StalledThreshold"]; elem && elem.type() == bsoncxx::type::k_int64)
+        stalled_age = std::chrono::hours(elem.get_int64().value);
 
     // New Job Counter
-    if (auto elem = doc["JobCounter"]; elem && elem.type() == bsoncxx::type::k_array) {
+    if (auto elem = doc["JobCounter"]; elem && elem.type() == bsoncxx::type::k_array)
+    {
         auto array = elem.get_array().value;
         size_t index = 0;
-        for (auto&& val : array) {
+
+        for (auto&& val : array)
+        {
             if (index >= g_counter.size()) break;
 
-            switch (val.type()) {
-            case bsoncxx::type::k_int32:
-                g_counter[index].store(val.get_int32());
-                break;
-            default:
+            if (val.type() == bsoncxx::type::k_int32)
+                g_counter[index].store(val.get_int32().value);
+            else
                 g_counter[index].store(0);
-                break;
-            }
+
             ++index;
         }
     }
 
     // Ping Rules
-    if (auto elem = doc["PingOnNew"])
+    if (auto elem = doc["PingOnNew"]; elem && elem.type() == bsoncxx::type::k_bool)
         bPingOnNew = elem.get_bool().value;
 
-    if (auto elem = doc["PingOnUpdate"])
+    if (auto elem = doc["PingOnUpdate"]; elem && elem.type() == bsoncxx::type::k_bool)
         bPingOnUpdate = elem.get_bool().value;
 
-    if (auto elem = doc["PingOnDelete"])
+    if (auto elem = doc["PingOnDelete"]; elem && elem.type() == bsoncxx::type::k_bool)
         bPingOnDelete = elem.get_bool().value;
 
-    if (auto elem = doc["PingOnComplete"])
+    if (auto elem = doc["PingOnComplete"]; elem && elem.type() == bsoncxx::type::k_bool)
         bPingOnComplete = elem.get_bool().value;
 
     // Roles
-    if (auto elem = doc["PingRole"])
-        roles[static_cast<std::size_t>(Roles::Ping)] = ReadOptionalId(doc["PingRole"]);
+    if (auto elem = doc["PingRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Ping)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["CraftRole"])
-        roles[static_cast<std::size_t>(Roles::Crafter)] = ReadOptionalId(doc["CraftRole"]);
+    if (auto elem = doc["CraftRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Crafter)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["BuildRole"])
-        roles[static_cast<std::size_t>(Roles::Builder)] = ReadOptionalId(doc["BuildRole"]);
+    if (auto elem = doc["BuildRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Builder)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["ComponentRole"])
-        roles[static_cast<std::size_t>(Roles::Comp)] = ReadOptionalId(doc["ComponentRole"]);
+    if (auto elem = doc["ComponentRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Comp)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["ResourceRole"])
-        roles[static_cast<std::size_t>(Roles::Gatherer)] = ReadOptionalId(doc["ResourceRole"]);
+    if (auto elem = doc["ResourceRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Gatherer)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["RefineRole"])
-        roles[static_cast<std::size_t>(Roles::Refiner)] = ReadOptionalId(doc["RefineRole"]);
+    if (auto elem = doc["RefineRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Refiner)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["HazmatRole"])
-        roles[static_cast<std::size_t>(Roles::Hazmat)] = ReadOptionalId(doc["HazmatRole"]);
+    if (auto elem = doc["HazmatRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Hazmat)] = ReadOptionalId(elem);
 
-    if (auto elem = doc["ManagerRole"])
-        roles[static_cast<std::size_t>(Roles::Manager)] = ReadOptionalId(doc["ManagerRole"]);
+    if (auto elem = doc["ManagerRole"]; elem && elem.type() != bsoncxx::type::k_null)
+        roles[static_cast<std::size_t>(Roles::Manager)] = ReadOptionalId(elem);
 }
 
 void GuildSettings::SaveGuildSettings(std::shared_ptr<IJobRepo> repo)

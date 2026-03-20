@@ -46,10 +46,16 @@ AdminQueueButtonPanel::AdminQueueButtonPanel(
 		.set_style(dpp::cos_danger)
 		.set_id(fmt::format("{}_adminhold:{}:{}", m_ownerName, m_userID, rID));
 
+	m_btnAdminDelete.set_type(dpp::cot_button)
+		.set_label("Delete Request")
+		.set_style(dpp::cos_danger)
+		.set_id(fmt::format("{}_admindelete:{}:{}", m_ownerName, m_userID, rID));
+
 	m_row2.add_component(m_btnRefreshPanel)
 		.add_component(m_btnAssignWorkers)
 		.add_component(m_btnMarkComplete)
-		.add_component(m_btnMarkOnHold);
+		.add_component(m_btnMarkOnHold)
+		.add_component(m_btnAdminDelete);
 
 	// row 3
 	m_btnShowWorkers.set_type(dpp::cot_button)
@@ -234,6 +240,25 @@ void AdminQueueButtonPanel::MarkOnHoldButton(const std::string& id, CommandConte
 	}
 }
 
+void AdminQueueButtonPanel::AdminDelete(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	auto parts = utils::Split(id, ':');
+	const dpp::snowflake worker = parts[1];
+	const std::string rID = parts[2];
+
+	const auto job = ctx.queue->GetJobByID(rID);
+	if (!job)
+	{
+		event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+		return;
+	}
+
+	std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+	utils::RemoveChar(desc, '*');
+	DeleteRequestDlg modal(job, desc);
+	event.dialog(modal);
+}
+
 void AdminQueueButtonPanel::RefreshButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
 	/* do nothing */
@@ -285,32 +310,36 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 		.set_style(dpp::cos_primary)
 		.set_id(fmt::format("{}_pingrules:{}", OwnerName, m_userID));
 
+	m_btnChangeCooldown.set_type(dpp::cot_button)
+		.set_label("Change Cooldown")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_changecooldown:{}", OwnerName, m_userID));
+
 	m_row.add_component(m_btnRefreshPanel)
 		.add_component(m_btnChangeRole)
 		.add_component(m_btnChangeChannel)
-		.add_component(m_btnPingRules);
+		.add_component(m_btnPingRules)
+		.add_component(m_btnChangeCooldown);
 
 	// Row 2
-	/*
-	m_btnShowBans.set_type(dpp::cot_button)
-		.set_label("Show Ban List")
+	m_btnChangeMaxRequests.set_type(dpp::cot_button)
+		.set_label("Max Requests")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("{}_banlist:{}", OwnerName, m_userID));
+		.set_id(fmt::format("{}_changemaxrequests:{}", OwnerName, m_userID));
 
-	m_btnAddBan.set_type(dpp::cot_button)
-		.set_label("Add Ban")
-		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("{}_addban:{}", OwnerName, m_userID));
+	m_btnChangeAutomatedArchive.set_type(dpp::cot_button)
+		.set_label("Archive Threshold")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_changearchive:{}", OwnerName, m_userID));
 
-	m_btnRemoveBan.set_type(dpp::cot_button)
-		.set_label("Remove Ban")
-		.set_style(dpp::cos_success)
-		.set_id(fmt::format("{}_removeban:{}", OwnerName, m_userID));
+	m_btnChangeAutomatedStall.set_type(dpp::cot_button)
+		.set_label("Stalled Threshold")
+		.set_style(dpp::cos_primary)
+		.set_id(fmt::format("{}_changestalled:{}", OwnerName, m_userID));
 
-	m_row2.add_component(m_btnShowBans)
-		.add_component(m_btnAddBan)
-		.add_component(m_btnRemoveBan);
-	*/
+	m_row2.add_component(m_btnChangeMaxRequests)
+		.add_component(m_btnChangeAutomatedArchive)
+		.add_component(m_btnChangeAutomatedStall);
 
 	// Row 3
 	m_btnSendLogs.set_type(dpp::cot_button)
@@ -333,7 +362,7 @@ AdminBotButtonPanel::AdminBotButtonPanel(
 		.add_component(m_btnDeleteData);
 
 	add_component(m_row);
-	//add_component(m_row2);
+	add_component(m_row2);
 	add_component(m_row3);
 }
 
@@ -367,19 +396,26 @@ void AdminBotButtonPanel::PingRulesButton(const std::string& id, CommandContext&
 }
 
 // Row 2
-void AdminBotButtonPanel::ShowBansButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminBotButtonPanel::ChangeCooldown(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
 	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
 }
 
-void AdminBotButtonPanel::AddBanButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminBotButtonPanel::ChangeMaxOpenRequests(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
 	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
 }
 
-void AdminBotButtonPanel::RemoveBanButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+void AdminBotButtonPanel::ChangeArchiveThreshold(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	AdminConfigDialog adminDlg(Command_AutomatedArchive, ctx);
+	event.dialog(adminDlg);
+}
+
+void AdminBotButtonPanel::ChangeStallThreshold(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
+{
+	AdminConfigDialog adminDlg(Command_AutomatedStalled, ctx);
+	event.dialog(adminDlg);
 }
 
 // Row 3

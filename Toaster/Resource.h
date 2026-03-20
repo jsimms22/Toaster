@@ -60,6 +60,8 @@ constexpr const char* Component_PingOnDelete	{ "pingdelete" };
 constexpr const char* Component_PingOnComplete	{ "pingcomplete" };
 constexpr const char* Component_RoleSelect		{ "roleselect" };
 constexpr const char* Component_RoleEdit		{ "roleedit" };
+constexpr const char* Component_ArchiveEdit		{ "archiveedit" };
+constexpr const char* Component_StalledEdit		{ "stallededit" };
 /*---------------------------ADMIN COMPONENT IDS--------------------------------*/
 
 /*----------------------------ADMIN COMMAND IDS---------------------------------*/
@@ -67,6 +69,8 @@ constexpr const char* Command_ConfigChannels	{ "admin_configchannels" };
 constexpr const char* Command_ConfigPing		{ "admin_configping" };
 constexpr const char* Command_ConfigRoles		{ "admin_configroles" };
 constexpr const char* Command_WorkerSignUp		{ "admin_worker_signup" };
+constexpr const char* Command_AutomatedArchive	{ "admin_auto_archive" };
+constexpr const char* Command_AutomatedStalled	{ "admin_auto_stalled" };
 /*----------------------------ADMIN COMMAND IDS---------------------------------*/
 
 /*-------------------------------COMMAND IDS------------------------------------*/

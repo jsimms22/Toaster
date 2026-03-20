@@ -91,14 +91,20 @@ void CraftingJobRequest::ReadAttributesBSON(const bsoncxx::document::view & doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszItemDesc }])
+    if (auto elem = doc[serial::pszItemDesc]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strItemDesc = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszItemQuantity }])
+    if (auto elem = doc[serial::pszItemQuantity]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strQuantity = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszItemQuality }])
+    if (auto elem = doc[serial::pszItemQuality]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strQuality = std::string{ elem.get_string().value };
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

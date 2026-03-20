@@ -113,14 +113,20 @@ void HazardousRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszHazItemList }])
+    if (auto elem = doc[serial::pszHazItemList]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strHazItemList = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszHazItemLoc }])
+    if (auto elem = doc[serial::pszHazItemLoc]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strHazItemZone = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszThreat }])
-        m_threat = static_cast<ThreatLevel>(static_cast<int>(elem.get_int32().value));
+    if (auto elem = doc[serial::pszThreat]; elem && elem.type() == bsoncxx::type::k_int32)
+    {
+        m_threat = static_cast<ThreatLevel>(elem.get_int32().value);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

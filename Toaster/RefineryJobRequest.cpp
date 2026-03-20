@@ -112,14 +112,20 @@ void RefineryJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszRefineList }])
+    if (auto elem = doc[serial::pszRefineList]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strResourceList = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszRefineryLoc }])
+    if (auto elem = doc[serial::pszRefineryLoc]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strRefinery = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszRefineState }])
-        m_eResourceState = static_cast<state>(static_cast<int>(elem.get_int32().value));
+    if (auto elem = doc[serial::pszRefineState]; elem && elem.type() == bsoncxx::type::k_int32)
+    {
+        m_eResourceState = static_cast<state>(elem.get_int32().value);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

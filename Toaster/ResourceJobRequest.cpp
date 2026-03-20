@@ -117,14 +117,20 @@ void ResourceJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
     JobRequest::ReadAttributesBSON(doc);
 
     // Read only derived fields
-    if (auto elem = doc[std::string{ serial::pszResourceList }])
+    if (auto elem = doc[serial::pszResourceList]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strResourceList = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszResourceQuality }])
+    if (auto elem = doc[serial::pszResourceQuality]; elem && elem.type() == bsoncxx::type::k_string)
+    {
         m_strQuality = std::string{ elem.get_string().value };
+    }
 
-    if (auto elem = doc[std::string{ serial::pszResourceState }])
-        m_eResourceState = static_cast<state>(static_cast<int>(elem.get_int32().value));
+    if (auto elem = doc[serial::pszResourceState]; elem && elem.type() == bsoncxx::type::k_int32)
+    {
+        m_eResourceState = static_cast<state>(elem.get_int32().value);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

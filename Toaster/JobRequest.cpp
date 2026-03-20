@@ -296,27 +296,70 @@ bsoncxx::builder::basic::document JobRequest::WriteAttributesBSON() const
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
 void JobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
-{
-    m_id = static_cast<std::uint64_t>(doc[std::string{ serial::pszRequestID}].get_int64().value);
-    m_idGuild = static_cast<std::uint64_t>(doc[std::string{ serial::pszGuild }].get_int64().value);
-    m_timeCreated = doc[std::string{ serial::pszCreation }].get_int64().value;
-    m_timeLastEdit = doc[std::string{ serial::pszLastEdit }].get_int64().value;
-    m_idCustomer = static_cast<std::uint64_t>(doc[std::string{ serial::pszRequestUser }].get_int64().value);
-    
-    if (auto elem = doc[std::string{ serial::pszJobWorkers }]; elem && elem.type() == bsoncxx::type::k_array) {
+{// IDs / timestamps
+    if (auto elem = doc[serial::pszRequestID]; elem && elem.type() == bsoncxx::type::k_int64)
+    {
+        m_id = static_cast<std::uint64_t>(elem.get_int64().value);
+    }
+
+    if (auto elem = doc[serial::pszGuild]; elem && elem.type() == bsoncxx::type::k_int64)
+    {
+        m_idGuild = static_cast<std::uint64_t>(elem.get_int64().value);
+    }
+
+    if (auto elem = doc[serial::pszCreation]; elem && elem.type() == bsoncxx::type::k_int64)
+    {
+        m_timeCreated = elem.get_int64().value;
+    }
+
+    if (auto elem = doc[serial::pszLastEdit]; elem && elem.type() == bsoncxx::type::k_int64)
+    {
+        m_timeLastEdit = elem.get_int64().value;
+    }
+
+    if (auto elem = doc[serial::pszRequestUser]; elem && elem.type() == bsoncxx::type::k_int64)
+    {
+        m_idCustomer = static_cast<std::uint64_t>(elem.get_int64().value);
+    }
+
+
+    // Worker list
+    if (auto elem = doc[serial::pszJobWorkers]; elem && elem.type() == bsoncxx::type::k_array)
+    {
         auto array = elem.get_array().value;
-        std::size_t index = 0;
-        for (auto&& val : array) 
+
+        for (auto&& val : array)
         {
             if (val.type() == bsoncxx::type::k_int64)
                 m_idWorkerList.push_back(static_cast<std::uint64_t>(val.get_int64().value));
         }
     }
 
-    m_strSCHandle = std::string{ doc[std::string{ serial::pszRequestSCHandle}].get_string().value };
-    m_eJobPriority = static_cast<priority>(static_cast<int>(doc[std::string{ serial::pszJobPriority }].get_int32().value));
-    m_eJobStatus = static_cast<status>(static_cast<int>(doc[std::string{ serial::pszJobStatus }].get_int32().value));
-    m_bNotifyCustomer = doc[serial::pszSubscribed].get_bool().value;
+
+    // Strings
+    if (auto elem = doc[serial::pszRequestSCHandle]; elem && elem.type() == bsoncxx::type::k_string)
+    {
+        m_strSCHandle = std::string{ elem.get_string().value };
+    }
+
+
+    // Enums
+    if (auto elem = doc[serial::pszJobPriority]; elem && elem.type() == bsoncxx::type::k_int32)
+    {
+        m_eJobPriority = static_cast<priority>(elem.get_int32().value);
+    }
+
+    if (auto elem = doc[serial::pszJobStatus]; elem && elem.type() == bsoncxx::type::k_int32)
+    {
+        m_eJobStatus = static_cast<status>(elem.get_int32().value);
+    }
+
+
+    // Bool
+    if (auto elem = doc[serial::pszSubscribed]; elem && elem.type() == bsoncxx::type::k_bool)
+    {
+        m_bNotifyCustomer = elem.get_bool().value;
+    }
 
     m_notes.clear();
 

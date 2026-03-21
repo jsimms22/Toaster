@@ -166,12 +166,45 @@ void MongoJobRepo::ArchiveJobs(const std::vector<RequestID>& ids)
                 ))
             );
 
-            mongoRepo->ArchiveMany("job_queue", "job_archive", filter);
+            mongoRepo->MoveMany("job_queue", "job_archive", filter);
         });
 
     if (m_logger)
     {
-        m_logger->debug("{}", "Added 'ArchiveMany' job to database mutation queue.");
+        m_logger->debug("{}", "Added 'MoveMany' job to database mutation queue.");
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void MongoJobRepo::ReOpenArchivedJobs(const std::vector<RequestID>& ids)
+{
+    EnqueueDBMutation([ids](IJobRepo* repo)
+        {
+            using namespace bsoncxx::builder::basic;
+
+            auto mongoRepo = static_cast<MongoJobRepo*>(repo);
+
+            array ids_array;
+
+            for (const auto& id : ids)
+            {
+                ids_array.append(static_cast<std::int64_t>(id.value));
+            }
+
+            auto filter = make_document(
+                kvp("_id", make_document(
+                    kvp("$in", ids_array)
+                ))
+            );
+            
+            mongoRepo->MoveMany("job_archive", "job_queue", filter);
+        });
+
+    if (m_logger)
+    {
+        m_logger->debug("{}", "Added 'MoveMany' job to database mutation queue.");
     }
 }
 
@@ -439,7 +472,7 @@ void MongoJobRepo::Insert(const std::string& name, bsoncxx::document::value docu
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void MongoJobRepo::InsertMany(const std::string& name, const std::vector<bsoncxx::document::value>& documents)
+void MongoJobRepo::InsertMany(const std::string& name, std::vector<bsoncxx::document::value> documents)
 {
     if (documents.empty())
     {
@@ -452,7 +485,7 @@ void MongoJobRepo::InsertMany(const std::string& name, const std::vector<bsoncxx
     for (const auto& doc : documents)
         views.push_back(doc);
 
-    auto col = GetCollection(name);
+    mongocxx::collection* col = GetCollection(name);
     if (!col)
     {
         return;
@@ -466,7 +499,7 @@ void MongoJobRepo::InsertMany(const std::string& name, const std::vector<bsoncxx
 //---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::Update(const std::string& name, bsoncxx::document::value filter, bsoncxx::document::value replacement)
 {
-    auto col = GetCollection(name);
+    mongocxx::collection* col = GetCollection(name);
     if (!col)
     {
         return;
@@ -480,7 +513,7 @@ void MongoJobRepo::Update(const std::string& name, bsoncxx::document::value filt
 //---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::Delete(const std::string& name, bsoncxx::document::value filter)
 {
-    auto col = GetCollection(name);
+    mongocxx::collection* col = GetCollection(name);
     if (!col)
     {
         return;
@@ -494,7 +527,7 @@ void MongoJobRepo::Delete(const std::string& name, bsoncxx::document::value filt
 //---------------------------------------------------------------------------------------------------------------------
 void MongoJobRepo::DeleteMany(const std::string& name, bsoncxx::document::value filter)
 {
-    auto col = GetCollection(name);
+    mongocxx::collection* col = GetCollection(name);
     if (!col)
     {
         return;
@@ -506,10 +539,10 @@ void MongoJobRepo::DeleteMany(const std::string& name, bsoncxx::document::value 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-void MongoJobRepo::ArchiveMany(const std::string& src, const std::string& dst, bsoncxx::document::value filter)
+void MongoJobRepo::MoveMany(const std::string& src, const std::string& dst, bsoncxx::document::value filter)
 {
-    auto srcCol = GetCollection(src);
-    auto dstCol = GetCollection(dst);
+    mongocxx::collection* srcCol = GetCollection(src);
+    mongocxx::collection* dstCol = GetCollection(dst);
 
     if (!srcCol || !dstCol)
     {

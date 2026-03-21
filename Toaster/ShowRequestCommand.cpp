@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 #include "Commands.h"
 #include "JobQueue.h"
+#include "JobRequest.h"
 #include "BotUtility.h"
 #include "RequestDlg.h"
 #include "PermissionsMgr.h"

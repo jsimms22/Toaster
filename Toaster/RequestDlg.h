@@ -3,17 +3,16 @@
 /// \brief
 //---------------------------------------------------------------------------------------------------------------------
 #pragma once
-#include "JobRequest.h"
 #include "Resource.h"
 // d++
 #include <dpp/appcommand.h>
 #include <dpp/snowflake.h>
 // std library
 #include <memory>
-#include <string_view>
 #include <string>
 
 class GuildSettings;
+class JobRequest;
 
 //---------------------------------------------------------------------------------------------------------------------
 /// \class CraftRequestDlg
@@ -309,4 +308,24 @@ private:
 
 	std::shared_ptr<const JobRequest> m_spJob;
 	std::string m_strDetails;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class ReOpenArchivedJobDlg
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+class ReOpenArchivedJobDlg : public dpp::interaction_modal_response
+{
+public:
+	ReOpenArchivedJobDlg();
+	~ReOpenArchivedJobDlg() = default;
+
+	static const std::string modalID;
+	static const std::string modalDesc;
+
+	void InitializeControls();
+	void AddChildrenComponents();
+
+private:
+	dpp::component ArchivedJobIDEdit;
 };

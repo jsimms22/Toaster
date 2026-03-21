@@ -534,6 +534,54 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         }
         */
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle ReOpenArchivedJobDlg
+    //-------------------------------------------------------------------------------------------------------------
+    else if (parts[0] == ReOpenArchivedJobDlg::modalID)
+    {
+        const dpp::user author = event.command.get_issuing_user();
+
+        // Grab the job ID
+        const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+
+        const auto job = ctx.queue->GetJobByID(strID, true);
+        if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the archived requests. It may have been reopened.")
+                .set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        ctx.queue->ReOpenArchivedJob(job->GetID());
+
+        const auto reopenedJob = ctx.queue->GetJobByID(strID);
+        if (!reopenedJob)
+        {
+            event.reply(dpp::message("This job was not found in the queue after reopening.")
+                .set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        // Acknowledge immediately
+        event.reply(dpp::message("The job request has been reopened.").set_flags(dpp::m_ephemeral));
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} reopened job request {}.", author.global_name, strID));
+
+        const auto jobDetails = reopenedJob->PrintJobDetails(ctx.cluster, event.command.guild_id);
+        // Notify original customer if needed
+        if ((reopenedJob->IsCustomerSubscribed() && event.command.usr.id != reopenedJob->GetCustomerID()) || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster,
+                reopenedJob->GetCustomerID(),
+                event,
+                fmt::format("Request {} has been reopened by {}.\n\n{}",
+                    strID,
+                    utils::FindPreferredNameByID(ctx.cluster, author.id, event.command.guild_id),
+                    jobDetails)
+            );
+        }
+
+        GuildSettings::AnnounceOnNew(ctx, reopenedJob, event.command.guild_id, true);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -632,10 +680,11 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             auto parts = utils::Split(id, ':');
             const std::string rID = parts[1];
             const auto job = ctx.queue->GetJobByID(rID);
+            const bool bReopenedJob = parts[2] == "true" ? true : false;
 
             if (!job) return;
-            GlobalButtonPanel panel{ ToString(job->GetID()) };
-            panel.AddEmbed("New Job Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+            GlobalButtonPanel panel{ ToString(job->GetID()), bReopenedJob };
+            panel.AddEmbed(bReopenedJob ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
 
             event.reply(dpp::ir_update_message, panel);
         }
@@ -647,10 +696,11 @@ void ModifyRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::bu
             auto parts = utils::Split(id, ':');
             const std::string rID = parts[1];
             const auto job = ctx.queue->GetJobByID(rID);
+            const bool bReopenedJob = parts[2] == "true" ? true : false;
 
             if (!job) return;
-            GlobalButtonPanel panel{ ToString(job->GetID()) };
-            panel.AddEmbed("New Job Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+            GlobalButtonPanel panel{ ToString(job->GetID()), bReopenedJob };
+            panel.AddEmbed(bReopenedJob ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, event.command.guild_id));
 
             event.reply(dpp::ir_update_message, panel);
         }

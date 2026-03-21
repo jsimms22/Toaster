@@ -243,7 +243,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
     // Announce in channel (if set)
-    GuildSettings::AnnounceOnNew(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+    GuildSettings::AnnounceOnNew(ctx, job, event.command.guild_id);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

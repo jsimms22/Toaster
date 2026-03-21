@@ -64,21 +64,23 @@ JobQueue::~JobQueue() = default;
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::RequestAdd(std::shared_ptr<JobRequest> job)
+void JobQueue::RequestAdd(std::shared_ptr<JobRequest> job, const bool bReOpenedJob)
 {
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
+    RequestID rID;
+    {
+        std::unique_lock<std::shared_mutex> lock(m_mtxShared);
 
-    lock.lock();
+        if (!job) { return; }
+        
+        rID = job->GetID();
 
-    if (!job) { return; }
-    RequestID rID = job->GetID();
-    m_vQueue.emplace_back(std::move(job));
+        m_vQueue.emplace_back(std::move(job));
 
-    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+        std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+    }
 
-    lock.unlock();
-
-    AddJobDB(rID);
+    if (!bReOpenedJob)
+        AddJobDB(rID);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -86,25 +88,21 @@ void JobQueue::RequestAdd(std::shared_ptr<JobRequest> job)
 //---------------------------------------------------------------------------------------------------------------------
 const bool JobQueue::RequestDelete(const RequestID rID)
 {
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
-
-    lock.lock();
-
-    bool bResult{ false };
-    for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
+    bool bResult = false;
     {
-        if ((*itr)->GetID() == rID)
+        std::unique_lock<std::shared_mutex> lock(m_mtxShared);
+
+        for (auto itr = m_vQueue.begin(); itr != m_vQueue.end(); ++itr)
         {
-            itr->reset();
-            m_vQueue.erase(itr);
-            bResult = true;
-            break;
+            if ((*itr)->GetID() == rID)
+            {
+                itr->reset();
+                itr = m_vQueue.erase(itr);
+                bResult = true;
+                break;
+            }
         }
     }
-
-    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
-
-    lock.unlock();
 
     RemoveJobDB(rID);
 
@@ -116,20 +114,21 @@ const bool JobQueue::RequestDelete(const RequestID rID)
 //---------------------------------------------------------------------------------------------------------------------
 void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 {
-    std::unique_lock<std::shared_mutex> lock(m_mtxShared, std::defer_lock);
+    {
+        std::unique_lock<std::shared_mutex> lock(m_mtxShared);
 
-    lock.lock();
+        auto job = GetJobByID_NoLock(rID);
 
-    auto job = GetJobByID_NoLock(rID);
+        if (!job) { return; }
 
-    if (!job) { return; }
+        auto prior = job->GetPriority();
+        mutator(job);
+        const bool bPriorityChanged = prior != job->GetPriority();
+        job->SetLastEditTime(utils::GetEpochTimestamp());
 
-    mutator(job);
-    job->SetLastEditTime(utils::GetEpochTimestamp());
-
-    std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
-
-    lock.unlock();
+        if (bPriorityChanged)
+            std::sort(m_vQueue.begin(), m_vQueue.end(), ComparePriority);
+    }
 
     UpdateJobDB(rID);
 }
@@ -137,11 +136,11 @@ void JobQueue::RequestModify(const RequestID rID, JobMutation mutator)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stalledAge)
+void JobQueue::AutomatedQueueScan(const std::uint64_t archivalAge, const std::uint64_t stalledAge)
 {
     const std::uint64_t now = utils::GetEpochTimestamp();
-    const std::uint64_t archiveCutoff = now - archivalAge;
-    const std::uint64_t stalledCutoff = now - stalledAge;
+    const std::uint64_t archiveCutoff = (archivalAge > now) ? 0 : now - archivalAge;
+    const std::uint64_t stalledCutoff = (stalledAge > now) ? 0 : now - stalledAge;
 
     std::vector<RequestID> archiveIDs;
     std::vector<RequestID> stalledIDs;
@@ -170,8 +169,6 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
 
                 // Remove from queue
                 itr = m_vQueue.erase(itr);
-
-                // Do not iterate after deleting
             }
             /* Check if job needs to be updated as stalled */
             else if ((job->GetStatus() == JobRequest::status::open ||
@@ -188,6 +185,14 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
         }
     }
 
+    if (!toArchive.empty())
+    {
+        std::unique_lock<std::shared_mutex> lock(m_mtxArchive);
+        m_vArchived.insert(m_vArchived.begin(),
+            std::make_move_iterator(toArchive.begin()),
+            std::make_move_iterator(toArchive.end()));
+    }
+
     if (!archiveIDs.empty())
         m_repo->ArchiveJobs(archiveIDs);
     
@@ -201,13 +206,58 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
                 });
         }
     }
+}
 
-    if (!toArchive.empty())
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void JobQueue::ReOpenArchivedJob(const RequestID rID)
+{
+    std::vector<RequestID> reopenIDs; 
+    std::shared_ptr<JobRequest> movedJob;
     {
-        std::unique_lock<std::shared_mutex> lock(m_mtxArchive);
-        m_vArchived.insert(m_vArchived.begin(),
-            std::make_move_iterator(toArchive.begin()),
-            std::make_move_iterator(toArchive.end()));
+        std::unique_lock<std::shared_mutex> archive_lock(m_mtxArchive);
+
+        for (auto itr = m_vArchived.begin(); itr != m_vArchived.end(); )
+        {
+            auto& job = *itr;
+            if (!job || job->GetID() != rID)
+            {
+                ++itr;
+                continue;
+            }
+
+            reopenIDs.push_back(rID);
+
+            // Handle queue lock inside here
+            movedJob = std::move(job);
+
+            // Remove iterator from archive
+            itr = m_vArchived.erase(itr);
+
+            break;
+        }
+    }
+
+    if (movedJob)
+        RequestAdd(std::move(movedJob), true);
+
+    if (!reopenIDs.empty())
+        m_repo->ReOpenArchivedJobs(reopenIDs);
+
+    if (!reopenIDs.empty())
+    {
+        for (const auto id : reopenIDs)
+        {
+            RequestModify(id, [](const std::shared_ptr<JobRequest> job)
+                {
+                    !job->GetWorkerIDs().empty() ?
+                        job->SetStatus(JobRequest::status::active) :
+                        job->SetStatus(JobRequest::status::open);
+
+                    job->SetLastEditTime(utils::GetEpochTimestamp());
+                });
+        }
     }
 }
 
@@ -216,9 +266,15 @@ void JobQueue::AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stall
 //---------------------------------------------------------------------------------------------------------------------
 void JobQueue::AddJobDB(const RequestID rID)
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    auto job = GetJobByID_NoLock(rID);
-    m_repo->InsertJob(job);
+    std::shared_ptr<JobRequest> job;
+
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        job = GetJobByID_NoLock(rID);
+    }
+
+    if (job)
+        m_repo->InsertJob(job);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -226,9 +282,15 @@ void JobQueue::AddJobDB(const RequestID rID)
 //---------------------------------------------------------------------------------------------------------------------
 void JobQueue::UpdateJobDB(const RequestID rID)
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    auto job = GetJobByID_NoLock(rID);
-    m_repo->UpdateJob(job);
+    std::shared_ptr<JobRequest> job;
+
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        job = GetJobByID_NoLock(rID);
+    }
+
+    if (job)
+        m_repo->UpdateJob(job);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -253,19 +315,36 @@ void JobQueue::ArchiveJobsDB(const std::vector<RequestID>& ids)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const RequestID rID) const
+std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const RequestID rID, const bool bArchived) const
 {
-    auto it = std::find_if(
-        m_vQueue.begin(),
-        m_vQueue.end(),
-        [&rID](const std::shared_ptr<JobRequest>& job)
-        {
-            return job && job->GetID() == rID;
-        }
-    );
+    if (bArchived)
+    {
+        auto it = std::find_if(
+            m_vArchived.begin(),
+            m_vArchived.end(),
+            [&rID](const std::shared_ptr<JobRequest>& job)
+            {
+                return job && job->GetID() == rID;
+            }
+        );
 
-    if (it != m_vQueue.end())
-        return *it;
+        if (it != m_vArchived.end())
+            return *it;
+    }
+    else
+    {
+        auto it = std::find_if(
+            m_vQueue.begin(),
+            m_vQueue.end(),
+            [&rID](const std::shared_ptr<JobRequest>& job)
+            {
+                return job && job->GetID() == rID;
+            }
+        );
+
+        if (it != m_vQueue.end())
+            return *it;
+    }
 
     return nullptr;
 }
@@ -273,28 +352,47 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const RequestID rID) con
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const std::string& strID) const
+std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const std::string& strID, const bool bArchived) const
 {
     auto is_all_numbers = [](const std::string& s) -> bool {
         return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
             return std::isdigit(c);
             });
         };
+    if (bArchived)
+    {
+        auto it = std::find_if(
+            m_vArchived.begin(),
+            m_vArchived.end(),
+            [&strID, &is_all_numbers](const std::shared_ptr<JobRequest>& job)
+            {
+                if (!is_all_numbers(strID))
+                    return job && ToString(job->GetID()) == strID;
+                else
+                    return job && job->GetID() == std::stoull(strID);
+            }
+        );
 
-    auto it = std::find_if(
-        m_vQueue.begin(),
-        m_vQueue.end(),
-        [&strID, &is_all_numbers](const std::shared_ptr<JobRequest>& job)
-        {
-            if (!is_all_numbers(strID))
-                return job && ToString(job->GetID()) == strID;
-            else
-                return job && job->GetID() == std::stoull(strID);
-        }
-    );
+        if (it != m_vArchived.end())
+            return *it;
+    }
+    else
+    {
+        auto it = std::find_if(
+            m_vQueue.begin(),
+            m_vQueue.end(),
+            [&strID, &is_all_numbers](const std::shared_ptr<JobRequest>& job)
+            {
+                if (!is_all_numbers(strID))
+                    return job && ToString(job->GetID()) == strID;
+                else
+                    return job && job->GetID() == std::stoull(strID);
+            }
+        );
 
-    if (it != m_vQueue.end())
-        return *it;
+        if (it != m_vQueue.end())
+            return *it;
+    }
 
     return nullptr;
 }
@@ -302,19 +400,35 @@ std::shared_ptr<JobRequest> JobQueue::GetJobByID_NoLock(const std::string& strID
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const RequestID rID) const
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const RequestID rID, const bool bArchived) const
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    return GetJobByID_NoLock(rID);
+    if (bArchived)
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxArchive);
+        return GetJobByID_NoLock(rID, bArchived);
+    }
+    else
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        return GetJobByID_NoLock(rID, bArchived);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const std::string& strID) const
+const std::shared_ptr<const JobRequest> JobQueue::GetJobByID(const std::string& strID, const bool bArchived) const
 {
-    std::shared_lock<std::shared_mutex> lock(m_mtxShared);
-    return GetJobByID_NoLock(strID);
+    if (bArchived)
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxArchive);
+        return GetJobByID_NoLock(strID, bArchived);
+    }
+    else
+    {
+        std::shared_lock<std::shared_mutex> lock(m_mtxShared);
+        return GetJobByID_NoLock(strID);
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

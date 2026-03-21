@@ -43,6 +43,7 @@ constexpr const char* Component_JobDescription	{ "description_id" };
 constexpr const char* Component_DeleteJustification	{ "justification_id" };
 constexpr const char* Component_NoteHistory		{ "notehistory_id" };
 constexpr const char* Component_AddNewNote		{ "addnewnote_id" };
+constexpr const char* Component_ReOpenJob		{ "reopenjob_id" };
 /*------------------------------COMPONENT IDS-----------------------------------*/
 
 /*---------------------------ADMIN COMPONENT IDS--------------------------------*/

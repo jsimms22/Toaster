@@ -281,7 +281,8 @@ void AdminQueueButtonPanel::DownloadArchiveButton(const std::string& id, Command
 
 void AdminQueueButtonPanel::ReopenArchiveButton(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	ReOpenArchivedJobDlg dlg;
+	event.dialog(dlg);
 }
 
 AdminBotButtonPanel::AdminBotButtonPanel(

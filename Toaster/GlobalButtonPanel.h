@@ -11,7 +11,7 @@ struct CommandContext;
 class GlobalButtonPanel :public dpp::message
 {
 public:
-	GlobalButtonPanel(const std::string& rID);
+	GlobalButtonPanel(const std::string& rID, const bool bReopened);
 
 	virtual ~GlobalButtonPanel() = default;
 

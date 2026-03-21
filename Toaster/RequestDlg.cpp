@@ -2,6 +2,7 @@
 
 #include "BotUtility.h"
 #include "GuildSettings.h"
+#include "JobRequest.h"
 #include "PermissionsMgr.h"
 
 #include "CraftingJobRequest.h"
@@ -59,6 +60,9 @@ const std::string EditRequestDlg::modalDesc = "Edit Active Job Request";
 
 const std::string DeleteRequestDlg::modalID = "DeleteRequestModal";
 const std::string DeleteRequestDlg::modalDesc = "Delete Job Request";
+
+const std::string ReOpenArchivedJobDlg::modalID = "ReOpenArchivedJobModal";
+const std::string ReOpenArchivedJobDlg::modalDesc = "Submit a Request ID to Reopen";
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
@@ -990,4 +994,40 @@ void DeleteRequestDlg::AddChildrenComponents()
     add_component(JobRequestIDEdit);
     add_component(JobDescriptionEdit);
     add_component(DeleteJustificationEdit);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+ReOpenArchivedJobDlg::ReOpenArchivedJobDlg()
+    : dpp::interaction_modal_response()
+{
+    set_custom_id(fmt::format("{}:{}", modalID, utils::GetEpochTimestamp()));
+    set_title(modalDesc);
+    InitializeControls();
+    AddChildrenComponents();
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void ReOpenArchivedJobDlg::InitializeControls()
+{
+    // Create a text box component
+    ArchivedJobIDEdit.set_label("Archived Job ID")
+        .set_type(dpp::cot_text)
+        .set_placeholder("")
+        .set_min_length(1)
+        .set_max_length(16)
+        .set_required(true)
+        .set_text_style(dpp::text_short)
+        .set_id(Component_ReOpenJob);
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief
+//---------------------------------------------------------------------------------------------------------------------
+void ReOpenArchivedJobDlg::AddChildrenComponents()
+{
+    add_component(ArchivedJobIDEdit);
 }

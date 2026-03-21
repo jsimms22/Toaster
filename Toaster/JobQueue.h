@@ -60,21 +60,22 @@ public:
     // Retrieve Job Methods
     const std::shared_ptr<const JobRequest> FirstAssignment(JobCompare compare, const std::size_t offset = 0);
     const std::shared_ptr<const JobRequest> FirstAssignment(const dpp::snowflake& userID);
-    const std::shared_ptr<const JobRequest> GetJobByID(const RequestID rID) const;
-    const std::shared_ptr<const JobRequest> GetJobByID(const std::string& rID) const;
+    const std::shared_ptr<const JobRequest> GetJobByID(const RequestID rID, const bool bArchived = false) const;
+    const std::shared_ptr<const JobRequest> GetJobByID(const std::string& rID, const bool bArchived = false) const;
 
     // Job Mutation Methods
     void RequestModify(const RequestID rID, JobMutation mutator);
-    void RequestAdd(std::shared_ptr<JobRequest> job);
+    void RequestAdd(std::shared_ptr<JobRequest> job, const bool bReOpenedJob = false);
     const bool RequestDelete(const RequestID rID);
+    void ReOpenArchivedJob(const RequestID rID);
 
 private:
     // Worker thread methods
-    std::shared_ptr<JobRequest> GetJobByID_NoLock(const RequestID rID) const;
-    std::shared_ptr<JobRequest> GetJobByID_NoLock(const std::string& rID) const;
+    std::shared_ptr<JobRequest> GetJobByID_NoLock(const RequestID rID, const bool bArchived = false) const;
+    std::shared_ptr<JobRequest> GetJobByID_NoLock(const std::string& rID, const bool bArchived = false) const;
 
     // Automatic processes
-    void AutomatedQueueScan(std::uint64_t archivalAge, std::uint64_t stalledAge);
+    void AutomatedQueueScan(const std::uint64_t archivalAge, const std::uint64_t stalledAge);
 
     // Mongo Database Methods
     void AddJobDB(const RequestID rID);

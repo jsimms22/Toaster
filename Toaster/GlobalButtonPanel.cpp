@@ -11,28 +11,28 @@
 // fmt
 #include <fmt/format.h>
 
-GlobalButtonPanel::GlobalButtonPanel(const std::string& rID)
+GlobalButtonPanel::GlobalButtonPanel(const std::string& rID, const bool bReopened)
 	: dpp::message(), m_rID{ rID }
 {
 	m_btnGlobalAssign.set_type(dpp::cot_button)
 		.set_label("Assign Me")
 		.set_style(dpp::cos_success)
-		.set_id(fmt::format("global_assign:{}", rID));
+		.set_id(fmt::format("global_assign:{}:{}", rID, bReopened));
 
 	m_btnGlobalUnassign.set_type(dpp::cot_button)
 		.set_label("Unassign Me")
 		.set_style(dpp::cos_danger)
-		.set_id(fmt::format("global_unassign:{}", rID));
+		.set_id(fmt::format("global_unassign:{}:{}", rID, bReopened));
 
 	m_btnGlobalAddNote.set_type(dpp::cot_button)
 		.set_label("Add Note")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("global_addnotes:{}", rID));
+		.set_id(fmt::format("global_addnotes:{}:{}", rID, bReopened));
 
 	m_btnGlobalShowNotes.set_type(dpp::cot_button)
 		.set_label("Show Notes")
 		.set_style(dpp::cos_primary)
-		.set_id(fmt::format("global_shownotes:{}", rID));
+		.set_id(fmt::format("global_shownotes:{}:{}", rID, bReopened));
 
 	m_row.add_component(m_btnGlobalAssign)
 		 .add_component(m_btnGlobalUnassign)

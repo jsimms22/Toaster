@@ -15,7 +15,7 @@
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/concatenate.hpp>
 // std library
-#include <string_view>
+#include <string>
 
 // ================================
 // Helper Utilities
@@ -92,12 +92,12 @@ std::optional<std::size_t> GuildSettings::RoleToJobType(const GuildSettings::Rol
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
+void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake guildID, const bool bReopened)
 {
     std::string roleMention;
     if (ctx.guild->bPingOnNew)
     {
-        if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
+        if (const auto roleOpt = GuildSettings::JobTypeToRole(job->JobType()); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
             const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
@@ -115,31 +115,10 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::size_t jobType
         }
     }
 
-    if (ctx.guild->idNewJobChannel.has_value())
+    if (ctx.guild->idNewJobChannel.has_value() && job)
     {
-        auto ExtractJobID = [](const std::string& text) -> std::optional<std::string>
-            {
-                constexpr std::string_view key = "**ID**: ";
-
-                const std::size_t pos = text.find(key);
-                if (pos == std::string::npos)
-                    return std::nullopt;
-
-                const std::size_t start = pos + key.size();
-                const std::size_t end = text.find('\n', start);
-
-                if (end == std::string::npos)
-                    return std::nullopt;
-
-                return text.substr(start, end - start);
-            };
-        
-        const auto strID = ExtractJobID(jobDetails).value_or("unknown");
-        const auto job = ctx.queue->GetJobByID(strID);
-        if (!job) return;
-
-        GlobalButtonPanel panel{ strID };
-        panel.AddEmbed("New Job Request", jobDetails);
+        GlobalButtonPanel panel{ std::to_string(job->GetID().value), bReopened };
+        panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, guildID));
         panel.set_content(roleMention);
         panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));
 

@@ -13,7 +13,10 @@ class GuildSettings;
 class ShowWorkersPanel : public dpp::message
 {
 public:
-	ShowWorkersPanel(const std::string& OwnerName, const std::shared_ptr<GuildSettings>& settings);
+	ShowWorkersPanel(
+		const std::string& OwnerName, 
+		const std::shared_ptr<GuildSettings>& settings,
+		const std::optional<dpp::snowflake> roleID);
 
 	virtual ~ShowWorkersPanel() = default;
 
@@ -33,6 +36,7 @@ protected:
 	dpp::component m_btnResource;
 	dpp::component m_btnRefinery;
 	dpp::component m_btnHazmat;
+	dpp::component m_btnManager;
 
 	std::string m_ownerName;
 };

@@ -8,7 +8,10 @@
 // std library
 #include <optional>
 
-ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shared_ptr<GuildSettings>& settings)
+ShowWorkersPanel::ShowWorkersPanel(
+	const std::string& OwnerName, 
+	const std::shared_ptr<GuildSettings>& settings,
+	const std::optional<dpp::snowflake> roleID)
 	: dpp::message(), m_ownerName{ OwnerName }
 {
 	// row 1
@@ -21,7 +24,7 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnGeneral.set_type(dpp::cot_button)
 			.set_label("General Workers")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == generalID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showgeneralworkers:{}:{}", m_ownerName, generalID.value(), static_cast<std::size_t>(GuildSettings::Roles::Ping)));
 		m_row.add_component(m_btnGeneral);
 	}
@@ -30,7 +33,7 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnCrafters.set_type(dpp::cot_button)
 			.set_label("Item Crafters")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == crafterID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showcrafters:{}:{}", m_ownerName, crafterID.value(), static_cast<std::size_t>(GuildSettings::Roles::Crafter)));
 		m_row.add_component(m_btnCrafters);
 	}
@@ -39,7 +42,7 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnBuilders.set_type(dpp::cot_button)
 			.set_label("Base Builders")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == builderID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showbuilders:{}:{}", m_ownerName, builderID.value(), static_cast<std::size_t>(GuildSettings::Roles::Builder)));
 		m_row.add_component(m_btnBuilders);
 	}
@@ -48,7 +51,7 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnCompSuppliers.set_type(dpp::cot_button)
 			.set_label("Component Suppliers")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == compID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showcompsupply:{}:{}", m_ownerName, compID.value(), static_cast<std::size_t>(GuildSettings::Roles::Comp)));
 		m_row.add_component(m_btnCompSuppliers);
 	}
@@ -57,12 +60,13 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	const auto resourceID = settings->roles[static_cast<std::size_t>(GuildSettings::Roles::Gatherer)];
 	const auto refinerID = settings->roles[static_cast<std::size_t>(GuildSettings::Roles::Refiner)];
 	const auto hazmatID = settings->roles[static_cast<std::size_t>(GuildSettings::Roles::Hazmat)];
+	const auto managerID = settings->roles[static_cast<std::size_t>(GuildSettings::Roles::Manager)];
 
 	if (resourceID.has_value())
 	{
 		m_btnResource.set_type(dpp::cot_button)
 			.set_label("Resource Gatherers")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == resourceID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showgatherers:{}:{}", m_ownerName, resourceID.value(), static_cast<std::size_t>(GuildSettings::Roles::Gatherer)));
 		m_row2.add_component(m_btnResource);
 	}
@@ -71,7 +75,7 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnRefinery.set_type(dpp::cot_button)
 			.set_label("Refinery Workers")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == refinerID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showrefiners:{}:{}", m_ownerName, refinerID.value(), static_cast<std::size_t>(GuildSettings::Roles::Refiner)));
 		m_row2.add_component(m_btnRefinery);
 	}
@@ -80,8 +84,17 @@ ShowWorkersPanel::ShowWorkersPanel(const std::string& OwnerName, const std::shar
 	{
 		m_btnHazmat.set_type(dpp::cot_button)
 			.set_label("Hazard Materials")
-			.set_style(dpp::cos_primary)
+			.set_style(roleID.has_value() && roleID == hazmatID ? dpp::cos_primary : dpp::cos_secondary)
 			.set_id(fmt::format("{}_showhazmatworkers:{}:{}", m_ownerName, hazmatID.value(), static_cast<std::size_t>(GuildSettings::Roles::Hazmat)));
+		m_row2.add_component(m_btnHazmat);
+	}
+
+	if (managerID.has_value())
+	{
+		m_btnHazmat.set_type(dpp::cot_button)
+			.set_label("Managers")
+			.set_style(roleID.has_value() && roleID == managerID ? dpp::cos_primary : dpp::cos_secondary)
+			.set_id(fmt::format("{}_showmanagers:{}:{}", m_ownerName, managerID.value(), static_cast<std::size_t>(GuildSettings::Roles::Manager)));
 		m_row2.add_component(m_btnHazmat);
 	}
 

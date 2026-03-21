@@ -13,7 +13,7 @@
 
 namespace
 {
-    std::string CreateReply(CommandContext& ctx, const dpp::snowflake& selectedRole)
+    std::string CreateReply(CommandContext& ctx, const std::optional<dpp::snowflake>& selectedRole)
     {
         // Role display names in enum order
         constexpr std::array<const char*, 8> roleNames{
@@ -82,7 +82,19 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
         return;
     }
 
-    dpp::snowflake selectedRole{ strRoleID };
+    bool bRoleExists = false;
+    dpp::snowflake newID{ strRoleID };
+    dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+    for (const auto& roleID : guild->roles)
+    {
+        if (newID == roleID)
+        {
+            bRoleExists = true;
+            break;
+        }
+    }
+
+    const std::optional<dpp::snowflake> selectedRole = !bRoleExists ? std::nullopt : std::optional<dpp::snowflake>(strRoleID);
 
     auto SetRole = [&ctx, &event, &selectedRole](GuildSettings::Roles roleEnum, const std::string& label)
         {
@@ -160,11 +172,23 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
             return;
         }
 
-        if (!strParam1.empty() && !strParam2.empty())
+        bool bRoleExists = false;
+        dpp::snowflake newID{ strParam2 };
+        dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+        for (const auto& roleID : guild->roles)
+        {
+            if (newID == roleID)
+            {
+                bRoleExists = true;
+                break;
+            }
+        }
+
+        if (!strParam1.empty() && !strParam2.empty() && bRoleExists)
         {
             try
             {
-                ctx.guild->roles[std::stoull(strParam1)] = dpp::snowflake(strParam2);
+                ctx.guild->roles[std::stoull(strParam1)] = newID;
             }
             catch (const std::exception)
             {
@@ -172,7 +196,7 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
                 return;
             }
         }
-        else if (!strParam1.empty())
+        else if (!strParam1.empty() || !bRoleExists)
         {
             try
             {
@@ -184,6 +208,8 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
                 return;
             }
         }
+
+        ctx.guild->SaveGuildSettings(ctx.repo);
 
         event.reply(dpp::message(CreateReply(ctx, dpp::snowflake(strParam2))).set_flags(dpp::m_ephemeral));
     }

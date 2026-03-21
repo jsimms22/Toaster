@@ -143,7 +143,7 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 		}
 	}
 
-	ShowWorkersPanel workerlist{ Command_ShowWorkers, ctx.guild };
+	ShowWorkersPanel workerlist{ Command_ShowWorkers, ctx.guild, role };
 	workerlist.AddEmbed("Assigned Worker Roles", fmt::to_string(buffer));
 
 	event.reply(workerlist.set_flags(dpp::m_ephemeral));

@@ -67,9 +67,21 @@ void AdminConfigPingCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::f
             return;
         }
 
-        if (!strParam1.empty())
+        bool bRoleExists = false;
+        dpp::snowflake newID{ strParam1 };
+        dpp::guild* guild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+        for (const auto& roleID : guild->roles)
         {
-            ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = dpp::snowflake(strParam1);
+            if (newID == roleID)
+            {
+                bRoleExists = true;
+                break;
+            }
+        }
+
+        if (!strParam1.empty() && bRoleExists)
+        {
+            ctx.guild->roles[static_cast<std::size_t>(GuildSettings::Roles::Ping)] = newID;
         }
         else
         {

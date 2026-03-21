@@ -37,7 +37,7 @@ void ShowWorkersCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashcom
 		}
 	}
 
-	ShowWorkersPanel workerlist{ this->name , ctx.guild };
+	ShowWorkersPanel workerlist{ this->name , ctx.guild, role };
 	workerlist.AddEmbed("Assigned Worker Roles", fmt::to_string(buffer));
 
 	event.reply(workerlist.set_flags(dpp::m_ephemeral));
@@ -58,9 +58,10 @@ void ShowWorkersCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 
 	const auto pManager = PermissionsMgr::GetInstance();
 	const auto& members = guild->members;
+	const auto& roleName = GuildSettings::RoleNames[std::stoull(parts[2])];
 
 	fmt::memory_buffer buffer;
-	fmt::format_to(std::back_inserter(buffer), "### {}\n", GuildSettings::RoleNames[std::stoull(parts[2])]);
+	fmt::format_to(std::back_inserter(buffer), "### {}\n", roleName);
 	for (const auto& member : members)
 	{
 		if (pManager->HasRole(member.second, std::stoull(parts[1])))
@@ -70,7 +71,7 @@ void ShowWorkersCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
 		}
 	}
 
-	ShowWorkersPanel workerlist{ Command_ShowWorkers, ctx.guild };
+	ShowWorkersPanel workerlist{ Command_ShowWorkers, ctx.guild, std::stoull(parts[1]) };
 	workerlist.AddEmbed("Assigned Worker Roles", fmt::to_string(buffer));
 
 	event.reply(dpp::ir_update_message, workerlist.set_flags(dpp::m_ephemeral));

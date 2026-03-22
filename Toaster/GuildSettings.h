@@ -108,10 +108,10 @@ public:
 	static std::optional<GuildSettings::Roles> JobTypeToRole(const std::size_t type);
 	static std::optional<std::size_t> RoleToJobType(const GuildSettings::Roles type);
 
-	static void AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake guildID, const bool bReopened = false);
-	static void AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
+	static void AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const bool bReopened);
+	static void AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job);
 	static void AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
-	static void AnnounceOnComplete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
+	static void AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job);
 
 	// Serialization + Deserialization: XML
 	void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const;

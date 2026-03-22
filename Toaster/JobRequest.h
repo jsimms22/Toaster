@@ -133,8 +133,8 @@ public:
     virtual bsoncxx::builder::basic::document WriteAttributesBSON() const;
     virtual void ReadAttributesBSON(const bsoncxx::document::view& doc);
 
-    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
-    const std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
+    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames = false) const;
+    const std::string PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames = false) const;
     const std::string GetCustomerName(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
     const WorkerList GetWorkerNames(dpp::cluster& cluster, const dpp::snowflake& idGuild) const;
 

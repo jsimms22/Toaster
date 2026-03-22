@@ -158,7 +158,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobCraft->SetQuantity(strParam2);
         jobCraft->SetQualityThres(strParam3);
         jobCraft->SetPriority(JobRequest::StringToPriority(strParam4));
-        jobDetails = jobCraft->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new CRAFTING request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobCraft));
     }
@@ -172,7 +171,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobBuild->SetBuildRequirments(strParam2);
         jobBuild->SetBuildZone(strParam3);
         jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
-        jobDetails = jobBuild->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobBuild));
     }
@@ -184,7 +182,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobComp->SetSCHandle(strSCHandle);
         jobComp->SetComponentList(strParam1);
         jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
-        jobDetails = jobComp->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobComp));
     }
@@ -198,7 +195,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRes->SetResourcelist(strParam2);
         jobRes->SetQualityThres(strParam3);
         jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
-        jobDetails = jobRes->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRes));
     }
@@ -212,7 +208,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRefine->SetResourcelist(strParam2);
         jobRefine->SetRefinery(strParam3);
         jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
-        jobDetails = jobRefine->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRefine));
     }
@@ -226,7 +221,6 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobHazard->SetItemLocation(strParam2);
         jobHazard->SetItemList(strParam3);
         jobHazard->SetPriority(JobRequest::StringToPriority(strParam4));
-        jobDetails = jobHazard->PrintJobDetails(ctx.cluster, event.command.guild_id);
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobHazard));
     }
@@ -243,7 +237,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
     // Announce in channel (if set)
-    GuildSettings::AnnounceOnNew(ctx, job, event.command.guild_id);
+    GuildSettings::AnnounceOnNew(ctx, job, false);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

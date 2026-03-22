@@ -402,7 +402,7 @@ void JobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames) const
 {
     fmt::memory_buffer buffer;
 
@@ -416,7 +416,14 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
             fmt::format_to(std::back_inserter(workerbuf), ", ");
         }
 
-        fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+        if (bPrintNames)
+        {
+            fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+        }
+        else
+        {
+            fmt::format_to(std::back_inserter(workerbuf), "<@{}>", m_idWorkerList[i]);
+        }
     }
 
     return fmt::format(
@@ -433,7 +440,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
         m_timeLastEdit,
         PriorityToString(m_eJobPriority),
         StatusToString(m_eJobStatus),
-        GetCustomerName(cluster, idGuild),
+        (bPrintNames ? GetCustomerName(cluster, idGuild) : "<@" + std::to_string(m_idCustomer) + ">"),
         GetSCHandle(),
         fmt::to_string(workerbuf)
     );
@@ -442,7 +449,7 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames) const
 {
     fmt::memory_buffer buffer;
 
@@ -456,7 +463,14 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
             fmt::format_to(std::back_inserter(workerbuf), ", "); 
         }
 
-        fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+        if (bPrintNames)
+        {
+            fmt::format_to(std::back_inserter(workerbuf), "{}", workers[i]);
+        }
+        else
+        {
+            fmt::format_to(std::back_inserter(workerbuf), "<@{}>", m_idWorkerList[i]);
+        }
     }
 
     return fmt::format(
@@ -471,7 +485,7 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
         m_timeCreated,
         PriorityToString(m_eJobPriority),
         StatusToString(m_eJobStatus),
-        GetCustomerName(cluster, idGuild),
+        (bPrintNames ? GetCustomerName(cluster, idGuild) : "<@" + std::to_string(m_idCustomer) + ">"),
         GetSCHandle(),
         fmt::to_string(workerbuf)
     );

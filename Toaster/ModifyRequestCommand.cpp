@@ -89,7 +89,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     }
     else if (strCmdID == Option_Delete && pGuild && (pManager->CanDeleteJob(event, author.id, job, pGuild, ctx.guild) || ctx.debug))
     {
-        std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+        std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id, true);
         utils::RemoveChar(desc, '*');
         DeleteRequestDlg modal(job, desc);
         event.dialog(modal);
@@ -230,15 +230,16 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
+
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldJobDetails != jobDetails) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
                 fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
-                    ToString(job->GetID()), author.global_name, jobDetails));
+                    ToString(job->GetID()), fmt::format("<@{}>", author.id), jobDetails));
         }
 
-        GuildSettings::AnnounceOnUpdate(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        GuildSettings::AnnounceOnUpdate(ctx, job);
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle AssignRequestDlg
@@ -318,9 +319,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         if (msg.size() != 0)
         {
+            const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+
             dpp::embed embed;
             embed.set_title("Assigned job:")
-                .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+                .set_description(jobDetails)
                 .set_color(0x3498db);
 
             event.reply(dpp::message(fmt::to_string(msg)).add_embed(embed).set_flags(dpp::m_ephemeral));
@@ -329,7 +332,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID()) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Your request has been assigned to {} by {}:\n\n{}", fmt::to_string(workerbuf), author.global_name, embed.description));
+                    fmt::format("{} have been assigned to your request by {}:\n\n{}", fmt::to_string(workerbuf), fmt::format("<@{}>", author.id), jobDetails));
             }
         }
     }
@@ -341,7 +344,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::user author = event.command.get_issuing_user();
 
         const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-        const std::string strStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
+        const std::string strNewStatus = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "";
 
         const auto job = ctx.queue->GetJobByID(strID);
         if (!job)
@@ -350,28 +353,34 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             return;
         }
 
-        const std::string strOldStatus = JobRequest::StatusToString(job->GetStatus());
+        const auto oldStatus = job->GetStatus();
         ctx.queue->RequestModify(job->GetID(),
-            [strStatus](std::shared_ptr<JobRequest> job)
+            [strNewStatus](std::shared_ptr<JobRequest> job)
             {
-                job->SetStatus(CraftingJobRequest::StringToStatus(strStatus));
+                job->SetStatus(CraftingJobRequest::StringToStatus(strNewStatus));
             });
+
+        const auto newStatus = job->GetStatus();
+        const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
 
         dpp::embed embed;
         embed.set_title("Status changed for job:")
-            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+            .set_description(jobDetails)
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strStatus));
-        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldStatus != strStatus) || ctx.debug)
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strNewStatus));
+        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && oldStatus != newStatus) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", strOldStatus, strStatus, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
+                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", JobRequest::StatusToString(oldStatus), strNewStatus, fmt::format("<@{}>", author.id), jobDetails));
         }
 
-        GuildSettings::AnnounceOnComplete(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        if (oldStatus != JobRequest::status::complete && newStatus != oldStatus && newStatus == JobRequest::status::complete)
+        {
+            GuildSettings::AnnounceOnComplete(ctx, job);
+        }
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle PriorityChangeRequestDlg
@@ -397,9 +406,11 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 job->SetPriority(JobRequest::StringToPriority(strPriority));
             });
 
+        const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+
         dpp::embed embed;
         embed.set_title("Priority changed for job:")
-            .set_description(job->PrintJobDetails(ctx.cluster, event.command.guild_id))
+            .set_description(jobDetails)
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
@@ -408,7 +419,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, author.global_name, job->PrintJobDetails(ctx.cluster, event.command.guild_id)));
+                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, fmt::format("<@{}>", author.id), jobDetails));
         }
     }
     //-------------------------------------------------------------------------------------------------------------
@@ -459,7 +470,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                                    event,
                                        fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
                                            strID,
-                                           author.global_name,
+                                           fmt::format("<@{}>", author.id),
                                            strJustification,
                                            jobDetails));
         }
@@ -515,8 +526,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             utils::NotifyIssuerMsg(ctx.cluster,
                 job->GetCustomerID(),
                 event,
-                fmt::format("A note has been added by {} to job request {}.\n\n **Note:**\n{}",
-                    utils::FindPreferredNameByID(ctx.cluster, author.id, event.command.guild_id),
+                fmt::format("{} has added a note to your request {}.\n\n **Note:**\n{}",
+                    fmt::format("<@{}>", author.id),
                     strID,
                     strNote));
         }
@@ -566,7 +577,6 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         event.reply(dpp::message("The job request has been reopened.").set_flags(dpp::m_ephemeral));
         ctx.cluster.log(dpp::ll_info, fmt::format("{} reopened job request {}.", author.global_name, strID));
 
-        const auto jobDetails = reopenedJob->PrintJobDetails(ctx.cluster, event.command.guild_id);
         // Notify original customer if needed
         if ((reopenedJob->IsCustomerSubscribed() && event.command.usr.id != reopenedJob->GetCustomerID()) || ctx.debug)
         {
@@ -575,12 +585,12 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 event,
                 fmt::format("Request {} has been reopened by {}.\n\n{}",
                     strID,
-                    utils::FindPreferredNameByID(ctx.cluster, author.id, event.command.guild_id),
-                    jobDetails)
+                    fmt::format("<@{}>", author.id),
+                    reopenedJob->PrintJobDetails(ctx.cluster, event.command.guild_id))
             );
         }
 
-        GuildSettings::AnnounceOnNew(ctx, reopenedJob, event.command.guild_id, true);
+        GuildSettings::AnnounceOnNew(ctx, reopenedJob, true);
     }
 }
 

@@ -79,12 +79,12 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
         if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
         {
             utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Request {} has been completed by {}.", rID, event.command.get_issuing_user().global_name));
+                fmt::format("Request {} has been completed by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)));
         }
 
         ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
 
-        GuildSettings::AnnounceOnComplete(ctx, job->JobType(), job->PrintJobDetails(ctx.cluster, event.command.guild_id));
+        GuildSettings::AnnounceOnComplete(ctx, job);
     }
     else
     {
@@ -140,7 +140,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been unassigned by {}.", rID, event.command.get_issuing_user().global_name));
+                    fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user), rID));
             }
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
@@ -162,14 +162,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
                 utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("Request {} has been assigned to {}.", rID, event.command.get_issuing_user().global_name));
-            }
-
-            // Send notification to the previously assigned worker
-            if (customer != user || ctx.debug)
-            {
-                utils::NotifyIssuerMsg(ctx.cluster, user, event,
-                    fmt::format("{} has been assigned to request {}.", event.command.get_issuing_user().global_name, rID));
+                    fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user), rID));
             }
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));

@@ -74,16 +74,23 @@ bool GlobalButtonPanel::AssignButton(const std::string& id, CommandContext& ctx,
         return false;
     }
 
-    ctx.queue->RequestModify(job->GetID(),
-        [id = user.id](std::shared_ptr<JobRequest> job)
-        {
-            if (job->IsWorker(id))
-                return;
+    if (!job->IsWorker(user.id))
+    {
+        ctx.queue->RequestModify(job->GetID(),
+            [id = user.id](std::shared_ptr<JobRequest> job)
+            {
+                job->AddWorkerID(id);
+                if (job->GetStatus() < JobRequest::status::complete)
+                    job->SetStatus(JobRequest::status::assigned);
+            });
 
-            job->AddWorkerID(id);
-            if (job->GetStatus() < JobRequest::status::complete)
-                job->SetStatus(JobRequest::status::assigned);
-        });
+        const dpp::snowflake customer = job->GetCustomerID();
+        if ((job->IsCustomerSubscribed() && customer != user.id) || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
+                fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user.id), rID));
+        }
+    }
 
     return true;
 }
@@ -110,16 +117,23 @@ bool GlobalButtonPanel::UnassignButton(const std::string& id, CommandContext& ct
         return false;
     }
 
-    ctx.queue->RequestModify(job->GetID(),
-        [id = user.id](std::shared_ptr<JobRequest> job)
-        {
-            if (!job->IsWorker(id))
-                return;
+    if (job->IsWorker(user.id))
+    {
+        ctx.queue->RequestModify(job->GetID(),
+            [id = user.id](std::shared_ptr<JobRequest> job)
+            {
+                job->RemoveWorkerID(id);
+                if (job->GetStatus() != JobRequest::status::complete && job->GetWorkerIDs().empty())
+                    job->SetStatus(JobRequest::status::open);
+            });
 
-            job->RemoveWorkerID(id);
-            if (job->GetStatus() != JobRequest::status::complete && job->GetWorkerIDs().empty())
-                job->SetStatus(JobRequest::status::open);
-        });
+        const dpp::snowflake customer = job->GetCustomerID();
+        if ((job->IsCustomerSubscribed() && customer != user.id) || ctx.debug)
+        {
+            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
+                fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user.id), rID));
+        }
+    }
 
     return true;
 }

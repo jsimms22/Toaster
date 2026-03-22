@@ -51,9 +51,9 @@ void ComponentJobRequest::ReadAttributes(tinyxml2::XMLElement* xmlNode)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string ComponentJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+std::string ComponentJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames) const
 {
-    std::string base = JobRequest::PrintJobDetails(cluster, idGuild);
+    std::string base = JobRequest::PrintJobDetails(cluster, idGuild, bPrintNames);
 
     return fmt::format(
         "{}"

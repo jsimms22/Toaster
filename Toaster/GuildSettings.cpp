@@ -92,8 +92,13 @@ std::optional<std::size_t> GuildSettings::RoleToJobType(const GuildSettings::Rol
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake guildID, const bool bReopened)
+void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const bool bReopened)
 {
+    if (!job)
+    {
+        return;
+    }
+
     std::string roleMention;
     if (ctx.guild->bPingOnNew)
     {
@@ -118,7 +123,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<con
     if (ctx.guild->idNewJobChannel.has_value() && job)
     {
         GlobalButtonPanel panel{ std::to_string(job->GetID().value), bReopened };
-        panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, guildID));
+        panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild));
         panel.set_content(roleMention);
         panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));
 
@@ -129,12 +134,17 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<con
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
+void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job)
 {
+    if (!job)
+    {
+        return;
+    }
+
     std::string roleMention;
     if (ctx.guild->bPingOnUpdate)
     {
-        if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
+        if (const auto roleOpt = GuildSettings::JobTypeToRole(job->JobType()); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
             const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
@@ -156,7 +166,7 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::size_t jobT
     {
         dpp::embed announce;
         announce.set_title("Job Request Edited")
-            .set_description(jobDetails)
+            .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild))
             .set_color(0x3498db);
 
         ctx.cluster.message_create(dpp::message(ctx.guild->idUpdateJobChannel.value_or(0), roleMention).add_embed(announce));
@@ -203,12 +213,17 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
+void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job)
 {
+    if (!job) 
+    {
+        return;
+    }
+
     std::string roleMention;
     if (ctx.guild->bPingOnComplete)
     {
-        if (const auto roleOpt = GuildSettings::JobTypeToRole(jobType); roleOpt.has_value())
+        if (const auto roleOpt = GuildSettings::JobTypeToRole(job->JobType()); roleOpt.has_value())
         {
             const auto roleEnum = *roleOpt;
             const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
@@ -230,7 +245,7 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::size_t jo
     {
         dpp::embed announce;
         announce.set_title("Job Request Completed")
-            .set_description(jobDetails)
+            .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild))
             .set_color(0x3498db);
 
         ctx.cluster.message_create(dpp::message(ctx.guild->idCompleteJobChannel.value_or(0), roleMention).add_embed(announce));

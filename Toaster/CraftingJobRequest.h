@@ -39,7 +39,7 @@ public:
     virtual bsoncxx::builder::basic::document WriteAttributesBSON() const override;
     virtual void ReadAttributesBSON(const bsoncxx::document::view& doc) override;
 
-    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const override;
+    virtual std::string PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames = false) const override;
 
 private:
     std::string m_strItemDesc = "n/a";  // Description of the item being crafted

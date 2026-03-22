@@ -176,7 +176,7 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         else if (id.starts_with(fmt::format("{}_admindelete:", this->name)))
         {
             AdminQueueButtonPanel::AdminDelete(id, ctx, event);
-            return;
+            //return;
         }
         else if (id.starts_with(fmt::format("{}_showworkers:", this->name)))
         {
@@ -186,7 +186,7 @@ void AdminPanelCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butto
         else if (id.starts_with(fmt::format("{}_downloadworkers:", this->name)))
         {
             AdminQueueButtonPanel::DownloadWorkersButton(id, ctx, event);
-            return;
+            //return;
         }
         else if (id.starts_with(fmt::format("{}_downloadarchive:", this->name)))
         {

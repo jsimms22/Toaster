@@ -176,7 +176,7 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 	const auto pManager = PermissionsMgr::GetInstance();
 	if (pManager->CanDeleteJob(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
-		std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+		std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id, true);
 		utils::RemoveChar(desc, '*');
 		DeleteRequestDlg modal(job, desc);
 		event.dialog(modal);

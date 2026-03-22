@@ -136,9 +136,9 @@ void ResourceJobRequest::ReadAttributesBSON(const bsoncxx::document::view& doc)
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild) const
+std::string ResourceJobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowflake& idGuild, const bool bPrintNames) const
 {
-    std::string base = JobRequest::PrintJobDetails(cluster, idGuild);
+    std::string base = JobRequest::PrintJobDetails(cluster, idGuild, bPrintNames);
 
     return fmt::format(
         "{}"

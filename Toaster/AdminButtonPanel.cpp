@@ -229,7 +229,7 @@ void AdminQueueButtonPanel::MarkOnHoldButton(const std::string& id, CommandConte
 		if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
 		{
 			utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-				fmt::format("Request {} has been placed on hold by {}.", rID, event.command.get_issuing_user().global_name));
+				fmt::format("Request {} has been placed on hold by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)));
 		}
 
 		ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been placed on hold by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
@@ -253,7 +253,7 @@ void AdminQueueButtonPanel::AdminDelete(const std::string& id, CommandContext& c
 		return;
 	}
 
-	std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+	std::string desc = job->PrintJobDetails(ctx.cluster, event.command.guild_id, true);
 	utils::RemoveChar(desc, '*');
 	DeleteRequestDlg modal(job, desc);
 	event.dialog(modal);
@@ -268,6 +268,7 @@ void AdminQueueButtonPanel::DownloadArchiveButton(const std::string& id, Command
 {
 	std::string queue = ctx.queue->PrintArchive(ctx.cluster,
 		event.command.guild_id,
+		true,
 		[](const std::shared_ptr<const JobRequest> job) -> bool { return true; });
 
 	utils::RemoveChar(queue, '*');
@@ -429,6 +430,7 @@ void AdminBotButtonPanel::SendQueueButton(const std::string& id, CommandContext&
 {
 	std::string queue = ctx.queue->PrintQueue(ctx.cluster,
 		event.command.guild_id,
+		true,
 		true,
 		[](const std::shared_ptr<const JobRequest> job) -> bool { return true; });
 

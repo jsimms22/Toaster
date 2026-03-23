@@ -56,29 +56,3 @@ private:
 	CommandContext m_ctx;
 	std::string m_strCommand;
 };
-
-//---------------------------------------------------------------------------------------------------------------------
-/// \class AdminConfigDialog
-/// \brief 
-//---------------------------------------------------------------------------------------------------------------------
-class AdminArchiveDialog : public dpp::interaction_modal_response
-{
-public:
-	AdminArchiveDialog(const std::string& strCommandName, CommandContext& ctx);
-	~AdminArchiveDialog() = default;
-
-	static const std::string modalID;
-	static const std::string modalDesc;
-
-	void InitializeControls();
-	void AddChildrenComponents();
-
-private:
-	// For ping rules
-	dpp::component WeekSelect;
-	dpp::component DaySelect;
-	dpp::component HourSelect;
-
-	CommandContext m_ctx;
-	std::string m_strCommand;
-};

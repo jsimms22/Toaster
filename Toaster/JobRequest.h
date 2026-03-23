@@ -73,22 +73,31 @@ public:
     void SetCustomerID(const dpp::snowflake& id) { m_idCustomer = id; }
 
     const std::vector<dpp::snowflake>& GetWorkerIDs() const { return m_idWorkerList; }
-    void AddWorkerID(const dpp::snowflake& id) 
+    bool AddWorkerID(const dpp::snowflake& id) 
     {
         if (m_idWorkerList.end() == std::find(m_idWorkerList.begin(), m_idWorkerList.end(), id))
         {
             m_idWorkerList.emplace_back(id);
+            return true;
         }
+
+        return false;
     }
-    void RemoveWorkerID(const dpp::snowflake& id) 
+    bool RemoveWorkerID(const dpp::snowflake& id)
     {
+        bool bResult = false;
+
         m_idWorkerList.erase(
-            std::remove_if(
-                m_idWorkerList.begin(),
-                m_idWorkerList.end(), 
-                [id](const auto& worker) { return worker == id; }), 
+            std::remove_if( m_idWorkerList.begin(), m_idWorkerList.end(), [&](const auto& worker) 
+                { 
+                    if (worker == id)
+                        bResult = true;
+                    return worker == id;
+                }), 
             m_idWorkerList.end()
         );
+
+        return bResult;
     }
     bool IsWorker(const dpp::snowflake& user) const;
 

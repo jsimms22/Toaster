@@ -174,9 +174,9 @@ public:
 
 private:
 	dpp::component JobRequestIDEdit;
+	dpp::component ActionTypeSelect;
 	dpp::component WorkerAssignSelect;
 	dpp::component WorkerAssignSelect2;
-	dpp::component WorkerAssignSelect3;
 	dpp::component StatusUpdateSelect;
 
 	std::shared_ptr<const JobRequest> m_spJob;

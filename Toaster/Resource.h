@@ -37,6 +37,7 @@ constexpr const char* Component_HazItemList		{ "hazitemlist_id" };
 constexpr const char* Component_hazItemZone		{ "hazitemloc_id" };
 constexpr const char* Component_ThreatLevel		{ "threatlevel_id" };
 constexpr const char* Component_Priority		{ "priority_id" };
+constexpr const char* Component_AssignmentAction{ "assignaction_id" };	
 constexpr const char* Component_Assignment		{ "assign_id" };
 constexpr const char* Component_Status			{ "status_id" };
 constexpr const char* Component_JobDescription	{ "description_id" };

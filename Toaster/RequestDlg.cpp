@@ -33,7 +33,7 @@ const std::string HazardousRequestDlg::modalID = "HazardousRequestModal";
 const std::string HazardousRequestDlg::modalDesc = "Submit Hazardous Item Retrieval Request";
 
 const std::string AssignRequestDlg::modalID = "AssignRequestModal";
-const std::string AssignRequestDlg::modalDesc = "Assign Job Request To Worker";
+const std::string AssignRequestDlg::modalDesc = "Update Job Request Assignments";
 
 const std::string StatusChangeRequestDlg::modalID = "StatusChangeModal";
 const std::string StatusChangeRequestDlg::modalDesc = "Update Status of Job Request";
@@ -569,10 +569,19 @@ void AssignRequestDlg::InitializeControls()
         .set_min_length(0)
         .set_max_length(16)
         .set_text_style(dpp::text_short)
-        .set_id(Component_RequestID);
+        .set_id(Component_RequestID); 
+
+        // Create a combo box component
+    ActionTypeSelect.set_label("Assigment Action to Perform")
+        .set_type(dpp::cot_selectmenu)
+        .set_placeholder("Select Action")
+        .set_required(true)
+        .add_select_option(dpp::select_option("Assign Workers", "1", "").set_emoji(dpp::unicode_emoji::green_circle).set_default(true))
+        .add_select_option(dpp::select_option("Unassign Workers", "0", "").set_emoji(dpp::unicode_emoji::red_circle))
+        .set_id(Component_AssignmentAction);
 
     // Create a combo box component
-    WorkerAssignSelect.set_label("Assign Task To")
+    WorkerAssignSelect.set_label("Input Worker ID")
         .set_type(dpp::cot_text)
         .set_placeholder("Enter Worker ID")
         .set_min_length(0)
@@ -580,21 +589,13 @@ void AssignRequestDlg::InitializeControls()
         .set_text_style(dpp::text_short)
         .set_id(Component_Assignment);
 
-    WorkerAssignSelect2.set_label("Assign Additional")
+    WorkerAssignSelect2.set_label("Input Additional ID")
         .set_type(dpp::cot_text)
-        .set_placeholder("Enter Worker ID 2")
+        .set_placeholder("Enter Worker ID")
         .set_min_length(0)
         .set_max_length(40)
         .set_text_style(dpp::text_short)
         .set_id(fmt::format("{}:{}", Component_Assignment, 2));
-
-    WorkerAssignSelect3.set_label("Assign Additional")
-        .set_type(dpp::cot_text)
-        .set_placeholder("Enter Worker ID 3")
-        .set_min_length(0)
-        .set_max_length(40)
-        .set_text_style(dpp::text_short)
-        .set_id(fmt::format("{}:{}", Component_Assignment, 3));
 
     StatusUpdateSelect.set_label("Update Status")
         .set_type(dpp::cot_selectmenu)
@@ -602,10 +603,9 @@ void AssignRequestDlg::InitializeControls()
         .set_id(Component_Status);
 
     // Add all status options dynamically
-    for (const auto& s : StatusChangeRequestDlg::StatusList) {
-        StatusUpdateSelect.add_select_option(
-            dpp::select_option(s.label, s.value, "").set_emoji(s.emoji)
-        );
+    for (const auto& s : StatusChangeRequestDlg::StatusList) 
+    {
+        StatusUpdateSelect.add_select_option(dpp::select_option(s.label, s.value, "").set_emoji(s.emoji));
     }
 }
 
@@ -615,9 +615,9 @@ void AssignRequestDlg::InitializeControls()
 void AssignRequestDlg::AddChildrenComponents()
 {
     add_component(JobRequestIDEdit);
+    add_component(ActionTypeSelect);
     add_component(WorkerAssignSelect);
     add_component(WorkerAssignSelect2);
-    add_component(WorkerAssignSelect3);
     add_component(StatusUpdateSelect);
 }
 

@@ -228,8 +228,14 @@ void AdminQueueButtonPanel::MarkOnHoldButton(const std::string& id, CommandConte
 		const dpp::snowflake customer = job->GetCustomerID();
 		if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
 		{
-			utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-				fmt::format("Request {} has been placed on hold by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)));
+			utils::NotifyIssuerMsgWithEmbed(
+				ctx.cluster,
+				event,
+				customer,
+				fmt::format("Request {} has been placed on hold by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)),
+				"Request Details",
+				job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID())
+			);
 		}
 
 		ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been placed on hold by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));

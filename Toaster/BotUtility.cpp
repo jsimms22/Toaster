@@ -103,6 +103,38 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
+    void NotifyIssuerMsgWithEmbed(
+        dpp::cluster& cluster,
+        const dpp::event_dispatch_t& event,
+        const dpp::snowflake& idUser,
+        const std::string& msgContent,
+        const std::string& embedHeader,
+        const std::string& embedContent)
+    {
+        dpp::message message(msgContent);
+
+        dpp::embed embed;
+        embed.set_title(embedHeader)
+            .set_description(embedContent)
+            .set_color(0x3498db);
+
+        message.add_embed(embed);
+
+        cluster.direct_message_create(idUser, message, [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
+            if (callback.is_error())
+            {
+                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", idUser));
+            }
+            else
+            {
+                dpp::user user = utils::FindUserByID(cluster, idUser);
+                cluster.log(dpp::ll_info, fmt::format("Sending direct message to '{}'.", user.global_name));
+            }});
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
     dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id)
     {
         if (id == ID_NULL)

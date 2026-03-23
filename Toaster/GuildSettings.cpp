@@ -122,7 +122,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<con
 
     if (ctx.guild->idNewJobChannel.has_value() && job)
     {
-        GlobalButtonPanel panel{ std::to_string(job->GetID().value), bReopened };
+        GlobalButtonPanel panel{ ToString(job->GetID()), bReopened };
         panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild));
         panel.set_content(roleMention);
         panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));

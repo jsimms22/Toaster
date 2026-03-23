@@ -87,8 +87,14 @@ bool GlobalButtonPanel::AssignButton(const std::string& id, CommandContext& ctx,
         const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && customer != user.id) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user.id), rID));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user.id), rID),
+                "Request Details",
+                job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID())
+            );
         }
     }
 
@@ -130,8 +136,14 @@ bool GlobalButtonPanel::UnassignButton(const std::string& id, CommandContext& ct
         const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && customer != user.id) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user.id), rID));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user.id), rID),
+                "Request Details",
+                job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID())
+            );
         }
     }
 

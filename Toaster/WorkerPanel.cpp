@@ -78,8 +78,14 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
         const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Request {} has been completed by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("Request {} has been completed by {}.", rID, fmt::format("<@{}>", event.command.get_issuing_user().id)),
+                "Request Details",
+                job->PrintJobDetails(ctx.cluster, event.command.guild_id)
+            );
         }
 
         ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
@@ -139,8 +145,14 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             const dpp::snowflake customer = job->GetCustomerID();
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
-                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user), rID));
+                utils::NotifyIssuerMsgWithEmbed(
+                    ctx.cluster,
+                    event,
+                    customer,
+                    fmt::format("{} has been unassigned from your request {}.", fmt::format("<@{}>", user), rID),
+                    "Request Details",
+                    job->PrintJobDetails(ctx.cluster, event.command.guild_id)
+                );
             }
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
@@ -161,8 +173,14 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
             const dpp::snowflake customer = job->GetCustomerID();
             if ((job->IsCustomerSubscribed() && customer != user) || ctx.debug)
             {
-                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user), rID));
+                utils::NotifyIssuerMsgWithEmbed(
+                    ctx.cluster,
+                    event,
+                    customer,
+                    fmt::format("{} has been assigned to your request {}.", fmt::format("<@{}>", user), rID),
+                    "Request Details",
+                    job->PrintJobDetails(ctx.cluster, event.command.guild_id)
+                );
             }
 
             ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));

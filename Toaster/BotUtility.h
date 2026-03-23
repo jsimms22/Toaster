@@ -26,6 +26,13 @@ namespace utils
 	const std::size_t CmdStringToJobType(const std::string& cmd);
 	const std::string JobTypeToString(const std::size_t& type);
 	void NotifyIssuerMsg(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::event_dispatch_t& event, const std::string& msg);
+	void NotifyIssuerMsgWithEmbed(
+		dpp::cluster& cluster,
+		const dpp::event_dispatch_t& event,
+		const dpp::snowflake& idUser,
+		const std::string& msgContent,
+		const std::string& embedHeader,
+		const std::string& embedContent);
 	dpp::user FindUserByID(dpp::cluster& cluster, const dpp::snowflake& id);
 	dpp::guild* FindGuildByID(dpp::cluster& cluster, const dpp::snowflake& id);
 	void FindGuildCallback(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback);

@@ -232,11 +232,18 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
 
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
-        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldJobDetails != jobDetails) || ctx.debug)
+
+        const dpp::snowflake customer = job->GetCustomerID();
+        if ((job->IsCustomerSubscribed() && author.id != customer && strOldJobDetails != jobDetails) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Request {} has been edited by {}:\n\n New Job Details:\n{}",
-                    ToString(job->GetID()), fmt::format("<@{}>", author.id), jobDetails));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("{} has edited your request {}.", fmt::format("<@{}>", author.id), ToString(job->GetID())),
+                "Request Details",
+                job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID())
+            );
         }
 
         GuildSettings::AnnounceOnUpdate(ctx, job);
@@ -329,10 +336,17 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             event.reply(dpp::message(fmt::to_string(msg)).add_embed(embed).set_flags(dpp::m_ephemeral));
             ctx.cluster.log(dpp::ll_info, fmt::format("{} assigned {} to {}", author.global_name, strID, fmt::to_string(workerbuf)));
 
-            if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID()) || ctx.debug)
+            const dpp::snowflake customer = job->GetCustomerID();
+            if ((job->IsCustomerSubscribed() && author.id != customer) || ctx.debug)
             {
-                utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                    fmt::format("{} have been assigned to your request by {}:\n\n{}", fmt::to_string(workerbuf), fmt::format("<@{}>", author.id), jobDetails));
+                utils::NotifyIssuerMsgWithEmbed(
+                    ctx.cluster,
+                    event,
+                    customer,
+                    fmt::format("{} have been assigned to your request by {}.", fmt::to_string(workerbuf), fmt::format("<@{}>", author.id)),
+                    "Request Details",
+                    jobDetails
+                );
             }
         }
     }
@@ -371,10 +385,18 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strNewStatus));
-        if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && oldStatus != newStatus) || ctx.debug)
+
+        const dpp::snowflake customer = job->GetCustomerID();
+        if ((job->IsCustomerSubscribed() && author.id != customer && oldStatus != newStatus) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's status has moved from {} to {} by {}:\n\n{}", JobRequest::StatusToString(oldStatus), strNewStatus, fmt::format("<@{}>", author.id), jobDetails));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("Your request's status has moved from {} to {} by {}.", JobRequest::StatusToString(oldStatus), strNewStatus, fmt::format("<@{}>", author.id)),
+                "Request Details",
+                jobDetails
+            );
         }
 
         if (oldStatus != JobRequest::status::complete && newStatus != oldStatus && newStatus == JobRequest::status::complete)
@@ -416,10 +438,18 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 
         ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.global_name, strID, strPriority));
+
+        const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster, job->GetCustomerID(), event,
-                fmt::format("Your request's priority has moved from {} to {} by {}:\n\n{}", strOldPriority, strPriority, fmt::format("<@{}>", author.id), jobDetails));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("Your request's priority has moved from {} to {} by {}.", strOldPriority, strPriority, fmt::format("<@{}>", author.id)),
+                "Request Details",
+                jobDetails
+            );
         }
     }
     //-------------------------------------------------------------------------------------------------------------
@@ -442,7 +472,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         const dpp::user author = event.command.get_issuing_user();
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
         const std::size_t jobType = job->JobType();
-        const dpp::snowflake customerID = job->GetCustomerID();
+        const dpp::snowflake customer = job->GetCustomerID();
         const bool bNotifyCustomer = job->IsCustomerSubscribed();
 
         const bool result = ctx.queue->RequestDelete(rID);
@@ -463,16 +493,16 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_warning,fmt::format("{} deleted {}. Reason: {}",author.global_name,strID,strJustification));
 
         // Notify original customer if needed
-        if ((bNotifyCustomer && event.command.usr.id != customerID) || ctx.debug)
+        if ((bNotifyCustomer && event.command.usr.id != customer) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster,
-                                   customerID,
-                                   event,
-                                       fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}\n\n{}",
-                                           strID,
-                                           fmt::format("<@{}>", author.id),
-                                           strJustification,
-                                           jobDetails));
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
+                event,
+                customer,
+                fmt::format("Request {} has been deleted by {}.\n\n**Reason:** {}", strID, fmt::format("<@{}>", author.id), strJustification),
+                "Request Details",
+                jobDetails
+            );
         }
 
         GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails);
@@ -521,15 +551,17 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("{} added a note to {}.", author.global_name, strID));
 
         // Notify original customer if needed
-        if ((job->IsCustomerSubscribed() && event.command.usr.id != job->GetCustomerID()) || ctx.debug)
+        const dpp::snowflake customer = job->GetCustomerID();
+        if ((job->IsCustomerSubscribed() && event.command.usr.id != customer) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster,
-                job->GetCustomerID(),
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
                 event,
-                fmt::format("{} has added a note to your request {}.\n\n **Note:**\n{}",
-                    fmt::format("<@{}>", author.id),
-                    strID,
-                    strNote));
+                customer,
+                fmt::format("{} has added a note to your request {}.\n\n **Note:**\n{}", fmt::format("<@{}>", author.id), strID, strNote),
+                "Request Details",
+                job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID())
+            );
         }
         // todo: need a way to allow workers to stop notifications
         /*
@@ -578,15 +610,16 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("{} reopened job request {}.", author.global_name, strID));
 
         // Notify original customer if needed
+        const dpp::snowflake customer = reopenedJob->GetCustomerID();
         if ((reopenedJob->IsCustomerSubscribed() && event.command.usr.id != reopenedJob->GetCustomerID()) || ctx.debug)
         {
-            utils::NotifyIssuerMsg(ctx.cluster,
-                reopenedJob->GetCustomerID(),
+            utils::NotifyIssuerMsgWithEmbed(
+                ctx.cluster,
                 event,
-                fmt::format("Request {} has been reopened by {}.\n\n{}",
-                    strID,
-                    fmt::format("<@{}>", author.id),
-                    reopenedJob->PrintJobDetails(ctx.cluster, event.command.guild_id))
+                customer,
+                fmt::format("{} has reopened your request {}.", strID, fmt::format("<@{}>", author.id)),
+                "Request Details",
+                reopenedJob->PrintJobDetails(ctx.cluster, event.command.guild_id)
             );
         }
 

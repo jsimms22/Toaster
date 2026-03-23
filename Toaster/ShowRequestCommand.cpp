@@ -12,6 +12,7 @@
 #include "PermissionsMgr.h"
 #include "WorkerPanel.h"
 #include "CustomerPanel.h"
+#include "PaginationPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -140,6 +141,42 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
     {
         GeneralUserPanel::ShowNotesButton(id, ctx, event);
         return;
+    }
+
+    if (id.starts_with("globalpanel_pagenext:") ||
+        id.starts_with("globalpanel_pageprev:") ||
+        id.starts_with("generaluser_pagenext:") ||
+        id.starts_with("generaluser_pageprev:"))
+    {
+        auto parts = utils::Split(id, ':');
+        const std::string rID = parts[1];
+        std::size_t page = parts[2] != std::to_string(std::numeric_limits<std::size_t>::max()) ? std::stoul(parts[2]) : 0;
+
+        const auto job = ctx.queue->GetJobByID(rID);
+        if (!job)
+        {
+            event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        const auto numNotes = job->NoteHistorySize();
+
+        // Check if there are any notes to show
+        if (numNotes == 0)
+        {
+            event.reply(dpp::message("There are no notes for this job.").set_flags(dpp::m_ephemeral));
+        }
+        else
+        {
+            // Format the note history
+            const std::string noteHistory = job->PrintNoteHistory(ctx.cluster, page);
+
+            const std::string header = fmt::format("Notes for Job: {}", rID);
+            PaginationPanel panel(ctx, "generaluser", rID, page, numNotes, JobRequest::NOTES_PER_PAGE);
+            panel.AddEmbed(header, numNotes != 0 ? noteHistory : "There are no notes for this job.");
+
+            event.reply(dpp::ir_update_message, panel.set_flags(dpp::m_ephemeral));
+        }
     }
 }
 

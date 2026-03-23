@@ -92,7 +92,7 @@ std::optional<std::size_t> GuildSettings::RoleToJobType(const GuildSettings::Rol
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const bool bReopened)
+void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const bool bReopened)
 {
     if (!job)
     {
@@ -123,18 +123,23 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<con
     if (ctx.guild->idNewJobChannel.has_value() && job)
     {
         GlobalButtonPanel panel{ ToString(job->GetID()), bReopened };
-        panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild));
+        panel.AddEmbed(bReopened ? "Reopened Job Request" : "New Job Request", job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID()));
         panel.set_content(roleMention);
         panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));
 
-        ctx.cluster.message_create(panel);
+        dpp::embed issuer;
+        issuer.set_title("Action Triggerd By")
+            .set_description(fmt::format("<@{}>", user))
+            .set_color(0x3498db);
+
+        ctx.cluster.message_create(panel.add_embed(issuer));
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job)
+void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const std::string& messageContent)
 {
     if (!job)
     {
@@ -155,10 +160,11 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<
             }
         }
 
+        roleMention += (!roleMention.empty() ? "\n" : "");
+
         if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
         {
-            roleMention += (!roleMention.empty() ? "\n" : "");
-            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">";
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">\n";
         }
     }
     
@@ -166,17 +172,78 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<
     {
         dpp::embed announce;
         announce.set_title("Job Request Edited")
-            .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild))
+            .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID()))
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild->idUpdateJobChannel.value_or(0), roleMention).add_embed(announce));
+        dpp::embed issuer;
+        issuer.set_title("Action Triggerd By")
+            .set_description(fmt::format("<@{}>", user))
+            .set_color(0x3498db);
+
+        ctx.cluster.message_create(dpp::message(ctx.guild->idUpdateJobChannel.value_or(0), roleMention + messageContent).add_embed(announce).add_embed(issuer));
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails)
+void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const dpp::embed& oldJobDetils)
+{
+    if (!job)
+    {
+        return;
+    }
+
+    std::string roleMention;
+    if (ctx.guild->bPingOnUpdate)
+    {
+        if (const auto roleOpt = GuildSettings::JobTypeToRole(job->JobType()); roleOpt.has_value())
+        {
+            const auto roleEnum = *roleOpt;
+            const std::optional<dpp::snowflake> roleSnowflake = ctx.guild->roles[static_cast<size_t>(roleEnum)];
+
+            if (roleSnowflake.has_value())
+            {
+                roleMention = "<@&" + std::to_string(*roleSnowflake) + ">";
+            }
+        }
+
+        roleMention += (!roleMention.empty() ? "\n" : "");
+
+        if (const auto roleOpt = ctx.guild->roles[static_cast<size_t>(GuildSettings::Roles::Ping)]; roleOpt.has_value())
+        {
+            roleMention += "<@&" + std::to_string(roleOpt.value()) + ">\n";
+        }
+    }
+
+    if (ctx.guild->idUpdateJobChannel.has_value())
+    {
+        dpp::embed announce;
+        announce.set_title("Job Request Edited")
+            .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->GetGuildID()))
+            .set_color(0x3498db);
+
+        dpp::embed issuer;
+        issuer.set_title("Action Triggerd By")
+            .set_description(fmt::format("<@{}>", user))
+            .set_color(0x3498db);
+
+        dpp::message msg(ctx.guild->idUpdateJobChannel.value_or(0), roleMention);
+        msg.add_embed(announce);
+
+        if (!oldJobDetils.description.empty())
+            msg.add_embed(oldJobDetils);
+
+        msg.add_embed(issuer);
+
+        ctx.cluster.message_create(msg);
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails, const dpp::snowflake& user, const std::string& justification)
 {
     std::string roleMention;
     if (ctx.guild->bPingOnDelete)
@@ -206,14 +273,19 @@ void GuildSettings::AnnounceOnDelete(CommandContext& ctx, const std::size_t jobT
             .set_description(jobDetails)
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild->idDeleteJobChannel.value_or(0), roleMention).add_embed(announce));
+        dpp::embed reason;
+        reason.set_title("Justification")
+            .set_description(fmt::format("<@{}>:\n {}", user, justification))
+            .set_color(0x3498db);
+
+        ctx.cluster.message_create(dpp::message(ctx.guild->idDeleteJobChannel.value_or(0), roleMention).add_embed(announce).add_embed(reason));
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief 
 //---------------------------------------------------------------------------------------------------------------------
-void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job)
+void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user)
 {
     if (!job) 
     {
@@ -248,7 +320,12 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::shared_pt
             .set_description(job->PrintJobDetails(ctx.cluster, ctx.guild->m_idGuild))
             .set_color(0x3498db);
 
-        ctx.cluster.message_create(dpp::message(ctx.guild->idCompleteJobChannel.value_or(0), roleMention).add_embed(announce));
+        dpp::embed issuer;
+        issuer.set_title("Action Triggerd By")
+            .set_description(fmt::format("<@{}>", user))
+            .set_color(0x3498db);
+
+        ctx.cluster.message_create(dpp::message(ctx.guild->idCompleteJobChannel.value_or(0), roleMention).add_embed(announce).add_embed(issuer));
     }
 }
 

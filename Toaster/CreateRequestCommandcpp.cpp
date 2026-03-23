@@ -237,7 +237,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
     event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
     // Announce in channel (if set)
-    GuildSettings::AnnounceOnNew(ctx, job, false);
+    GuildSettings::AnnounceOnNew(ctx, job, author.id, false);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

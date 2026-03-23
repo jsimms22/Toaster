@@ -90,7 +90,7 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
 
         ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
 
-        GuildSettings::AnnounceOnComplete(ctx, job);
+        GuildSettings::AnnounceOnComplete(ctx, job, worker);
     }
     else
     {

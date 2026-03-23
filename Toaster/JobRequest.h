@@ -56,6 +56,8 @@ public:
         std::string note;
     };
 
+    static const std::size_t NOTES_PER_PAGE;
+
     using UserNotes = std::vector<NoteMetaData>;
     using NoteHistory = std::unordered_map<dpp::snowflake, UserNotes>;
     using WorkerList = std::vector<std::string>;
@@ -122,7 +124,8 @@ public:
     const NoteHistory GetNoteHistory() const { return m_notes; }
     const UserNotes GetNoteHistory(const dpp::snowflake user) const { return m_notes.at(user); }
     void AddNote(const dpp::snowflake& id, const JobRequest::NoteMetaData& meta);
-    const std::string PrintNoteHistory(dpp::cluster& cluster) const;
+    const std::size_t NoteHistorySize() const;
+    const std::string PrintNoteHistory(dpp::cluster& cluster, const std::size_t page) const;
     const std::string PrintLastTwoNotes(dpp::cluster& cluster) const;
 
     bool IsCustomerSubscribed() const { return m_bNotifyCustomer; }

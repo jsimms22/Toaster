@@ -40,11 +40,44 @@ PaginationPanel::PaginationPanel(
 
 		m_row.add_component(m_btnPrev)
 			.add_component(m_btnNext);
+	}
 
-		if (OwnerName != Button_Unassigned && OwnerName != Button_Stalled)
-		{
-			m_row.add_component(m_btnShowComplete);
-		}
+	if (OwnerName != Button_Unassigned && OwnerName != Button_Stalled)
+	{
+		m_row.add_component(m_btnShowComplete);
+	}
+
+	add_component(m_row);
+}
+
+PaginationPanel::PaginationPanel(
+	CommandContext& ctx,
+	const std::string& OwnerName,
+	const std::string& jobID,
+	const std::size_t page,
+	const std::size_t size,
+	const std::size_t itemsPerPage)
+	: dpp::message(), m_page{ page }, m_size{ size }
+{
+	m_lastPage = m_size <= 1 ? 0 : (m_size - 1) / itemsPerPage;
+
+	const std::size_t prevPage = m_page > 0 ? m_page - 1 : 0;
+	const std::size_t nextPage = m_page < m_lastPage ? m_page + 1 : m_lastPage;
+
+	if (prevPage != nextPage)
+	{
+		m_btnPrev.set_type(dpp::cot_button)
+			.set_label("Prev")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_pagenext:{}:{}", OwnerName, jobID, prevPage));
+
+		m_btnNext.set_type(dpp::cot_button)
+			.set_label("Next")
+			.set_style(dpp::cos_primary)
+			.set_id(fmt::format("{}_pageprev:{}:{}", OwnerName, jobID, nextPage));
+
+		m_row.add_component(m_btnPrev)
+			.add_component(m_btnNext);
 
 		add_component(m_row);
 	}

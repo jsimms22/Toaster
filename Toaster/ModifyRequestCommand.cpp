@@ -246,119 +246,138 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             );
         }
 
-        GuildSettings::AnnounceOnUpdate(ctx, job);
-    }
-    //-------------------------------------------------------------------------------------------------------------
-// Handle AssignRequestDlg
-//-------------------------------------------------------------------------------------------------------------
-else if (parts[0] == AssignRequestDlg::modalID)
-{
-    const dpp::user author = event.command.get_issuing_user();
-    const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
-    const std::string action = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "1";
-    std::string workerID1 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
-    std::string workerID2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
-    const std::string strStatus = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
-
-    const auto job = ctx.queue->GetJobByID(strID);
-    if (!job)
-    {
-        event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-        return;
-    }
-
-    auto is_all_numbers = [](const std::string& s) -> bool {
-        return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
-            return std::isdigit(c);
-            });
-        };
-
-    auto pManager = PermissionsMgr::GetInstance();
-    auto* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
-
-    fmt::memory_buffer workerbuf;
-    fmt::memory_buffer errorbuf;
-
-    bool bModified = false;
-
-    std::array<std::string, 2> workers = { workerID1, workerID2 };
-    for (auto& worker : workers)
-    {
-        utils::FilterUserString(worker);
-        if (worker.empty())
-            continue;
-
-        if (!is_all_numbers(worker))
-        {
-            fmt::format_to(std::back_inserter(errorbuf), "Invalid input for id {}.\n", worker);
-            continue;
-        }
-
-        if (!pManager->IsWorker(worker, pGuild, ctx.guild))
-        {
-            fmt::format_to(std::back_inserter(errorbuf), "User id <@{}> does not have a worker role.\n", worker);
-            continue;
-        }
-
-        fmt::format_to(std::back_inserter(workerbuf), "<@{}> ", worker);
-
-        ctx.queue->RequestModify(job->GetID(),
-            [worker, strStatus, action](std::shared_ptr<JobRequest> job)
-            {
-                bool bResult = false;
-
-                if (action == "1") // Assign
-                    bResult = job->AddWorkerID(worker);
-                else               // Unassign
-                    bResult = job->RemoveWorkerID(worker);
-
-                if (bResult)
-                    job->SetStatus(JobRequest::StringToStatus(strStatus));
-            });
-
-        bModified = true;
-    }
-
-    fmt::memory_buffer msg;
-    if (bModified)
-    {
-        fmt::format_to(std::back_inserter(msg), "Workers updated: {}\n", fmt::to_string(workerbuf));
-    }
-
-    if (errorbuf.size() != 0)
-    {
-        fmt::format_to(std::back_inserter(msg), "\nErrors:\n{}", fmt::to_string(errorbuf));
-    }
-
-    if (msg.size() != 0)
-    {
-        const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
-
-        dpp::embed embed;
-        embed.set_title("Updated Assignments")
-            .set_description(jobDetails)
+        dpp::embed oldEmbedDetails;
+        oldEmbedDetails.set_title("Previous Job Request Details")
+            .set_description(strOldJobDetails)
             .set_color(0x3498db);
 
-        event.reply(
-            dpp::message(fmt::to_string(msg))
-            .add_embed(embed)
-            .set_flags(dpp::m_ephemeral));
-
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated {} with [{}]", author.global_name, strID, fmt::to_string(workerbuf)));
-
-        const dpp::snowflake customer = job->GetCustomerID();
-        if ((job->IsCustomerSubscribed() && author.id != customer) || ctx.debug)
-        {
-            utils::NotifyIssuerMsgWithEmbed(
-                ctx.cluster,
-                event,
-                customer,
-                fmt::format("{} were updated on your request by <@{}>.", fmt::to_string(workerbuf), author.id),
-                "Request Details",
-                jobDetails
-            );
-        }
+        GuildSettings::AnnounceOnUpdate(ctx, job, author.id, oldEmbedDetails);
     }
+    //-------------------------------------------------------------------------------------------------------------
+    // Handle AssignRequestDlg
+    //-------------------------------------------------------------------------------------------------------------
+    else if (parts[0] == AssignRequestDlg::modalID)
+    {
+       const dpp::user author = event.command.get_issuing_user();
+        const std::string strID = !event.components.empty() ? std::get<std::string>(event.components[0].value) : "";
+        const std::string action = event.components.size() > 1 ? std::get<std::string>(event.components[1].value) : "1";
+        std::string workerID1 = event.components.size() > 2 ? std::get<std::string>(event.components[2].value) : "";
+        std::string workerID2 = event.components.size() > 3 ? std::get<std::string>(event.components[3].value) : "";
+        const std::string strStatus = event.components.size() > 4 ? std::get<std::string>(event.components[4].value) : "";
+
+        const auto job = ctx.queue->GetJobByID(strID);
+        if (!job)
+        {
+            event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
+        auto is_all_numbers = [](const std::string& s) -> bool {
+            return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+                return std::isdigit(c);
+                });
+            };
+
+        auto pManager = PermissionsMgr::GetInstance();
+        auto* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
+
+        fmt::memory_buffer workerbuf;
+        fmt::memory_buffer errorbuf;
+
+        bool bModified = false;
+
+        const auto oldJobStatus = job->GetStatus();
+
+        std::array<std::string, 2> workers = { workerID1, workerID2 };
+        for (auto& worker : workers)
+        {
+            utils::FilterUserString(worker);
+            if (worker.empty())
+                continue;
+
+            if (!is_all_numbers(worker))
+            {
+                fmt::format_to(std::back_inserter(errorbuf), "Invalid input for id {}.\n", worker);
+                continue;
+            }
+
+            if (!pManager->IsWorker(worker, pGuild, ctx.guild))
+            {
+                fmt::format_to(std::back_inserter(errorbuf), "User id <@{}> does not have a worker role.\n", worker);
+                continue;
+            }
+
+            fmt::format_to(std::back_inserter(workerbuf), "<@{}> ", worker);
+
+            ctx.queue->RequestModify(job->GetID(),
+                [worker, strStatus, action](std::shared_ptr<JobRequest> job)
+                {
+                    bool bResult = false;
+
+                    if (action == "1") // Assign
+                        bResult = job->AddWorkerID(worker);
+                    else               // Unassign
+                        bResult = job->RemoveWorkerID(worker);
+
+                    if (bResult)
+                        job->SetStatus(JobRequest::StringToStatus(strStatus));
+                });
+
+            bModified = true;
+        }
+
+        fmt::memory_buffer msg;
+        if (bModified)
+        {
+            fmt::format_to(std::back_inserter(msg), "Workers updated: {}\n", fmt::to_string(workerbuf));
+        }
+
+        if (errorbuf.size() != 0)
+        {
+            fmt::format_to(std::back_inserter(msg), "\nErrors:\n{}", fmt::to_string(errorbuf));
+        }
+
+        if (msg.size() != 0)
+        {
+            const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
+
+            const auto newJobStatus = job->GetStatus();
+
+            dpp::embed embed;
+            embed.set_title("Updated Assignments")
+                .set_description(jobDetails)
+                .set_color(0x3498db);
+
+            event.reply(
+                dpp::message(fmt::to_string(msg))
+                .add_embed(embed)
+                .set_flags(dpp::m_ephemeral));
+
+            ctx.cluster.log(dpp::ll_info, fmt::format("{} updated {} with [{}]", author.global_name, strID, fmt::to_string(workerbuf)));
+
+            const dpp::snowflake customer = job->GetCustomerID();
+            if ((job->IsCustomerSubscribed() && author.id != customer) || ctx.debug)
+            {
+                utils::NotifyIssuerMsgWithEmbed(
+                    ctx.cluster,
+                    event,
+                    customer,
+                    fmt::format("{} were updated on your request by <@{}>.", fmt::to_string(workerbuf), author.id),
+                    "Request Details",
+                    jobDetails
+                );
+            }
+
+            std::string customMessage = "Worker list was updated on the request.";
+            if (oldJobStatus != newJobStatus)
+                customMessage += fmt::format("\nRequest's status has moved from **{}** to **{}**.", JobRequest::StatusToString(oldJobStatus), JobRequest::StatusToString(newJobStatus));
+
+            GuildSettings::AnnounceOnUpdate(ctx, job, author.id, customMessage);
+        } 
+        else
+        {
+            event.reply(dpp::message("No worker ids provided.").set_flags(dpp::m_ephemeral));
+        }
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle StatusChangeRequestDlg
@@ -411,7 +430,11 @@ else if (parts[0] == AssignRequestDlg::modalID)
 
         if (oldStatus != JobRequest::status::complete && newStatus != oldStatus && newStatus == JobRequest::status::complete)
         {
-            GuildSettings::AnnounceOnComplete(ctx, job);
+            GuildSettings::AnnounceOnComplete(ctx, job, author.id);
+        }
+        else if (newStatus != oldStatus && newStatus < JobRequest::status::complete)
+        {
+            GuildSettings::AnnounceOnUpdate(ctx, job, author.id, fmt::format("Request's status has moved from **{}** to **{}**.", JobRequest::StatusToString(oldStatus), strNewStatus));
         }
     }
     //-------------------------------------------------------------------------------------------------------------
@@ -461,6 +484,11 @@ else if (parts[0] == AssignRequestDlg::modalID)
                 jobDetails
             );
         }
+        
+        if (strOldPriority != strPriority)
+        {
+            GuildSettings::AnnounceOnUpdate(ctx, job, author.id, fmt::format("Request's priority has moved from **{}** to **{}**.", strOldPriority, strPriority));
+        }
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle DeleteRequestDlg
@@ -503,7 +531,7 @@ else if (parts[0] == AssignRequestDlg::modalID)
         ctx.cluster.log(dpp::ll_warning,fmt::format("{} deleted {}. Reason: {}",author.global_name,strID,strJustification));
 
         // Notify original customer if needed
-        if ((bNotifyCustomer && event.command.usr.id != customer) || ctx.debug)
+        if ((bNotifyCustomer && author.id != customer) || ctx.debug)
         {
             utils::NotifyIssuerMsgWithEmbed(
                 ctx.cluster,
@@ -515,7 +543,7 @@ else if (parts[0] == AssignRequestDlg::modalID)
             );
         }
 
-        GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails);
+        GuildSettings::AnnounceOnDelete(ctx, jobType, jobDetails, author.id, strJustification);
     }
     //-------------------------------------------------------------------------------------------------------------
     // Handle NoteDlg
@@ -633,7 +661,7 @@ else if (parts[0] == AssignRequestDlg::modalID)
             );
         }
 
-        GuildSettings::AnnounceOnNew(ctx, reopenedJob, true);
+        GuildSettings::AnnounceOnNew(ctx, reopenedJob, author.id, true);
     }
 }
 

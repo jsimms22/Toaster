@@ -8,6 +8,7 @@
 #include "JobQueue.h"
 #include "RequestDlg.h"
 #include "NoteDialog.h"
+#include "PaginationPanel.h"
 // fmt
 #include <fmt/format.h>
 
@@ -206,23 +207,26 @@ void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ct
 	// Check if the user has permission to view notes for the job
 	if (pManager->CanAddNote(event, user, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) || ctx.debug)
 	{
-		// Format the note history
-		const std::string noteHistory = job->PrintNoteHistory(ctx.cluster);
+		const auto numNotes = job->NoteHistorySize();
 
 		// Check if there are any notes to show
-		if (noteHistory.empty())
+		if (numNotes == 0)
 		{
 			event.reply(dpp::message("There are no notes for this job.").set_flags(dpp::m_ephemeral));
 		}
 		else
 		{
-			// Send the note history in an embed message
-			dpp::embed embed;
-			embed.set_title(fmt::format("Notes for Job: {}", rID))
-				.set_description(noteHistory)
-				.set_color(0x3498db); // You can adjust this color as needed
+			// Format the note history
+			const std::string noteHistory = job->PrintNoteHistory(ctx.cluster, 0);
 
-			event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
+			// Acknowledge immediately to avoid timing out
+			event.reply(dpp::message("...this could take a second. Please hold.").set_flags(dpp::m_ephemeral));
+
+			const std::string header = fmt::format("Notes for Job: {}", rID);
+			PaginationPanel panel(ctx, "generaluser", rID, 0, numNotes, JobRequest::NOTES_PER_PAGE);
+			panel.AddEmbed(header, numNotes != 0 ? noteHistory : "There are no notes for this job.");
+
+			event.edit_original_response(panel.set_flags(dpp::m_ephemeral));
 		}
 	}
 	else

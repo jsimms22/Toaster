@@ -2,6 +2,7 @@
 #include "Resource.h"
 // d++
 #include <dpp/snowflake.h>
+#include <dpp/message.h>
 // tinyxml2
 #include "tinyxml2.h"
 // bsoncxx
@@ -108,10 +109,11 @@ public:
 	static std::optional<GuildSettings::Roles> JobTypeToRole(const std::size_t type);
 	static std::optional<std::size_t> RoleToJobType(const GuildSettings::Roles type);
 
-	static void AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const bool bReopened);
-	static void AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job);
-	static void AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails);
-	static void AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job);
+	static void AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const bool bReopened);
+	static void AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const std::string& messageContent = "");
+	static void AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user, const dpp::embed& oldJobDetils);
+	static void AnnounceOnDelete(CommandContext& ctx, const std::size_t jobType, const std::string& jobDetails, const dpp::snowflake& user, const std::string& justification);
+	static void AnnounceOnComplete(CommandContext& ctx, const std::shared_ptr<const JobRequest> job, const dpp::snowflake& user);
 
 	// Serialization + Deserialization: XML
 	void WriteAttributes(tinyxml2::XMLElement* xmlNode, tinyxml2::XMLElement* xmlParent) const;

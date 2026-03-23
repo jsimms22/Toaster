@@ -32,6 +32,8 @@ namespace serial
     constexpr const char* pszSubscribed{ "notify_customer" };
 }
 
+const std::size_t JobRequest::NOTES_PER_PAGE{ 6 };
+
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
@@ -428,8 +430,8 @@ std::string JobRequest::PrintJobDetails(dpp::cluster& cluster, const dpp::snowfl
 
     return fmt::format(
         "ID: **{}**\n"
-        "Created: <t:{}:F>\n"
-        "Last Edit: <t:{}:F>\n"
+        "Created: <t:{}:f>\n"
+        "Last Edit: <t:{}:f>\n"
         "Priority: {}\n"
         "Status: **{}**\n"
         "Customer: {}\n"
@@ -475,7 +477,7 @@ const std::string JobRequest::PrintJobDetailsCompact(dpp::cluster& cluster, cons
 
     return fmt::format(
         "ID: **{}**\n"
-        "Created: <t:{}:F>\n"
+        "Created: <t:{}:f>\n"
         "Priority: {}\n"
         "Status: **{}**\n"
         "Customer: {}\n"
@@ -518,17 +520,25 @@ const JobRequest::WorkerList JobRequest::GetWorkerNames(dpp::cluster& cluster, c
 //---------------------------------------------------------------------------------------------------------------------
 void JobRequest::AddNote(const dpp::snowflake& id, const JobRequest::NoteMetaData& meta)
 {
-    const std::size_t timestamp = utils::GetEpochTimestamp();
     m_notes[id].emplace_back(std::move(meta));
+}
+
+const std::size_t JobRequest::NoteHistorySize() const
+{
+    std::size_t size = 0;
+    for (const auto& note : m_notes)
+    {
+        size += note.second.size();
+    }
+
+    return size;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // \brief
 //---------------------------------------------------------------------------------------------------------------------
-const std::string JobRequest::PrintNoteHistory(dpp::cluster& cluster) const
+const std::string JobRequest::PrintNoteHistory(dpp::cluster& cluster, const std::size_t page) const
 {
-    fmt::memory_buffer buffer;
-
     // Flatten all notes into a single vector
     std::vector<std::pair<dpp::snowflake, NoteMetaData>> allNotes;
     for (const auto& [userID, notes] : m_notes)
@@ -543,30 +553,30 @@ const std::string JobRequest::PrintNoteHistory(dpp::cluster& cluster) const
     std::sort(allNotes.begin(), allNotes.end(),
         [](const std::pair<dpp::snowflake, NoteMetaData> a, const std::pair<dpp::snowflake, NoteMetaData> b)
         {
-            return a.second.timestamp < b.second.timestamp;
+            // oldest timestamps first
+            return a.second.timestamp > b.second.timestamp;
         });
 
-    // Format each note in UTC
+    const std::size_t start_index = page * NOTES_PER_PAGE;
+    const std::size_t end_index = start_index + NOTES_PER_PAGE;
+
+    std::size_t filtered_index = 0;
+
+    fmt::memory_buffer buffer;
+
+    // Format each note in discord format
     for (const auto& [userID, meta] : allNotes)
     {
-        std::time_t tt = static_cast<std::time_t>(meta.timestamp);
-        std::tm tm{};
+        if (filtered_index >= end_index)
+            break;
 
-        // Thread-safe UTC conversion
-#if defined(_MSC_VER)
-        gmtime_s(&tm, &tt);   // MSVC-safe
-#else
-        tm = *std::gmtime(&tt); // POSIX
-#endif
+        if (filtered_index >= start_index)
+        {
+            // Append to fmt buffer
+            fmt::format_to(std::back_inserter(buffer), "### <t:{}:f> | <@{}>:\n{}\n", meta.timestamp, userID, meta.note);
+        }
 
-        char timeBuf[64];
-        std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M UTC", &tm);
-
-        // Lookup username
-        std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
-
-        // Append to fmt buffer
-        fmt::format_to(std::back_inserter(buffer), "### {} | {}:\n{}\n", timeBuf, username, meta.note);
+        ++filtered_index;
     }
 
     return fmt::to_string(buffer);

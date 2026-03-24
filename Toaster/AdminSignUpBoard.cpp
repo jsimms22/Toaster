@@ -129,7 +129,7 @@ void AdminSignUpBoard::ExecuteInteraction(CommandContext& ctx, const dpp::intera
     }
 
     const dpp::user author = event.command.get_issuing_user();
-    std::string channelID = std::get<std::string>(event.get_parameter(Parameter_Id));
+    std::string channelID = std::get<std::string>(event.get_parameter(Parameter_Channel));
 
     const auto pManager = PermissionsMgr::GetInstance();
     if (!pManager->CanAccessAdminPanel(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
@@ -146,6 +146,7 @@ void AdminSignUpBoard::ExecuteInteraction(CommandContext& ctx, const dpp::intera
         };
 
     utils::FilterWhiteSpace(channelID);
+    utils::FilterUserString(channelID);
 
     if (!is_all_numbers(channelID) && !channelID.empty())
     {

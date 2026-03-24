@@ -128,7 +128,7 @@ void GuildSettings::AnnounceOnNew(CommandContext& ctx, const std::shared_ptr<con
         panel.set_channel_id(ctx.guild->idNewJobChannel.value_or(0));
 
         dpp::embed issuer;
-        issuer.set_title("Action Triggerd By")
+        issuer.set_title("Action Triggered By")
             .set_description(fmt::format("<@{}>", user))
             .set_color(0x3498db);
 
@@ -176,7 +176,7 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<
             .set_color(0x3498db);
 
         dpp::embed issuer;
-        issuer.set_title("Action Triggerd By")
+        issuer.set_title("Action Triggered By")
             .set_description(fmt::format("<@{}>", user))
             .set_color(0x3498db);
 
@@ -224,7 +224,7 @@ void GuildSettings::AnnounceOnUpdate(CommandContext& ctx, const std::shared_ptr<
             .set_color(0x3498db);
 
         dpp::embed issuer;
-        issuer.set_title("Action Triggerd By")
+        issuer.set_title("Action Triggered By")
             .set_description(fmt::format("<@{}>", user))
             .set_color(0x3498db);
 
@@ -321,7 +321,7 @@ void GuildSettings::AnnounceOnComplete(CommandContext& ctx, const std::shared_pt
             .set_color(0x3498db);
 
         dpp::embed issuer;
-        issuer.set_title("Action Triggerd By")
+        issuer.set_title("Action Triggered By")
             .set_description(fmt::format("<@{}>", user))
             .set_color(0x3498db);
 

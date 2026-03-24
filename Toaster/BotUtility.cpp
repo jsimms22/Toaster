@@ -399,7 +399,7 @@ namespace utils
     {
         const std::vector<char> filterList
         {
-            '\n', '\r', '\t', '`', '*', '~', '@', '<', '>', '|', '`', '#'
+            '\n', '\r', '\t', '`', '*', '~', '@', '<', '>', '|', '`', '#', '&'
         };
 
         // I'm purposingly not removing '_' because its fairly common for game handles

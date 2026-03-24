@@ -17,7 +17,7 @@ namespace
     {
         // Role display names in enum order
         constexpr std::array<const char*, 8> roleNames{
-            "Ping",
+            "General",
             "Crafter",
             "Builder",
             "Component",
@@ -58,7 +58,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
 
     const dpp::user author = event.command.get_issuing_user();
     const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
-    std::string strRoleID = std::get<std::string>(event.get_parameter(Parameter_Id));
+    std::string strRoleID = std::get<std::string>(event.get_parameter(Parameter_Role));
 
     const auto pManager = PermissionsMgr::GetInstance();
     if (!pManager->CanAccessAdminPanel(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
@@ -74,6 +74,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
             });
         };
 
+    utils::FilterUserString(strRoleID);
     utils::FilterWhiteSpace(strRoleID);
 
     if (!is_all_numbers(strRoleID) && !strRoleID.empty())
@@ -102,7 +103,11 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
             event.reply(dpp::message(CreateReply(ctx, selectedRole)).set_flags(dpp::m_ephemeral));
         };
 
-    if (strCmdID == Option_CraftingRole)
+    if (strCmdID == Option_GeneralRole)
+    {
+        SetRole(GuildSettings::Roles::Ping, "General Worker");
+    }
+    else if (strCmdID == Option_CraftingRole)
     {
         SetRole(GuildSettings::Roles::Crafter, "Item Crafter");
     }
@@ -132,7 +137,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
     }
     else
     {
-        event.reply(dpp::message("Unknown role option.").set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message("Unknown option.").set_flags(dpp::m_ephemeral));
         return;
     }
 

@@ -62,6 +62,12 @@ public:
     AdminConfigChannelsCommand()
         : ICustomCommand(Command_ConfigChannels, "Set channel ids for various request announcements.")
     {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the channel announcement to set.", true)
+            .add_choice(dpp::command_option_choice("New Requests", Option_NewRequest))
+            .add_choice(dpp::command_option_choice("Request Edited", Option_EditRequest))
+            .add_choice(dpp::command_option_choice("Request Deleted", Option_DeleteRequest))
+            .add_choice(dpp::command_option_choice("Request Completed", Option_CompleteRequest)));
+        add_option(dpp::command_option(dpp::co_string, Parameter_Channel, "Channel ID.", true));
     }
 
     virtual ~AdminConfigChannelsCommand() = default;
@@ -84,6 +90,12 @@ public:
     AdminConfigPingCommand()
         : ICustomCommand(Command_ConfigPing, "Set ping role and rules.")
     {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the ping rule to change.", true)
+            .add_choice(dpp::command_option_choice("New Requests", Option_NewRequest))
+            .add_choice(dpp::command_option_choice("Request Edited", Option_EditRequest))
+            .add_choice(dpp::command_option_choice("Request Deleted", Option_DeleteRequest))
+            .add_choice(dpp::command_option_choice("Request Completed", Option_CompleteRequest)));
+        add_option(dpp::command_option(dpp::co_boolean, Parameter_Bool, "True or False", true));
     }
 
     virtual ~AdminConfigPingCommand() = default;
@@ -107,6 +119,7 @@ public:
         : ICustomCommand(Command_ConfigRoles, "Set roles for various worker archetypes.")
     {
         add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the role to set for worker archetypes.", true)
+            .add_choice(dpp::command_option_choice("General Worker", Option_GeneralRole))
             .add_choice(dpp::command_option_choice("Item Crafter", Option_CraftingRole))
             .add_choice(dpp::command_option_choice("Base Builder", Option_BuildingRole))
             .add_choice(dpp::command_option_choice("Component Dealer", Option_CompDealerRole))
@@ -114,7 +127,7 @@ public:
             .add_choice(dpp::command_option_choice("Refinery Worker", Option_RefiningRole))
             .add_choice(dpp::command_option_choice("Hazardous Materials Collector", Option_HazmatRole))
             .add_choice(dpp::command_option_choice("Manager", Option_ManagerRole)));
-        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Role ID.", true));
+        add_option(dpp::command_option(dpp::co_string, Parameter_Role, "Role ID.", true));
     }
 
     virtual ~AdminConfigRolesCommand() = default;
@@ -163,7 +176,7 @@ public:
     AdminSignUpBoard()
         : ICustomCommand(Command_WorkerSignUp, "Post a billboard in a channel to allow users to sign up for worker roles.")
     {
-        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Specify the channel id to post in.", true));
+        add_option(dpp::command_option(dpp::co_string, Parameter_Channel, "Specify the channel id to post in.", true));
     }
 
     virtual ~AdminSignUpBoard() = default;

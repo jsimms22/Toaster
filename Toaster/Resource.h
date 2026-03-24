@@ -90,6 +90,7 @@ constexpr const char* Command_ShowWorkers		{ "show_workers" };
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
 // Command Options for Command_ConfigRoles
+constexpr const char* Option_GeneralRole		{ "generalrole" };
 constexpr const char* Option_CraftingRole		{ "craftingrole" };
 constexpr const char* Option_BuildingRole		{ "buildingrole" };
 constexpr const char* Option_CompDealerRole		{ "comprole" };
@@ -97,6 +98,12 @@ constexpr const char* Option_ResourceRole		{ "resourcerole" };
 constexpr const char* Option_RefiningRole		{ "refiningrole" };
 constexpr const char* Option_HazmatRole			{ "hazmatrole" };
 constexpr const char* Option_ManagerRole		{ "managerrole" };
+
+// Command Options for Command_ConfigPing
+constexpr const char* Option_NewRequest			{ "newrequestrule" };
+constexpr const char* Option_EditRequest		{ "editrequestrule" };
+constexpr const char* Option_DeleteRequest		{ "deleterequestrule" };
+constexpr const char* Option_CompleteRequest	{ "completerequestrule" };
 
 // Command Options for Command_Admin
 constexpr const char* Option_Bot				{ "adminbot" };
@@ -133,6 +140,9 @@ constexpr const char* Option_HelpAdmin			{ "helpadmin" };
 constexpr const char* Parameter_Cmd				{ "cmd" };
 constexpr const char* Parameter_Type			{ "type" };
 constexpr const char* Parameter_Id				{ "id" };
+constexpr const char* Parameter_Channel			{ "channel" };
+constexpr const char* Parameter_Role			{ "role" };
+constexpr const char* Parameter_Bool			{ "boolean" };
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/
 
 /*--------------------------------BUTTON IDS------------------------------------*/

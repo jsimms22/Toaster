@@ -15,6 +15,8 @@ void AdminConfigPingCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
     }
 
     const dpp::user author = event.command.get_issuing_user();
+    const std::string strCmdID = std::get<std::string>(event.get_parameter(Parameter_Type));
+    const bool bPingRuleSetting = std::get<bool>(event.get_parameter(Parameter_Bool));
 
     const auto pManager = PermissionsMgr::GetInstance();
     if (!pManager->CanAccessAdminPanel(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
@@ -24,8 +26,53 @@ void AdminConfigPingCommand::ExecuteCommand(CommandContext& ctx, const dpp::slas
         return;
     }
 
-    AdminConfigDialog modal(this->name, ctx);
-    event.dialog(modal);
+    if (strCmdID == Option_NewRequest)
+    {
+        ctx.guild->bPingOnNew = bPingRuleSetting;
+    }
+    else if (strCmdID == Option_EditRequest)
+    {
+        ctx.guild->bPingOnUpdate = bPingRuleSetting;
+    }
+    else if (strCmdID == Option_DeleteRequest)
+    {
+        ctx.guild->bPingOnDelete = bPingRuleSetting;
+    }
+    else if (strCmdID == Option_CompleteRequest)
+    {
+        ctx.guild->bPingOnComplete = bPingRuleSetting;
+    }
+    else
+    {
+        event.reply(dpp::message("Unknown option.").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
+    ctx.guild->SaveGuildSettings(ctx.repo);
+
+    auto FormatRole = [](const std::optional<dpp::snowflake>& id)
+        {
+            return id.has_value()
+                ? fmt::format("<@&{}>", *id)
+                : std::string("*Not Set*");
+        };
+
+    const std::string settings = fmt::format(
+        "**On New:** {}\n"
+        "**On Update:** {}\n"
+        "**On Delete:** {}\n"
+        "**On Complete:** {}\n",
+        ctx.guild->bPingOnNew ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnUpdate ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnDelete ? "Enabled" : "Disabled",
+        ctx.guild->bPingOnComplete ? "Enabled" : "Disabled");
+
+    dpp::embed embed;
+    embed.set_title("Ping Rule Settings")
+        .set_description(settings)
+        .set_color(0x3498db);
+
+    event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 }
 
 void AdminConfigPingCommand::ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event)

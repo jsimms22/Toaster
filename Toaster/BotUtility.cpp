@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <future>
+#include <regex>
 
 namespace utils
 {
@@ -341,23 +342,6 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
-    std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len)
-    {
-        std::vector<std::string> pages;
-        const size_t page_count = (input.size() + max_len - 1) / max_len;
-        pages.reserve(page_count); 
-
-        for (size_t i = 0; i < input.length(); i += max_len) 
-        {
-            pages.push_back(input.substr(i, max_len));
-        }
-
-        return pages;
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // \brief
-    //---------------------------------------------------------------------------------------------------------------------
     std::vector<std::string> Split(const std::string& input, char delimiter)
     {
         std::vector<std::string> result;
@@ -397,6 +381,16 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     void FilterUserString(std::string& str)
     {
+        RemoveHiddenLinks(str);
+        //RemoveUnsafeProtocols(str); // this may become necessary, it seems discord filters for these already
+        FilterCharacters(str);
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
+    void FilterCharacters(std::string& str)
+    {
         const std::vector<char> filterList
         {
             '\n', '\r', '\t', '`', '*', '~', '@', '<', '>', '|', '`', '#', '&'
@@ -406,5 +400,27 @@ namespace utils
 
         for (const auto sym : filterList)
             RemoveChar(str, sym);
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
+    void RemoveHiddenLinks(std::string& str)
+    {
+        // Capture:
+        // 1 = link text
+        // 2 = URL
+        static const std::regex md_link(R"(\[([^\]]*?)\]\(([^)]+?)\))");
+
+        str = std::regex_replace(str, md_link, "$2");
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // \brief
+    //---------------------------------------------------------------------------------------------------------------------
+    void RemoveUnsafeProtocols(std::string& str)
+    {
+        static const std::regex unsafe((R"(\b(javascript|data|vbscript)\s*:\s*\S*)"), std::regex::icase);
+        str = std::regex_replace(str, unsafe, "[unsafe link]");
     }
 }

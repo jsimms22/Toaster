@@ -40,14 +40,14 @@ PaginationPanel::PaginationPanel(
 
 		m_row.add_component(m_btnPrev)
 			.add_component(m_btnNext);
-	}
 
-	if (OwnerName != Button_Unassigned && OwnerName != Button_Stalled)
-	{
-		m_row.add_component(m_btnShowComplete);
-	}
+		if (OwnerName != Button_Unassigned && OwnerName != Button_Stalled)
+		{
+			m_row.add_component(m_btnShowComplete);
+		}
 
-	add_component(m_row);
+		add_component(m_row);
+	}
 }
 
 PaginationPanel::PaginationPanel(

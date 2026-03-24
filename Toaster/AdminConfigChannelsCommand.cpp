@@ -35,11 +35,11 @@ void AdminConfigChannelsCommand::ExecuteCommand(CommandContext& ctx, const dpp::
         };
 
     utils::FilterWhiteSpace(strChannelID);
-    utils::FilterUserString(strChannelID);
+    utils::FilterCharacters(strChannelID);
 
     if (!is_all_numbers(strChannelID) && !strChannelID.empty())
     {
-        event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message("Invalid input for the channel id. Must be all numeric characters or a channel mention.").set_flags(dpp::m_ephemeral));
         return;
     }
 

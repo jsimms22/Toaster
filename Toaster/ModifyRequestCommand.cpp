@@ -291,7 +291,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         std::array<std::string, 2> workers = { workerID1, workerID2 };
         for (auto& worker : workers)
         {
-            utils::FilterUserString(worker);
+            utils::FilterWhiteSpace(worker);
+            utils::FilterCharacters(worker);
             if (worker.empty())
                 continue;
 

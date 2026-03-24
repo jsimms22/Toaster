@@ -129,7 +129,7 @@ void AdminSignUpBoard::ExecuteInteraction(CommandContext& ctx, const dpp::intera
     }
 
     const dpp::user author = event.command.get_issuing_user();
-    std::string channelID = std::get<std::string>(event.get_parameter(Parameter_Channel));
+    std::string strChannelID = std::get<std::string>(event.get_parameter(Parameter_Channel));
 
     const auto pManager = PermissionsMgr::GetInstance();
     if (!pManager->CanAccessAdminPanel(event, author.id, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug)
@@ -145,12 +145,12 @@ void AdminSignUpBoard::ExecuteInteraction(CommandContext& ctx, const dpp::intera
             });
         };
 
-    utils::FilterWhiteSpace(channelID);
-    utils::FilterUserString(channelID);
+    utils::FilterWhiteSpace(strChannelID);
+    utils::FilterCharacters(strChannelID);
 
-    if (!is_all_numbers(channelID) && !channelID.empty())
+    if (!is_all_numbers(strChannelID) && !strChannelID.empty())
     {
-        event.reply(dpp::message("Invalid input for the channel id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message("Invalid input for the channel id. Must be all numeric characters or a channel mention.").set_flags(dpp::m_ephemeral));
         return;
     }
 
@@ -166,14 +166,14 @@ void AdminSignUpBoard::ExecuteInteraction(CommandContext& ctx, const dpp::intera
     };
 
     dpp::message msg = BuildRoleBoard(
-        channelID,
+        strChannelID,
         "Logistics - Job Board Ping Roles",
         buttons
     );
 
     ctx.cluster.message_create(msg);
 
-    event.reply(dpp::message("Posting sign-up board in <#" + channelID + ">. This Discord bot needs to have a role assigned that is higher in order than roles being assigned to users.").set_flags(dpp::m_ephemeral));
+    event.reply(dpp::message("Posting sign-up board in <#" + strChannelID + ">. This bot needs a role assigned that is higher in order than roles being assigned to work properly.").set_flags(dpp::m_ephemeral));
 }
 
 void AdminSignUpBoard::ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event)

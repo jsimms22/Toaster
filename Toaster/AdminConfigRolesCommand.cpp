@@ -74,12 +74,12 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
             });
         };
 
-    utils::FilterUserString(strRoleID);
     utils::FilterWhiteSpace(strRoleID);
+    utils::FilterCharacters(strRoleID);
 
     if (!is_all_numbers(strRoleID) && !strRoleID.empty())
     {
-        event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters.").set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message("Invalid input for the role id. Must be all numeric characters or a role ping.").set_flags(dpp::m_ephemeral));
         return;
     }
 

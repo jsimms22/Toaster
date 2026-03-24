@@ -38,9 +38,11 @@ namespace utils
 	void FindGuildCallback(dpp::cluster& cluster, const dpp::snowflake& id, std::function<void(dpp::guild*)> callback);
 	std::vector<std::pair<dpp::snowflake, std::string>> BuildWorkerList(dpp::guild* guild, const std::shared_ptr<const JobRequest>& job, const std::shared_ptr<const GuildSettings>& settings);
 	const std::string FindPreferredNameByID(dpp::cluster& cluster, const dpp::snowflake& idUser, const dpp::snowflake& idGuild);
-	std::vector<std::string> SplitIntoPages(const std::string& input, size_t max_len = 1500);
 	std::vector<std::string> Split(const std::string& input, char delimiter);
 	void RemoveChar(std::string& str, const char sym);
 	void FilterWhiteSpace(std::string& str);
 	void FilterUserString(std::string& str);
+	void FilterCharacters(std::string& str);
+	void RemoveHiddenLinks(std::string& str);
+	void RemoveUnsafeProtocols(std::string& str);
 }

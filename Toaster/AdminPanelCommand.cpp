@@ -246,14 +246,14 @@ const std::string AdminPanelCommand::CreateBotEmbed(CommandContext& ctx, const d
     auto FormatChannel = [](const std::optional<dpp::snowflake>& id)
         {
             return id.has_value()
-                ? fmt::format("<#{}>", *id)
+                ? fmt::format("<#{}> (`{}`)", id.value(), id.value())
                 : std::string("*Not Set*");
         };
 
     auto FormatRole = [](const std::optional<dpp::snowflake>& id)
         {
             return id.has_value()
-                ? fmt::format("<@&{}>", *id)
+                ? fmt::format("<@&{}> (`{}`)", id.value(), id.value())
                 : std::string("*Not Set*");
         };
 

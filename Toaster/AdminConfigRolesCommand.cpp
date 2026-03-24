@@ -13,7 +13,7 @@
 
 namespace
 {
-    std::string CreateReply(CommandContext& ctx, const std::optional<dpp::snowflake>& selectedRole)
+    std::string CreateReply(CommandContext& ctx)
     {
         // Role display names in enum order
         constexpr std::array<const char*, 8> roleNames{
@@ -100,7 +100,7 @@ void AdminConfigRolesCommand::ExecuteCommand(CommandContext& ctx, const dpp::sla
     auto SetRole = [&ctx, &event, &selectedRole](GuildSettings::Roles roleEnum, const std::string& label)
         {
             ctx.guild->roles[static_cast<std::size_t>(roleEnum)] = selectedRole;
-            event.reply(dpp::message(CreateReply(ctx, selectedRole)).set_flags(dpp::m_ephemeral));
+            event.reply(dpp::message(CreateReply(ctx)).set_flags(dpp::m_ephemeral));
         };
 
     if (strCmdID == Option_GeneralRole)
@@ -216,6 +216,6 @@ void AdminConfigRolesCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::
 
         ctx.guild->SaveGuildSettings(ctx.repo);
 
-        event.reply(dpp::message(CreateReply(ctx, dpp::snowflake(strParam2))).set_flags(dpp::m_ephemeral));
+        event.reply(dpp::message(CreateReply(ctx)).set_flags(dpp::m_ephemeral));
     }
 }

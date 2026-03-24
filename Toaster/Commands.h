@@ -84,6 +84,33 @@ public:
 ///
 /// Provides bot and queue management panels for administrators.
 //---------------------------------------------------------------------------------------------------------------------
+class AdminResetChannelsCommand : public ICustomCommand
+{
+public:
+    AdminResetChannelsCommand()
+        : ICustomCommand(Command_ResetChannels, "Reset channel ids for various request announcements.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the channel announcement to reset.", true)
+            .add_choice(dpp::command_option_choice("New Requests", Option_NewRequest))
+            .add_choice(dpp::command_option_choice("Request Edited", Option_EditRequest))
+            .add_choice(dpp::command_option_choice("Request Deleted", Option_DeleteRequest))
+            .add_choice(dpp::command_option_choice("Request Completed", Option_CompleteRequest)));
+    }
+
+    virtual ~AdminResetChannelsCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
 class AdminConfigPingCommand : public ICustomCommand
 {
 public:
@@ -135,6 +162,37 @@ public:
     virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
     virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
     virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override;
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class AdminPanelCommand
+/// \brief Displays administrative control panels.
+///
+/// Provides bot and queue management panels for administrators.
+//---------------------------------------------------------------------------------------------------------------------
+class AdminResetRolesCommand : public ICustomCommand
+{
+public:
+    AdminResetRolesCommand()
+        : ICustomCommand(Command_ResetRoles, "Reset roles for the various worker archetypes.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Type, "Specify the role to reset.", true)
+            .add_choice(dpp::command_option_choice("General Worker", Option_GeneralRole))
+            .add_choice(dpp::command_option_choice("Item Crafter", Option_CraftingRole))
+            .add_choice(dpp::command_option_choice("Base Builder", Option_BuildingRole))
+            .add_choice(dpp::command_option_choice("Component Dealer", Option_CompDealerRole))
+            .add_choice(dpp::command_option_choice("Resource Gatherer", Option_ResourceRole))
+            .add_choice(dpp::command_option_choice("Refinery Worker", Option_RefiningRole))
+            .add_choice(dpp::command_option_choice("Hazardous Materials Collector", Option_HazmatRole))
+            .add_choice(dpp::command_option_choice("Manager", Option_ManagerRole)));
+    }
+
+    virtual ~AdminResetRolesCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
     virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
 };
 
@@ -426,6 +484,50 @@ public:
 };
 
 //---------------------------------------------------------------------------------------------------------------------
+/// \class AddWorkerCommand
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+class AddWorkerCommand : public ICustomCommand
+{
+public:
+    AddWorkerCommand()
+        : ICustomCommand(Command_AddWorker, "Assign a worker to a job request with either a ping mention or their id.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Specify the id of the job request.", true));
+        add_option(dpp::command_option(dpp::co_string, Parameter_User, "Specify the user to assign", true));
+    }
+
+    virtual ~AddWorkerCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+/// \class RemoveWorkerCommand
+/// \brief 
+//---------------------------------------------------------------------------------------------------------------------
+class RemoveWorkerCommand : public ICustomCommand
+{
+public:
+    RemoveWorkerCommand()
+        : ICustomCommand(Command_RemoveWorker, "Unassign a worker from a job request with either a ping mention or their id.")
+    {
+        add_option(dpp::command_option(dpp::co_string, Parameter_Id, "Specify the id of the job request.", true));
+        add_option(dpp::command_option(dpp::co_string, Parameter_User, "Specify the user to unassign", true));
+    }
+
+    virtual ~RemoveWorkerCommand() = default;
+
+    virtual void ExecuteCommand(CommandContext& ctx, const dpp::slashcommand_t& event) override;
+    virtual void ExecuteInteraction(CommandContext& ctx, const dpp::interaction_create_t& event) override {}
+    virtual void ExecuteFormSubmit(CommandContext& ctx, const dpp::form_submit_t& event) override {}
+    virtual void ExecuteButtonClick(CommandContext& ctx, const dpp::button_click_t& event) override {}
+};
+
+//---------------------------------------------------------------------------------------------------------------------
 /// \namespace Toaster
 /// \brief Contains global command registrations for the bot.
 ///
@@ -437,8 +539,10 @@ namespace Toaster
     static inline CommandList BotCommands
     {
         new AdminConfigChannelsCommand(),
+        new AdminResetChannelsCommand(),
         new AdminConfigPingCommand(),
         new AdminConfigRolesCommand(),
+        new AdminResetRolesCommand(),
         new AdminSignUpBoard(),
         new AdminPanelCommand(),
         new WorkerPanelCommand(),
@@ -448,6 +552,8 @@ namespace Toaster
         new HelpCommand(),
         new CreateRequestCommand(),
         new ModifyRequestCommand(),
+        new AddWorkerCommand(),
+        new RemoveWorkerCommand(),
         new MyRequestsCommand(),
         new ShowRequestCommand()
     };

@@ -70,6 +70,8 @@ constexpr const char* Component_StalledEdit		{ "stallededit" };
 constexpr const char* Command_ConfigChannels	{ "admin_configchannels" };
 constexpr const char* Command_ConfigPing		{ "admin_configping" };
 constexpr const char* Command_ConfigRoles		{ "admin_configroles" };
+constexpr const char* Command_ResetChannels		{ "admin_resetchannels" };
+constexpr const char* Command_ResetRoles		{ "admin_resetroles" };
 constexpr const char* Command_WorkerSignUp		{ "admin_worker_signup" };
 constexpr const char* Command_AutomatedArchive	{ "admin_auto_archive" };
 constexpr const char* Command_AutomatedStalled	{ "admin_auto_stalled" };
@@ -86,6 +88,8 @@ constexpr const char* Command_MyRequests		{ "my_requests" };
 constexpr const char* Command_ShowQueue			{ "show_queue" };
 constexpr const char* Command_SummaryQueue		{ "show_summary" };
 constexpr const char* Command_ShowWorkers		{ "show_workers" };
+constexpr const char* Command_AddWorker			{ "add_worker" };
+constexpr const char* Command_RemoveWorker		{ "remove_worker" };
 /*-------------------------------COMMAND IDS------------------------------------*/
 
 /*----------------------------COMMAND OPTION IDS--------------------------------*/
@@ -143,6 +147,7 @@ constexpr const char* Parameter_Id				{ "id" };
 constexpr const char* Parameter_Channel			{ "channel" };
 constexpr const char* Parameter_Role			{ "role" };
 constexpr const char* Parameter_Bool			{ "boolean" };
+constexpr const char* Parameter_User			{ "user" };
 /*--------------------------COMMAND PARAMETER IDS-------------------------------*/
 
 /*--------------------------------BUTTON IDS------------------------------------*/

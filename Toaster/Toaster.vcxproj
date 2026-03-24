@@ -197,12 +197,15 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AddWorkerCommand.cpp" />
     <ClCompile Include="AdminButtonPanel.cpp" />
     <ClCompile Include="AdminConfigChannelsCommand.cpp" />
     <ClCompile Include="AdminConfigDialog.cpp" />
     <ClCompile Include="AdminPanelCommand.cpp" />
     <ClCompile Include="AdminConfigPingCommand.cpp" />
     <ClCompile Include="AdminConfigRolesCommand.cpp" />
+    <ClCompile Include="AdminResetChannelsCommand.cpp" />
+    <ClCompile Include="AdminResetRolesCommand.cpp" />
     <ClCompile Include="AdminSignUpBoard.cpp" />
     <ClCompile Include="BuildingJobRequest.cpp" />
     <ClCompile Include="Commands.cpp" />
@@ -227,6 +230,7 @@
     <ClCompile Include="PaginationPanel.cpp" />
     <ClCompile Include="PermissionsMgr.cpp" />
     <ClCompile Include="RefineryJobRequest.cpp" />
+    <ClCompile Include="RemoveWorkerCommand.cpp" />
     <ClCompile Include="RequestDlg.cpp" />
     <ClCompile Include="RequestID.cpp" />
     <ClCompile Include="ResourceJobRequest.cpp" />

@@ -75,14 +75,14 @@ void ToasterBot::onMessage(const dpp::message_create_t& event)
             for (auto& idUser : channel->recipients)
             {
                 dpp::user user = utils::FindUserByID(m_cluster, idUser);
-                m_cluster.log(dpp::ll_info, fmt::format("Sending outgoing direct message to '{}'.", user.global_name));
+                m_cluster.log(dpp::ll_info, fmt::format("Sending outgoing direct message to USER '{}'.", user.global_name));
             }
         }
         else if (channel)
         {
             // Guild channel
             m_cluster.log(dpp::ll_info,
-                fmt::format("Sending outgoing message in channel '{}' - '{}'.", event.msg.channel_id, channel->name));
+                fmt::format("Sending outgoing message in CHANNEL '{}' - '{}'.", event.msg.channel_id, channel->name));
         }
     }
 }

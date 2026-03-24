@@ -57,21 +57,22 @@ bool GlobalButtonPanel::AssignButton(const std::string& id, CommandContext& ctx,
 {
     auto parts = utils::Split(id, ':');
     const std::string rID = parts[1];
+    const dpp::user user = event.command.get_issuing_user();
+
     const auto job = ctx.queue->GetJobByID(rID);
     if (!job)
     {
         event.reply(dpp::ir_update_message, dpp::message("This job was not found in the queue. It may have been deleted or archived."));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", rID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' pressed global assign for '{}'", user.global_name, rID));
         return false;
     }
 
     const auto pManager = PermissionsMgr::GetInstance();
-    const dpp::user user = event.command.get_issuing_user();
     if (!pManager || (!pManager->CanAssignJob(event, user.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug))
     {
         // Permission denied
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", ToString(job->GetID()))).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, ToString(job->GetID())));
+        ctx.cluster.log(dpp::ll_warning, fmt::format(" USER '{}' DENIED for '{}' with global assign button.", user.global_name, ToString(job->GetID())));
         return false;
     }
 
@@ -106,21 +107,22 @@ bool GlobalButtonPanel::UnassignButton(const std::string& id, CommandContext& ct
 {
     auto parts = utils::Split(id, ':');
     const std::string rID = parts[1];
+    const dpp::user user = event.command.get_issuing_user();
+
     const auto job = ctx.queue->GetJobByID(rID);
     if (!job)
     {
         event.reply(dpp::ir_update_message, dpp::message("This job was not found in the queue. It may have been deleted or archived."));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("Global assign was pressed for {}", rID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' pressed global unassign for '{}'", user.global_name, rID));
         return false;
     }
 
     const auto pManager = PermissionsMgr::GetInstance();
-    const dpp::user user = event.command.get_issuing_user();
     if (!pManager || (!pManager->CanAssignJob(event, user.id, job, utils::FindGuildByID(ctx.cluster, event.command.guild_id), ctx.guild) && !ctx.debug))
     {
         // Permission denied
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", ToString(job->GetID()))).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with global assign button.", user.global_name, ToString(job->GetID())));
+        ctx.cluster.log(dpp::ll_warning, fmt::format(" USER '{}' DENIED for '{}' with global unassign button.", user.global_name, ToString(job->GetID())));
         return false;
     }
 
@@ -173,7 +175,7 @@ void GlobalButtonPanel::AddNoteButton(const std::string& id, CommandContext& ctx
     else
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", event.command.get_issuing_user().id, parts[0]));
+        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", event.command.get_issuing_user().global_name, parts[0]));
         return;
     }
 }
@@ -220,7 +222,7 @@ void GlobalButtonPanel::ShowNotesButton(const std::string& id, CommandContext& c
     {
         // If user doesn't have permission to view notes
         event.reply(dpp::message("You do not have sufficient permissions to view the notes for this job.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", event.command.get_issuing_user().id, rID));
+        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", event.command.get_issuing_user().global_name, rID));
         return;
     }
 }

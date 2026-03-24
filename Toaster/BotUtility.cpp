@@ -92,7 +92,8 @@ namespace utils
         cluster.direct_message_create(idUser, dpp::message(msg), [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
             if (callback.is_error())
             {
-                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", idUser));
+                dpp::user user = utils::FindUserByID(cluster, idUser);
+                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", user.global_name));
             }
             else
             {
@@ -124,7 +125,8 @@ namespace utils
         cluster.direct_message_create(idUser, message, [&cluster, &idUser](const dpp::confirmation_callback_t& callback) {
             if (callback.is_error())
             {
-                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", idUser));
+                dpp::user user = utils::FindUserByID(cluster, idUser);
+                cluster.log(dpp::ll_error, fmt::format("Error sending direct message to user id '{}'.", user.global_name));
             }
             else
             {

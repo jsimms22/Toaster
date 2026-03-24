@@ -88,7 +88,7 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
             );
         }
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to completed by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
+        ctx.cluster.log(dpp::ll_info, fmt::format("Request '{}' has been set to completed by USER '{}'.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
 
         GuildSettings::AnnounceOnComplete(ctx, job, worker);
     }
@@ -123,7 +123,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
     {
         // Permission denied
         event.reply(dpp::message("You do not have permissions to change assignments for this job.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to reassign a job with a button.", user));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' attempted to reassign a job with a button.", event.command.get_issuing_user().global_name));
         return;
     }
 
@@ -155,7 +155,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
                 );
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to unassigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request '{}' has been set to unassigned by USER '{}'.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
         }
         else if (!job->IsWorker(user))
         {
@@ -183,7 +183,7 @@ void WorkerPanel::UnassignButton(const std::string& id, CommandContext& ctx, con
                 );
             }
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("Request {} has been set to assigned by {}.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
+            ctx.cluster.log(dpp::ll_info, fmt::format("Request '{}' has been set to assigned by USER '{}'.", ToString(job->GetID()), event.command.get_issuing_user().global_name));
         }
         else
         {

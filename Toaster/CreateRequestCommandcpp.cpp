@@ -171,7 +171,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobBuild->SetBuildRequirments(strParam2);
         jobBuild->SetBuildZone(strParam3);
         jobBuild->SetPriority(JobRequest::StringToPriority(strParam4));
-        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.id, ToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("'{}' added new BASE BUILDING request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobBuild));
     }
     else if (parts[0] == ComponentRequestDlg::modalID)
@@ -182,7 +182,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobComp->SetSCHandle(strSCHandle);
         jobComp->SetComponentList(strParam1);
         jobComp->SetPriority(JobRequest::StringToPriority(strParam2));
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.id, ToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new COMPONENT request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobComp));
     }
     else if (parts[0] == ResourceRequestDlg::modalID)
@@ -195,7 +195,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRes->SetResourcelist(strParam2);
         jobRes->SetQualityThres(strParam3);
         jobRes->SetPriority(JobRequest::StringToPriority(strParam4));
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.id, ToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new RESOURCE request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRes));
     }
     else if (parts[0] == RefineryRequestDlg::modalID)
@@ -208,7 +208,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobRefine->SetResourcelist(strParam2);
         jobRefine->SetRefinery(strParam3);
         jobRefine->SetPriority(JobRequest::StringToPriority(strParam4));
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, ToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobRefine));
     }
     else if (parts[0] == HazardousRequestDlg::modalID)
@@ -221,7 +221,7 @@ void CreateRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         jobHazard->SetItemLocation(strParam2);
         jobHazard->SetItemList(strParam3);
         jobHazard->SetPriority(JobRequest::StringToPriority(strParam4));
-        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.id, ToString(jobID)));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added new REFINERY request '{}'.", author.global_name, ToString(jobID)));
         ctx.queue->RequestAdd(std::move(jobHazard));
     }
     else

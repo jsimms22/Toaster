@@ -114,7 +114,7 @@ void GeneralUserPanel::EditButton(const std::string& id, CommandContext& ctx, co
 	else
 	{
 		event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", event.command.get_issuing_user().global_name, parts[0]));
 		return;
 	}
 }
@@ -149,7 +149,7 @@ void GeneralUserPanel::NoteButton(const std::string& id, CommandContext& ctx, co
 	else
 	{
 		event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", event.command.get_issuing_user().global_name, parts[0]));
 		return;
 	}
 }
@@ -185,7 +185,7 @@ void GeneralUserPanel::DeleteButton(const std::string& id, CommandContext& ctx, 
 	else
 	{
 		event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", user, parts[0]));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button", event.command.get_issuing_user().global_name, parts[0]));
 		return;
 	}
 }
@@ -233,7 +233,7 @@ void GeneralUserPanel::ShowNotesButton(const std::string& id, CommandContext& ct
 	{
 		// If user doesn't have permission to view notes
 		event.reply(dpp::message("You do not have sufficient permissions to view the notes for this job.").set_flags(dpp::m_ephemeral));
-		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", user, rID));
+		ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to view notes for job '{}'", event.command.get_issuing_user().global_name, rID));
 		return;
 	}
 }

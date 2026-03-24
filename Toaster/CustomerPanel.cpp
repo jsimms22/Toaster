@@ -67,7 +67,7 @@ void CustomerPanel::SubscribeButton(const std::string& id, CommandContext& ctx, 
                 job->SubscribeCustomer(bSubscribe);
             });
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("User changed subscribed status for '{}' to '{}'.", strJobID, bSubscribe ? "Subscribe" : "Unsubscribe"));
+        ctx.cluster.log(dpp::ll_info, fmt::format("{} changed subscribed status for '{}' to '{}'.", event.command.get_issuing_user().global_name, strJobID, bSubscribe ? "Subscribe" : "Unsubscribe"));
     }
     else if (!job)
     {
@@ -77,7 +77,7 @@ void CustomerPanel::SubscribeButton(const std::string& id, CommandContext& ctx, 
     else
     {
         event.reply(dpp::message("You do not have sufficient permissions to perform this action.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button.", user, parts[0]));
+        ctx.cluster.log(dpp::ll_debug, fmt::format("USER '{}' was DENIED access to use '{}' button.", event.command.get_issuing_user().global_name, parts[0]));
         return;
     }
 }

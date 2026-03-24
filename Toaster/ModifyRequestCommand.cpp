@@ -56,7 +56,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     if (!job)
     {
         event.reply(dpp::message("This job was not found in the queue. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} could not find {} to handle cmd {}", author.global_name, strJobID, strCmdID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' could not find '{}' to handle cmd '{}'", author.global_name, strJobID, strCmdID));
         return;
     }
 
@@ -105,7 +105,7 @@ void ModifyRequestCommand::ExecuteInteraction(CommandContext& ctx, const dpp::in
     {
         // Permission denied
         event.reply(dpp::message(fmt::format("You do not have permissions to modify {}.", strJobID)).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning, fmt::format("{} attempted to modify job {} with command {}.", author.global_name, strJobID, strCmdID));
+        ctx.cluster.log(dpp::ll_warning, fmt::format("USER '{}' attempted to modify job '{}' with command '{}'.", author.global_name, strJobID, strCmdID));
         return;
     }
 }
@@ -229,7 +229,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         // Edit the original message
         event.edit_original_response(SendPanel(ctx, event, job, author.id).set_flags(dpp::m_ephemeral));
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} edited {}.", author.global_name, strID));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' edited '{}'.", author.global_name, strID));
 
         const std::string jobDetails = job->PrintJobDetails(ctx.cluster, event.command.guild_id);
 
@@ -354,7 +354,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
                 .add_embed(embed)
                 .set_flags(dpp::m_ephemeral));
 
-            ctx.cluster.log(dpp::ll_info, fmt::format("{} updated {} with [{}]", author.global_name, strID, fmt::to_string(workerbuf)));
+            ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' updated '{}' with '{}'", author.global_name, strID, fmt::to_string(workerbuf)));
 
             const dpp::snowflake customer = job->GetCustomerID();
             if ((job->IsCustomerSubscribed() && author.id != customer) || ctx.debug)
@@ -414,7 +414,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the status for {} to {}", author.global_name, strID, strNewStatus));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' updated the status for '{}' to '{}'", author.global_name, strID, strNewStatus));
 
         const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && author.id != customer && oldStatus != newStatus) || ctx.debug)
@@ -471,7 +471,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
 
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} updated the priority for {} to {}", author.global_name, strID, strPriority));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' updated the priority for '{}' to '{}'", author.global_name, strID, strPriority));
 
         const dpp::snowflake customer = job->GetCustomerID();
         if ((job->IsCustomerSubscribed() && author.id != job->GetCustomerID() && strOldPriority != strPriority) || ctx.debug)
@@ -529,7 +529,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
             .set_color(0x3498db);
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_warning,fmt::format("{} deleted {}. Reason: {}",author.global_name,strID,strJustification));
+        ctx.cluster.log(dpp::ll_warning,fmt::format("USER '{}' deleted '{}' - Reason: '{}'",author.global_name,strID,strJustification));
 
         // Notify original customer if needed
         if ((bNotifyCustomer && author.id != customer) || ctx.debug)
@@ -587,7 +587,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         // Acknowledge immediately
         event.reply(dpp::message("Your note has been added to this request.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} added a note to {}.", author.global_name, strID));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' added a note to '{}'.", author.global_name, strID));
 
         // Notify original customer if needed
         const dpp::snowflake customer = job->GetCustomerID();
@@ -646,7 +646,7 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
 
         // Acknowledge immediately
         event.reply(dpp::message("The job request has been reopened.").set_flags(dpp::m_ephemeral));
-        ctx.cluster.log(dpp::ll_info, fmt::format("{} reopened job request {}.", author.global_name, strID));
+        ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' reopened job request '{}'.", author.global_name, strID));
 
         // Notify original customer if needed
         const dpp::snowflake customer = reopenedJob->GetCustomerID();

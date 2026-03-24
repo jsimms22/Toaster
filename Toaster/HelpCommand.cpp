@@ -102,6 +102,12 @@ std::string CreateWorkerHelp()
         "**/show_workers**\n"
         "Displays lists of members who currently have worker roles assigned.\n\n"
 
+        "**/add_worker**\n"
+        "Adds a user as a worker to the given job request.\n\n"
+
+        "**/remove_worker**\n"
+        "Remove a user as a worker from the given job request.\n\n"
+
         "**/worker_panel**\n"
         "Displays your worker assignment portal. Panels:\n"
         "- Assignment Overview\n"
@@ -163,6 +169,8 @@ std::string CreateAdminHelp()
         "/show_queue\n"
         "/summary_queue\n"
         "/show_workers\n"
+        "/add_worker\n"
+        "/remove_worker\n"
         "/worker_panel\n"
         "/modify_request\n"
 
@@ -173,7 +181,7 @@ std::string CreateAdminHelp()
         "- Bot Panel\n"
         "- Queue Panel\n\n"
 
-        "**/config_roles**\n"
+        "**/admin_configroles**\n"
         "Assign or update the Discord roles used by the system. Roles include:\n"
         "- General Worker\n"
         "- Item Crafter\n"
@@ -184,10 +192,16 @@ std::string CreateAdminHelp()
         "- Hazardous Materials Collector\n"
         "- Manager\n\n"
 
-        "**/config_channels**\n"
-        "Configure which Discord channels receive job announcements and queue updates.\n\n"
+        "**/admin_resetroles**\n"
+        "Reset a Discord role used by the system.\n\n"
 
-        "**/config_ping**\n"
+        "**/admin_configchannels**\n"
+        "Configure which Discord channels receive job announcements.\n\n"
+
+        "**/admin_resetchannels**\n"
+        "Reset a Discord channel for receiving job announcements.\n\n"
+
+        "**/admin_configping**\n"
         "Configure the worker ping role and notification rules for job announcements.\n"
 
         "### Queue Management Responsibilities:\n"
@@ -201,7 +215,12 @@ std::string CreateAdminHelp()
         "### Priority and Status Authority:\n"
         "Customers may request a priority when submitting a job."
         " However, managers and workers reserve the right to adjust"
-        " priority or status based on workload, fairness, and available resources."
+        " priority or status based on workload, fairness, and available resources.\n"
+
+        "### Tip:\n"
+        "There are a number of input fields that accept raw id values for either roles,"
+        " channels, or users. It may be beneficial for managers or admins to use Discord's"
+        " dev mode option."
     );
 }
 } // namespace

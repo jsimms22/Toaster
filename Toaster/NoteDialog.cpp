@@ -32,7 +32,7 @@ void NoteDialog::InitializeControls()
 		.set_type(dpp::cot_text)
 		.set_default_value(rID)
 		.set_min_length(0)
-		.set_max_length(40)
+		.set_max_length(16)
 		.set_text_style(dpp::text_short)
 		.set_id(Component_RequestID);
 
@@ -50,7 +50,7 @@ void NoteDialog::InitializeControls()
 		.set_type(dpp::cot_text)
 		.set_placeholder("Add note...")
 		.set_min_length(2)
-		.set_max_length(156)
+		.set_max_length(160)
 		.set_text_style(dpp::text_paragraph)
 		.set_id(Component_AddNewNote);
 }

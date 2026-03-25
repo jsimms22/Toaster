@@ -363,7 +363,7 @@ void ToasterBot::AutomatedBotTasks(std::stop_token stopToken)
 
         if (m_logger)
         {
-            m_logger->info("{}", "Automated worker thread beginning queue scans.");
+            m_logger->debug("{}", "Automated worker thread beginning queue scans.");
         }
 
         std::vector<std::pair<std::shared_ptr<JobQueue>, cutoffs>> work;
@@ -393,7 +393,7 @@ void ToasterBot::AutomatedBotTasks(std::stop_token stopToken)
 
         if (m_logger)
         {
-            m_logger->info("{}", "Automated worker thread ending queue scans.");
+            m_logger->debug("{}", "Automated worker thread ending queue scans.");
         }
     }
 }

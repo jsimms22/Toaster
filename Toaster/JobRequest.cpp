@@ -14,6 +14,7 @@
 // std library
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <stdexcept>
 #include <string>
 
@@ -613,24 +614,15 @@ const std::string JobRequest::PrintLastTwoNotes(dpp::cluster& cluster) const
     {
         const auto& [userID, meta] = allNotes[i];
 
-        std::time_t tt = static_cast<std::time_t>(meta.timestamp);
-        std::tm tm{};
-
-        // Thread-safe UTC conversion
-#if defined(_MSC_VER)
-        gmtime_s(&tm, &tt);     // MSVC-safe
-#else
-        tm = *std::gmtime(&tt); // POSIX
-#endif
-
-        char timeBuf[64];
-        std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M UTC", &tm);
+        // I hate that this is UTC, this should be relative to the client's system clock timezone to match discord's timestamp API
+        std::chrono::system_clock::time_point tp = std::chrono::system_clock::time_point{ std::chrono::seconds{meta.timestamp} };
+        const std::string strTimeStamp = std::format("{:%Y-%m-%d %H:%M UTC}", std::chrono::floor<std::chrono::seconds>(tp));
 
         // Lookup username
-        std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
+        const std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);
 
         // Append to fmt buffer
-        fmt::format_to(std::back_inserter(buffer), "{} | {}:\n{}\n", timeBuf, username, meta.note);
+        fmt::format_to(std::back_inserter(buffer), "{} | {}:\n{}\n", strTimeStamp, username, meta.note);
     }
 
     return fmt::to_string(buffer);

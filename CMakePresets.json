@@ -1,0 +1,77 @@
+{
+  "version": 3,
+    "configurePresets": [
+        {
+            "name": "default-debug",
+            "displayName": "Debug Mingw Build",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "name": "default-release",
+            "displayName": "Release Mingw Build",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "name": "msvc-debug",
+            "displayName": "Debug MSVC Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [ "Windows" ]
+                }
+            }
+        },
+        {
+            "name": "msvc-release",
+            "displayName": "Release MSVC Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [ "Windows" ]
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug-build",
+            "displayName": "Build Debug",
+            "configurePreset": "default-debug"
+        },
+        {
+            "name": "release-build",
+            "displayName": "Build Release",
+            "configurePreset": "default-release"
+        },
+        {
+            "name": "debug-mscv-build",
+            "displayName": "Build MSCV Debug",
+            "configurePreset": "msvc-debug"
+        },
+        {
+            "name": "release-mscv-build",
+            "displayName": "Build MSCV Release",
+            "configurePreset": "msvc-release"
+        }
+    ]
+}

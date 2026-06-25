@@ -22,6 +22,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <thread>
 
 // URL Encoding guidelines for mongodb: https://www.mongodb.com/docs/atlas/troubleshoot-connection/#special-characters-in-connection-string-password
 
@@ -30,7 +31,7 @@ std::string IntentsString(uint64_t intents);
 
 auto main() -> int
 {
-    const std::string log_name{ "../toaster_logfile.log" };
+    const std::string log_name{ "logs/toaster_logfile.log" };
 
     // Initialize and setup spdlog
     std::shared_ptr<spdlog::logger> log;
@@ -47,10 +48,10 @@ auto main() -> int
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
     log->set_level(spdlog::level::level_enum::info);
 
-    const std::string BOT_TOKEN{ utils::LoadSecret("../token.txt", "BOT_TOKEN") };
-    const std::string DB_USER{ utils::LoadSecret("../token.txt", "DB_USER") };
-    const std::string DB_PASS{ utils::LoadSecret("../token.txt", "DB_PASS") };
-    const std::string DB_CLUSTER{ utils::LoadSecret("../token.txt", "DB_CLUSTER") };
+    const std::string BOT_TOKEN{ utils::LoadSecret("token.txt", "BOT_TOKEN") };
+    const std::string DB_USER{ utils::LoadSecret("token.txt", "DB_USER") };
+    const std::string DB_PASS{ utils::LoadSecret("token.txt", "DB_PASS") };
+    const std::string DB_CLUSTER{ utils::LoadSecret("token.txt", "DB_CLUSTER") };
 
     // Create an instance and establish our MongoDB connection
     MongoDatabase database;
@@ -103,7 +104,7 @@ auto main() -> int
 
             if (counter > 5) { return 1; }
 
-            Sleep(500);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             continue;
         }
         else
@@ -160,7 +161,7 @@ auto main() -> int
         }
 
         // Reconnection delay to prevent hammering discord
-        Sleep(50);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     std::for_each(Toaster::BotCommands.begin(), Toaster::BotCommands.end(), [](ICustomCommand* cmd) { delete cmd; });

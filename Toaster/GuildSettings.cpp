@@ -25,7 +25,7 @@ namespace
     void WriteOptionalId(tinyxml2::XMLElement* xmlNode, const char* name, const std::optional<dpp::snowflake>& value)
     {
         if (value.has_value()) { xmlNode->SetAttribute(name, value.value()); }
-        else { xmlNode->SetAttribute(name, 0ULL); }
+        else { xmlNode->SetAttribute(name, static_cast<std::uint64_t>(0)); }
     }
 
     std::optional<dpp::snowflake> ReadOptionalId(tinyxml2::XMLElement* xmlNode, const char* name)

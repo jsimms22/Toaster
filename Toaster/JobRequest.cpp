@@ -6,6 +6,7 @@
 #include <dpp/user.h>
 #include <dpp/unicode_emoji.h>
 // fmt
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 // bsoncxx
 #include <bsoncxx/builder/basic/document.hpp>
@@ -14,7 +15,6 @@
 // std library
 #include <algorithm>
 #include <chrono>
-#include <format>
 #include <stdexcept>
 #include <string>
 
@@ -616,7 +616,7 @@ const std::string JobRequest::PrintLastTwoNotes(dpp::cluster& cluster) const
 
         // I hate that this is UTC, this should be relative to the client's system clock timezone to match discord's timestamp API
         std::chrono::system_clock::time_point tp = std::chrono::system_clock::time_point{ std::chrono::seconds{meta.timestamp} };
-        const std::string strTimeStamp = std::format("{:%Y-%m-%d %H:%M UTC}", std::chrono::floor<std::chrono::seconds>(tp));
+        const std::string strTimeStamp = fmt::format("{:%Y-%m-%d %H:%M UTC}", std::chrono::floor<std::chrono::seconds>(tp));
 
         // Lookup username
         const std::string username = utils::FindPreferredNameByID(cluster, userID, meta.guildID);

@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <type_traits>
 

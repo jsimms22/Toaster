@@ -2,8 +2,6 @@
 #include "GuildSettings.h"
 #include "PermissionsMgr.h"
 #include "JobRequest.h"
-// microsoft
-#include <objbase.h>
 // fmt
 #include <fmt/format.h>
 // std library

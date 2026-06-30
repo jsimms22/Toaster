@@ -1,7 +1,7 @@
 # root/CMakeLists.txt
 
-cmake_minimum_required(VERSION 3.30)
-cmake_policy(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
+cmake_policy(VERSION 3.20)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -60,8 +60,8 @@ target_link_libraries(ToasterBot
         tinyxml2
         dpp
 
-        mongo::bsoncxx_shared
-        mongo::mongocxx_shared
+        $<IF:$<TARGET_EXISTS:mongo::bsoncxx_static>,mongo::bsoncxx_static,mongo::bsoncxx_shared>
+        $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>
 )
 
 if(WIN32)

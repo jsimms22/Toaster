@@ -203,7 +203,8 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
     }
     // Covering down for these options so I don't need to create another command
     else if (strDialogOwner == Command_AutomatedArchive ||
-             strDialogOwner == Command_AutomatedStalled)
+             strDialogOwner == Command_AutomatedStalled ||
+             strDialogOwner == Command_MaxOpenRequests)
     {
         const dpp::user author = event.command.get_issuing_user();
         // These parameters are input that depend on the dialog form's order as defined by the type of the job
@@ -230,20 +231,39 @@ void AdminConfigChannelsCommand::ExecuteFormSubmit(CommandContext& ctx, const dp
         {
             ctx.guild->stalled_age = static_cast<std::chrono::hours>(std::stoull(strParam1));
         }
+        else if (strDialogOwner == Command_MaxOpenRequests)
+        {
+            ctx.guild->requestLimitPerUser = std::stoul(strParam1);
+        }
 
         ctx.guild->SaveGuildSettings(ctx.repo);
 
-        const std::string settings = fmt::format(
-            "**Auto-Archive Age Threshold:** {} hour(s)\n"
-            "**Auto-Stalled Age Threshold:** {} hour(s)\n\n",
-            ctx.guild->archival_age.count(),
-            ctx.guild->stalled_age.count()
-        );
-
         dpp::embed embed;
-        embed.set_title("Automated Queue Settings")
-            .set_description(settings)
-            .set_color(0x3498db);
+        if (strDialogOwner == Command_AutomatedArchive ||
+            strDialogOwner == Command_AutomatedStalled)
+        {
+            const std::string settings = fmt::format(
+                "**Auto-Archive Age Threshold:** {} hour(s)\n"
+                "**Auto-Stalled Age Threshold:** {} hour(s)\n\n",
+                ctx.guild->archival_age.count(),
+                ctx.guild->stalled_age.count()
+            );
+
+            embed.set_title("Automated Queue Settings")
+                .set_description(settings)
+                .set_color(0x3498db);
+        }
+        else if (strDialogOwner == Command_MaxOpenRequests)
+        {
+            const std::string settings = fmt::format(
+                "**Maximum Open Requests Allowed:** {} request(s)\n\n",
+                ctx.guild->requestLimitPerUser
+            );
+
+            embed.set_title("Per User Settings (Non-Admins)")
+                .set_description(settings)
+                .set_color(0x3498db);
+        }
 
         event.reply(dpp::message().add_embed(embed).set_flags(dpp::m_ephemeral));
     }

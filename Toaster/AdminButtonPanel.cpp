@@ -411,7 +411,9 @@ void AdminBotButtonPanel::ChangeCooldown(const std::string& id, CommandContext& 
 
 void AdminBotButtonPanel::ChangeMaxOpenRequests(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)
 {
-	event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
+	AdminConfigDialog adminDlg(Command_MaxOpenRequests, ctx);
+	event.dialog(adminDlg);
+	//event.reply(dpp::message("Functionality coming soon...").set_flags(dpp::m_ephemeral));
 }
 
 void AdminBotButtonPanel::ChangeArchiveThreshold(const std::string& id, CommandContext& ctx, const dpp::button_click_t& event)

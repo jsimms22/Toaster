@@ -53,6 +53,9 @@ private:
 	dpp::component ArchiveThresholdEdit;
 	dpp::component ArchiveStalledEdit;
 
+	// Max allowed open requests for non-admins
+	dpp::component MaxRequestsEdit;
+
 	CommandContext m_ctx;
 	std::string m_strCommand;
 };

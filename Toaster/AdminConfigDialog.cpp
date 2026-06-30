@@ -165,6 +165,18 @@ void AdminConfigDialog::InitializeControls()
 
 		ArchiveStalledEdit.set_default_value(std::to_string(m_ctx.guild->stalled_age.count()));
 	}
+	else if (m_strCommand == Command_MaxOpenRequests)
+	{
+		MaxRequestsEdit.set_label("Maximum Allowed Open Requests")
+			.set_type(dpp::cot_text)
+			.set_placeholder("Max allowed open requests per general users...")
+			.set_min_length(0)
+			.set_max_length(4)
+			.set_text_style(dpp::text_short)
+			.set_id(Component_StalledEdit);
+
+		MaxRequestsEdit.set_default_value(std::to_string(m_ctx.guild->requestLimitPerUser));
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -202,5 +214,9 @@ void AdminConfigDialog::AddChildrenComponents()
 	else if (m_strCommand == Command_AutomatedStalled)
 	{
 		add_component(ArchiveStalledEdit);
+	}
+	else if (m_strCommand == Command_MaxOpenRequests)
+	{
+		add_component(MaxRequestsEdit);
 	}
 }

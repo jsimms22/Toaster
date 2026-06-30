@@ -75,6 +75,7 @@ constexpr const char* Command_ResetRoles		{ "admin_resetroles" };
 constexpr const char* Command_WorkerSignUp		{ "admin_worker_signup" };
 constexpr const char* Command_AutomatedArchive	{ "admin_auto_archive" };
 constexpr const char* Command_AutomatedStalled	{ "admin_auto_stalled" };
+constexpr const char* Command_MaxOpenRequests	{ "admin_max_requests"};
 /*----------------------------ADMIN COMMAND IDS---------------------------------*/
 
 /*-------------------------------COMMAND IDS------------------------------------*/

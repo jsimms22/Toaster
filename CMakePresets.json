@@ -51,9 +51,8 @@
         },
         {
             "name": "msvc-release",
+            "inherits": "base-config",
             "displayName": "Release MSVC Build",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             },
@@ -73,9 +72,8 @@
         },
         {
             "name": "release",
+            "inherits": "base-config",
             "displayName": "Release Build",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }

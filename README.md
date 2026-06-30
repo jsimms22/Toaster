@@ -2,4 +2,4 @@ Discord bot for a gaming community to track logistics requests. Currently under 
 
 Bot is build using the DPP C++ Discord API library.
 
-[![CMake on multiple platforms](https://github.com/jsimms22/Toaster/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/jsimms22/Toaster/actions/workflows/cmake-multi-platform.yml)
+[![Builds](https://github.com/jsimms22/Toaster/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/jsimms22/Toaster/actions/workflows/cmake-multi-platform.yml)

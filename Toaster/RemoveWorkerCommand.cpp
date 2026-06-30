@@ -56,7 +56,7 @@ void RemoveWorkerCommand::ExecuteCommand(CommandContext& ctx, const dpp::slashco
     const dpp::snowflake worker{ strUserID };
     auto* pGuild = utils::FindGuildByID(ctx.cluster, event.command.guild_id);
 
-    if (!pManager->IsWorker(worker, pGuild, ctx.guild))
+    if (!(pManager->IsWorker(worker, pGuild, ctx.guild) || pManager->IsRequestWorker(worker, job)))
     {
         event.reply(dpp::message(fmt::format("User <@{}> does not have a worker role.\n", worker)).set_flags(dpp::m_ephemeral));
         return;

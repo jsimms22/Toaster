@@ -79,6 +79,12 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         const std::string rID = parts[2];
         const auto job = ctx.queue->GetJobByID(rID);
 
+        if (!job)
+        {
+            event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
         return;
@@ -91,6 +97,12 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         dpp::snowflake user = parts[1];
         const std::string rID = parts[2];
         const auto job = ctx.queue->GetJobByID(rID);
+
+        if (!job)
+        {
+            event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
@@ -115,6 +127,12 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         const std::string rID = parts[2];
         const auto job = ctx.queue->GetJobByID(rID);
 
+        if (!job)
+        {
+            event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));
         return;
@@ -127,6 +145,12 @@ void ShowRequestCommand::ExecuteButtonClick(CommandContext& ctx, const dpp::butt
         dpp::snowflake user = parts[1];
         const std::string rID = parts[2];
         const auto job = ctx.queue->GetJobByID(rID);
+
+        if (!job)
+        {
+            event.reply(dpp::message("Could not find the job by its ID. It may have been deleted or archived.").set_flags(dpp::m_ephemeral));
+            return;
+        }
 
         // Edit the original message
         event.reply(dpp::ir_update_message, SendPanel(ctx, event, job, user).set_flags(dpp::m_ephemeral));

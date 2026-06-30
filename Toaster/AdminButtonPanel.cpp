@@ -138,7 +138,7 @@ void AdminQueueButtonPanel::ShowWorkersButton(const std::string& id, CommandCont
 	{
 		if (role.has_value() && pManager->HasRole(member.second, role))
 		{
-			std::string label = fmt::format("<@{}>", member.first);
+			std::string label = fmt::format("<@{}> (`{}`)", member.first, member.first);
 			fmt::format_to(std::back_inserter(buffer), "- {}\n", label);
 		}
 	}

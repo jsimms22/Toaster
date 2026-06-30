@@ -1,0 +1,39 @@
+name: CMake Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            configure: wsl-release
+            build: release-unix-build
+
+          - os: windows-latest
+            configure: msvc-release
+            build: release-msvc-build
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Show VCPKG_ROOT
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_ROOT"
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.configure }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.build }}

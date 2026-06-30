@@ -8,14 +8,13 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "~/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_INSTALLED_DIR": "~/vcpkg/installed",
-                "CMAKE_C_COMPILER": "/usr/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             },
             "vendor": {
-                "://microsoft.com": {
-                    "hostOS": [ "Linux" ]
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Linux"
+                    ]
                 }
             }
         },
@@ -26,14 +25,13 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "~/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_INSTALLED_DIR": "~/vcpkg/installed",
-                "CMAKE_C_COMPILER": "/usr/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             },
             "vendor": {
-                "://microsoft.com": {
-                    "hostOS": [ "Linux" ]
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Linux"
+                    ]
                 }
             }
         },
@@ -44,7 +42,7 @@
             "binaryDir": "${sourceDir}/build/debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
@@ -59,7 +57,7 @@
             "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {

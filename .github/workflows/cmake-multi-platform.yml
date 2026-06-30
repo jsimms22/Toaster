@@ -2,52 +2,38 @@ name: CMake Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     strategy:
-      fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
+        include:
+          - os: ubuntu-latest
+            configure: wsl-release
+            build: release-unix-build
+
+          - os: windows-latest
+            configure: msvc-release
+            build: release-msvc-build
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup CMake
-        uses: lukka/get-cmake@latest
-
-      - name: Restore vcpkg cache and install dependencies
+      - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgJsonGlob: "**/vcpkg.json"
+
+      - name: Show VCPKG_ROOT
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_ROOT"
 
       - name: Configure
-        run: >
-          cmake
-          -B build
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_INSTALLATION_ROOT }}/scripts/buildsystems/vcpkg.cmake
+        run: cmake --preset ${{ matrix.configure }}
 
       - name: Build
-        run: cmake --build build --config Release --parallel
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ToasterBot-${{ matrix.os }}
-          path: |
-            build/ToasterBot*
-            build/*.exe
-            build/*.dll
-            build/*.so
-            build/*.dylib
+        run: cmake --build --preset ${{ matrix.build }}

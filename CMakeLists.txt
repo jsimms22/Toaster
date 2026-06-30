@@ -90,5 +90,9 @@ add_custom_command(TARGET ToasterBot POST_BUILD
         $<TARGET_FILE_DIR:ToasterBot>/token.txt
 )
 else()
-# linux post_build commands
+add_custom_command(TARGET ToasterBot POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/token.txt
+        $<TARGET_FILE_DIR:ToasterBot>/token.txt
+)
 endif()

@@ -14,13 +14,13 @@ jobs:
         include:
           - os: ubuntu-latest
             triplet: x64-linux
-            configure: wsl-release
-            build: release-unix-build
+            configure: release
+            build: release-build
 
           - os: windows-latest
             triplet: x64-windows
-            configure: msvc-release
-            build: release-msvc-build
+            configure: release
+            build: release-build
 
     runs-on: ${{ matrix.os }}
 

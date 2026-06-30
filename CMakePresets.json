@@ -2,47 +2,46 @@
   "version": 3,
     "configurePresets": [
         {
-            "name": "wsl-debug",
-            "displayName": "Debug Unix Build",
+            "name": "base-config",
+            "hidden": true,
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "name": "wsl-debug",
+            "inherits": "base-config",
+            "displayName": "Debug WSL Build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "hostOS": [
-                        "Linux"
-                    ]
+                    "hostOS": [ "Linux" ]
                 }
             }
         },
         {
             "name": "wsl-release",
-            "displayName": "Release Unix Build",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "inherits": "base-config",
+            "displayName": "Release WSL Build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_BUILD_TYPE": "Release"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "hostOS": [
-                        "Linux"
-                    ]
+                    "hostOS": [ "Linux" ]
                 }
             }
         },
         {
             "name": "msvc-debug",
+            "inherits": "base-config",
             "displayName": "Debug MSVC Build",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_BUILD_TYPE": "Debug"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
@@ -56,25 +55,41 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_BUILD_TYPE": "Release"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
                     "hostOS": [ "Windows" ]
                 }
             }
+        },
+        {
+            "name": "debug",
+            "inherits": "base-config",
+            "displayName": "Debug Build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
         {
-            "name": "debug-unix-build",
-            "displayName": "Build Unix Debug",
+            "name": "debug-wsl-build",
+            "displayName": "Build WSL Debug",
             "configurePreset": "wsl-debug"
         },
         {
-            "name": "release-unix-build",
-            "displayName": "Build Unix Release",
+            "name": "release-wsl-build",
+            "displayName": "Build WSL Release",
             "configurePreset": "wsl-release"
         },
         {
@@ -86,6 +101,16 @@
             "name": "release-msvc-build",
             "displayName": "Build MSCV Release",
             "configurePreset": "msvc-release"
+        },
+        {
+            "name": "debug-build",
+            "displayName": "Build Debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release-build",
+            "displayName": "Build Release",
+            "configurePreset": "release"
         }
     ]
 }

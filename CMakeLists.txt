@@ -64,6 +64,7 @@ target_link_libraries(ToasterBot
         $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>
 )
 
+#[[
 if(WIN32)
 add_custom_command(TARGET ToasterBot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -96,3 +97,4 @@ add_custom_command(TARGET ToasterBot POST_BUILD
         $<TARGET_FILE_DIR:ToasterBot>/token.txt
 )
 endif()
+]]

@@ -78,12 +78,12 @@
             "configurePreset": "wsl-release"
         },
         {
-            "name": "debug-mscv-build",
+            "name": "debug-msvc-build",
             "displayName": "Build MSCV Debug",
             "configurePreset": "msvc-debug"
         },
         {
-            "name": "release-mscv-build",
+            "name": "release-msvc-build",
             "displayName": "Build MSCV Release",
             "configurePreset": "msvc-release"
         }

@@ -2,23 +2,39 @@
   "version": 3,
     "configurePresets": [
         {
-            "name": "default-debug",
-            "displayName": "Debug Mingw Build",
-            "generator": "Unix Makefiles",
-            "binaryDir": "${sourceDir}/build/debug",
+            "name": "wsl-debug",
+            "displayName": "Debug Unix Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "~/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_INSTALLED_DIR": "~/vcpkg/installed",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
+            },
+            "vendor": {
+                "://microsoft.com": {
+                    "hostOS": [ "Linux" ]
+                }
             }
         },
         {
-            "name": "default-release",
-            "displayName": "Release Mingw Build",
-            "generator": "Unix Makefiles",
-            "binaryDir": "${sourceDir}/build/release",
+            "name": "wsl-release",
+            "displayName": "Release Unix Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "S:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "~/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_INSTALLED_DIR": "~/vcpkg/installed",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
+            },
+            "vendor": {
+                "://microsoft.com": {
+                    "hostOS": [ "Linux" ]
+                }
             }
         },
         {
@@ -54,14 +70,14 @@
     ],
     "buildPresets": [
         {
-            "name": "debug-build",
-            "displayName": "Build Debug",
-            "configurePreset": "default-debug"
+            "name": "debug-unix-build",
+            "displayName": "Build Unix Debug",
+            "configurePreset": "wsl-debug"
         },
         {
-            "name": "release-build",
-            "displayName": "Build Release",
-            "configurePreset": "default-release"
+            "name": "release-unix-build",
+            "displayName": "Build Unix Release",
+            "configurePreset": "wsl-release"
         },
         {
             "name": "debug-mscv-build",

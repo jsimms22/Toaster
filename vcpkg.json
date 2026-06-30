@@ -1,5 +1,7 @@
 {
   "dependencies": [
-    "mongo-cxx-driver"
+    "mongo-cxx-driver",
+    "opus",
+    "openssl"
   ]
 }

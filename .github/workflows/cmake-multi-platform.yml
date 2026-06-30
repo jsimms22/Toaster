@@ -34,9 +34,6 @@ jobs:
         shell: bash
         run: |
           echo "VCPKG_ROOT=$VCPKG_ROOT"
-      
-      - name: Install dependencies
-        run: vcpkg install mongo-cxx-driver openssl opus --triplet ${{ matrix.triplet }}
 
       - name: Configure
         run: cmake --preset ${{ matrix.configure }}

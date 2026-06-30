@@ -417,7 +417,8 @@ void ModifyRequestCommand::ExecuteFormSubmit(CommandContext& ctx, const dpp::for
         ctx.cluster.log(dpp::ll_info, fmt::format("USER '{}' updated the status for '{}' to '{}'", author.global_name, strID, strNewStatus));
 
         const dpp::snowflake customer = job->GetCustomerID();
-        if ((job->IsCustomerSubscribed() && author.id != customer && oldStatus != newStatus) || ctx.debug)
+        // Temporarily forcing a message to send on complete per request by Leaf
+        if (((job->IsCustomerSubscribed() || newStatus == JobRequest::status::complete) && author.id != customer && oldStatus != newStatus) || ctx.debug)
         {
             utils::NotifyIssuerMsgWithEmbed(
                 ctx.cluster,

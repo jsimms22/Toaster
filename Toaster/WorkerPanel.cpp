@@ -76,7 +76,8 @@ void WorkerPanel::CompleteButton(const std::string& id, CommandContext& ctx, con
             });
 
         const dpp::snowflake customer = job->GetCustomerID();
-        if ((job->IsCustomerSubscribed() && customer != worker) || ctx.debug)
+        // Temporarily forcing a message to send on complete per request by Leaf
+        if ((/*job->IsCustomerSubscribed() &&*/ customer != worker) || ctx.debug)
         {
             utils::NotifyIssuerMsgWithEmbed(
                 ctx.cluster,

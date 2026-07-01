@@ -27,15 +27,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(dpp)
 
-## ----- xml ----- ##
-set(tinyxml2_SHARED_LIBS OFF CACHE INTERNAL "")
-FetchContent_Declare(
-    tinyxml2
-    GIT_REPOSITORY  https://github.com/leethomason/tinyxml2.git
-    GIT_TAG         9148bdf719e997d1f474be6bcc7943881046dba1 # 11.0.0
-)
-FetchContent_MakeAvailable(tinyxml2)
-
 ## ----- spdlog ----- ##
 FetchContent_Declare(
     spdlog
@@ -57,14 +48,12 @@ target_link_libraries(ToasterBot
     PRIVATE
         fmt::fmt-header-only
         spdlog::spdlog_header_only
-        tinyxml2
         dpp
 
         $<IF:$<TARGET_EXISTS:mongo::bsoncxx_static>,mongo::bsoncxx_static,mongo::bsoncxx_shared>
         $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>
 )
 
-#[[
 if(WIN32)
 add_custom_command(TARGET ToasterBot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -97,4 +86,3 @@ add_custom_command(TARGET ToasterBot POST_BUILD
         $<TARGET_FILE_DIR:ToasterBot>/token.txt
 )
 endif()
-]]

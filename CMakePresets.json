@@ -39,6 +39,7 @@
         {
             "name": "msvc-debug",
             "inherits": "base-config",
+            "generator": "Visual Studio 17 2022",
             "displayName": "Debug MSVC Build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
@@ -54,6 +55,7 @@
         {
             "name": "msvc-release",
             "inherits": "base-config",
+            "generator": "Visual Studio 17 2022",
             "displayName": "Release MSVC Build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",

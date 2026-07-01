@@ -9,6 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(ToasterBot LANGUAGES CXX)
 
+option(ENABLE_POST_BUILD "Enable post-build copy commands" ON)
+
 include(FetchContent)
 
 ## ----- fmt ----- ##
@@ -54,6 +56,7 @@ target_link_libraries(ToasterBot
         $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>
 )
 
+if(ENABLE_POST_BUILD)
 if(WIN32)
 add_custom_command(TARGET ToasterBot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -86,3 +89,4 @@ add_custom_command(TARGET ToasterBot POST_BUILD
         $<TARGET_FILE_DIR:ToasterBot>/token.txt
 )
 endif()
+endif() # ENABLE_POST_BUILD

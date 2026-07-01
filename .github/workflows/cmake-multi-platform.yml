@@ -1,4 +1,4 @@
-name: CMake Build
+name: Bot CI
 
 on:
   push:
@@ -6,30 +6,32 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  linux:
+    permissions:
+      contents: write
+    name: Linux
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            triplet: x64-linux
             configure: release
             build: release-build
-            c_compiler: gcc
-            cxx_compiler: g++
-
-          - os: windows-latest
-            triplet: x64-windows
-            configure: release
-            build: release-build
-            c_compiler: cl
-            cxx_compiler: cl
-
-    runs-on: ${{ matrix.os }}
+            c_compiler: gcc-13
+            cxx_compiler: g++-13
 
     steps:
       - uses: actions/checkout@v4
+  
+      - name: Install GCC 13
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
@@ -39,8 +41,43 @@ jobs:
         run: |
           echo "VCPKG_ROOT=$VCPKG_ROOT"
 
-      - name: Configure
-        run: cmake --preset ${{ matrix.configure }}
+      - name: Generate CMake
+        run: cmake --preset ${{ matrix.configure }} -DENABLE_POST_BUILD=OFF
+        env:
+          CC: ${{ matrix.c_compiler }}
+          CXX: ${{ matrix.cxx_compiler }}
 
       - name: Build
-        run: cmake --build --preset ${{ matrix.build }}
+        run: cmake --build --preset ${{ matrix.build }} --parallel
+
+  windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            configure: msvc-release
+            build: release-msvc-build
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Show VCPKG_ROOT
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_ROOT"
+
+      - name: Generate CMake
+        run: cmake --preset ${{ matrix.configure }} -DENABLE_POST_BUILD=OFF
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.build }} --parallel 2

@@ -26,7 +26,7 @@ jobs:
             cxx_compiler: g++-13
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
   
       - name: Install GCC 13
         run: |
@@ -61,9 +61,7 @@ jobs:
             build: release-msvc-build
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          path: main
+      - uses: actions/checkout@v7
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v3

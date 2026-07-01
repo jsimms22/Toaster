@@ -11,28 +11,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        build_type: [Release]
-        c_compiler: [cl, gcc]
-        cxx_compiler: [cl, g++]
         include:
           - os: ubuntu-latest
             triplet: x64-linux
             configure: release
             build: release-build
+            c_compiler: gcc
+            cxx_compiler: g++
 
           - os: windows-latest
             triplet: x64-windows
             configure: release
             build: release-build
-        exclude:
-          - os: ubuntu-latest
             c_compiler: cl
             cxx_compiler: cl
-
-          - os: windows-latest
-            c_compiler: gcc
-            cxx_compiler: g++
 
     runs-on: ${{ matrix.os }}
 

@@ -39,12 +39,10 @@
         {
             "name": "msvc-debug",
             "inherits": "base-config",
-            "generator": "Visual Studio 17 2022",
+            "generator": "Ninja",
             "displayName": "Debug MSVC Build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl"
+                "CMAKE_BUILD_TYPE": "Debug"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
@@ -55,12 +53,10 @@
         {
             "name": "msvc-release",
             "inherits": "base-config",
-            "generator": "Visual Studio 17 2022",
+            "generator": "Ninja",
             "displayName": "Release MSVC Build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl"
+                "CMAKE_BUILD_TYPE": "Release"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {

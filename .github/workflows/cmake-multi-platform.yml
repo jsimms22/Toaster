@@ -62,10 +62,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v3
-
+  
+      - uses: ilammy/msvc-dev-cmd@v1
+    
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
 

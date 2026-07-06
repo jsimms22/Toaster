@@ -1,0 +1,9 @@
+.github/
+.vs/
+.vscode/
+build/
+Tests/
+Deps/
+Secrets/
+token.txt
+token_dev.txt

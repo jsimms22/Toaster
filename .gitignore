@@ -390,3 +390,5 @@ FodyWeavers.xsd
 
 # Local config with secrets
 token.txt
+token_dev.txt
+Secrets/

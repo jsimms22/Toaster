@@ -77,16 +77,28 @@ foreach(dll ${DPP_RUNTIME_DLLS})
     )
 endforeach()
 
+file(GLOB MY_SECRETS
+    "${CMAKE_SOURCE_DIR}/Secrets/dev/*"
+)
+
+foreach(file ${MY_SECRETS})
 add_custom_command(TARGET ToasterBot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_SOURCE_DIR}/token.txt
-        $<TARGET_FILE_DIR:ToasterBot>/token.txt
+        ${file}
+        $<TARGET_FILE_DIR:ToasterBot>
 )
+endforeach()
 else()
+file(GLOB MY_SECRETS
+    "${CMAKE_SOURCE_DIR}/Secrets/dev/*"
+)
+
+foreach(file ${MY_SECRETS})
 add_custom_command(TARGET ToasterBot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/token.txt
-        $<TARGET_FILE_DIR:ToasterBot>/token.txt
+        ${file}
+        $<TARGET_FILE_DIR:ToasterBot>
 )
+endforeach()
 endif()
 endif() # ENABLE_POST_BUILD

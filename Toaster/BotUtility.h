@@ -20,7 +20,7 @@ namespace utils
 {
 	static constexpr std::size_t PAGE_SIZE{ 1500 };
 
-	std::string LoadSecret(const std::string& filename, const std::string& find);
+	std::string LoadSecret(const std::string& filename);
 	int PriorityToString(const std::string& priority_str);
 	const std::size_t GetEpochTimestamp();
 	const std::size_t CmdStringToJobType(const std::string& cmd);

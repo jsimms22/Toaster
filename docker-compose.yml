@@ -1,0 +1,28 @@
+name: toasterbot-dev
+
+services:
+  toaster:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: toaster-dev:latest
+    container_name: toaster-dev
+    restart: unless-stopped
+    command:
+      - "--secrets-dir"
+      - "/run/secrets/"
+    secrets:
+      - bot_token
+      - db_cluster
+      - db_user
+      - db_pass
+      
+secrets:
+  bot_token:
+    file: ./secrets/dev/bot_token
+  db_cluster:
+    file: ./secrets/dev/db_cluster
+  db_user:
+    file: ./secrets/dev/db_user
+  db_pass:
+    file: ./secrets/dev/db_pass

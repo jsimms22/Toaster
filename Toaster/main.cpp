@@ -19,21 +19,36 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 // std library
+#include <cstdlib>
 #include <exception>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <thread>
 
 // URL Encoding guidelines for mongodb: https://www.mongodb.com/docs/atlas/troubleshoot-connection/#special-characters-in-connection-string-password
 
-std::string CacheString(dpp::cache_policy_setting_t cache);
-std::string IntentsString(uint64_t intents);
+inline std::string CacheString(dpp::cache_policy_setting_t cache);
+inline std::string IntentsString(uint64_t intents);
+inline std::string GetSecretsDir(int argc, char* argv[]);
 
-auto main() -> int
+auto main(int argc, char* argv[]) -> int
 {
-    const std::string log_name{ "logs/toaster_logfile.log" };
+    // Load secrets and database uri format
+    const std::string secretsDir = GetSecretsDir(argc, argv);
 
+    const std::string BOT_TOKEN{ utils::LoadSecret(secretsDir + "bot_token") };
+    const std::string DB_USER{ utils::LoadSecret(secretsDir + "db_user") };
+    const std::string DB_PASS{ utils::LoadSecret(secretsDir + "db_pass") };
+    const std::string DB_CLUSTER{ utils::LoadSecret(secretsDir + "db_cluster") };
+
+    const char* value = std::getenv("MONGO_USE_SRV");
+    const bool useSRV = value && std::string_view(value) == "true";
+    const std::string strURIPrefix = useSRV ? "mongodb+srv" : "mongodb";
+    
     // Initialize and setup spdlog
+    const std::string log_name{ "logs/toaster_logfile.log" };
+    
     std::shared_ptr<spdlog::logger> log;
     spdlog::init_thread_pool(8192, 2);
 
@@ -48,15 +63,12 @@ auto main() -> int
     log->set_pattern("%^%Y-%m-%d %H:%M:%S.%e [%L] [th#%t]%$ : %v");
     log->set_level(spdlog::level::level_enum::info);
 
-    const std::string BOT_TOKEN{ utils::LoadSecret("token.txt", "BOT_TOKEN") };
-    const std::string DB_USER{ utils::LoadSecret("token.txt", "DB_USER") };
-    const std::string DB_PASS{ utils::LoadSecret("token.txt", "DB_PASS") };
-    const std::string DB_CLUSTER{ utils::LoadSecret("token.txt", "DB_CLUSTER") };
-
     // Create an instance and establish our MongoDB connection
     MongoDatabase database;
     database.SetLogger(log);
-    database.connect(fmt::format("mongodb+srv://{}:{}@{}", DB_USER, DB_PASS, DB_CLUSTER));
+    const std::string strMongoURI = fmt::format("{}://{}:{}@{}", strURIPrefix, DB_USER, DB_PASS, DB_CLUSTER);
+    log->info("Attempting to connect to mongodb with uri: " + strMongoURI);
+    database.connect(strMongoURI);
     std::shared_ptr<MongoJobRepo> jobRepo = std::make_shared<MongoJobRepo>(database.GetDB());
     jobRepo->SetLogger(log);
 
@@ -170,27 +182,31 @@ auto main() -> int
     return 0;
 }
 
-std::string CacheString(dpp::cache_policy_setting_t cache) {
+inline std::string CacheString(dpp::cache_policy_setting_t cache) 
+{
     switch (cache)
     {
-    case dpp::cp_none: return "none";
-    case dpp::cp_aggressive: return "cp_aggressive";
-    case dpp::cp_lazy: return "cp_lazy";
-    default: return "unknown";
+        case dpp::cp_none: return "none";
+        case dpp::cp_aggressive: return "cp_aggressive";
+        case dpp::cp_lazy: return "cp_lazy";
+        default: return "unknown";
     }
 }
 
-std::string IntentsString(uint64_t intents) {
+inline std::string IntentsString(uint64_t intents) 
+{
     fmt::memory_buffer buf;
     bool first = true;
 
-    auto append = [&](std::string_view name) {
-        if (!first) {
+    auto append = [&](std::string_view name) 
+    {
+        if (!first) 
+        {
             fmt::format_to(std::back_inserter(buf), " | ");
         }
         fmt::format_to(std::back_inserter(buf), "{}", name);
         first = false;
-        };
+    };
 
     if (intents & dpp::intents::i_message_content)
         append("message_content");
@@ -211,9 +227,21 @@ std::string IntentsString(uint64_t intents) {
     if (intents & dpp::i_direct_messages)
         append("direct_messages");
 
-    if (first) {
+    if (first)
         return "none";
-    }
 
     return fmt::to_string(buf);
+}
+
+inline std::string GetSecretsDir(int argc, char* argv[])
+{
+    for (int i = 1; i < argc - 1; ++i)
+    {
+        if (std::string(argv[i]) == "--secrets-dir")
+        {
+            return argv[i + 1];
+        }
+    }
+
+    return {};
 }

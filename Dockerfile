@@ -32,8 +32,10 @@ COPY vcpkg-configuration.json .
 COPY vcpkg.json .
 COPY Toaster ./Toaster
 
-RUN cmake --preset release -DENABLE_POST_BUILD=OFF
-RUN cmake --build . --preset release-build --parallel
+ARG BUILD_PRESET=release
+
+RUN cmake --preset ${BUILD_PRESET} -DENABLE_POST_BUILD=OFF
+RUN cmake --build . --preset ${BUILD_PRESET}-build --parallel
 
 # ----------------------------
 # Runtime stage
@@ -48,12 +50,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=builder /app/build/release/ToasterBot .
-COPY --from=builder /app/build/release/_deps/dpp-build/library/libdpp.so.10.1.5 .
+ARG BUILD_PRESET=release
+
+COPY --from=builder /app/build/${BUILD_PRESET}/ToasterBot .
+COPY --from=builder /app/build/${BUILD_PRESET}/_deps/dpp-build/library/libdpp.so.10.1.5 .
 
 ENV LD_LIBRARY_PATH=/app
 
-COPY token.txt .
 COPY LICENSE .
 
-CMD ["./ToasterBot"]
+ENTRYPOINT ["./ToasterBot"]
+CMD []

@@ -16,20 +16,18 @@ namespace utils
     //---------------------------------------------------------------------------------------------------------------------
     // \brief
     //---------------------------------------------------------------------------------------------------------------------
-    std::string LoadSecret(const std::string& filename, const std::string& find)
+    std::string LoadSecret(const std::string& filename)
     {
         std::ifstream file(filename);
-        std::string line;
-
-        while (std::getline(file, line))
+        
+        if (!file)
         {
-            if (line.find(find + "=") == 0)
-            {
-                return line.substr(std::string(find + "=").length());
-            }
+            throw std::runtime_error("Could not open secret file");
         }
 
-        throw std::runtime_error(fmt::format("[{}] not found in config file",find));
+        std::string value;
+        std::getline(file, value);
+        return value;
     }
 
     //---------------------------------------------------------------------------------------------------------------------

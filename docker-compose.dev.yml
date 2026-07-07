@@ -1,0 +1,46 @@
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+name: toasterbot-dev
+
+services:
+  mongodb:
+    image: mongo:8
+    container_name: mongodb-dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-dev-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/db_user
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_pass
+    secrets:
+      - db_user
+      - db_pass
+
+    # Health check for MongoDB
+    healthcheck:
+      test: 
+        [
+          "CMD-SHELL",
+          "mongosh -u $$(cat /run/secrets/db_user) -p $$(cat /run/secrets/db_pass) --authenticationDatabase admin --quiet --eval 'db.adminCommand(\"ping\")'"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+      
+  toaster:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: toaster-dev:latest
+    container_name: toaster-dev
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGO_USE_SRV: "false"
+
+volumes:
+  mongo-dev-data:

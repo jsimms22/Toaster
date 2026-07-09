@@ -19,10 +19,10 @@ services:
       
 secrets:
   bot_token:
-    file: ./secrets/dev/bot_token
+    file: ./Secrets/dev/bot_token
   db_cluster:
-    file: ./secrets/dev/db_cluster
+    file: ./Secrets/dev/db_cluster
   db_user:
-    file: ./secrets/dev/db_user
+    file: ./Secrets/dev/db_user
   db_pass:
-    file: ./secrets/dev/db_pass
+    file: ./Secrets/dev/db_pass

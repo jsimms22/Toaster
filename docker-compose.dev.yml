@@ -2,14 +2,33 @@
 name: toasterbot-dev
 
 services:
+  nginx-proxy-manager:
+      image: 'jc21/nginx-proxy-manager:latest'
+      container_name: nginx-proxy-manager-dev
+      restart: unless-stopped
+      ports:
+        - '80:80'
+        - '443:443'
+        - '81:81'
+        - '27017:27017'
+      volumes:
+        - nginx-dev-data:/data:/data
+        - nginx-dev-data:/letsencrypt:/etc/letsencrypt
+      networks:
+        - web-network
+
   mongodb:
     image: mongo:8
     container_name: mongodb-dev
     restart: unless-stopped
-    ports:
-      - "27017:27017"
+    depends_on:
+      - nginx-proxy-manager
+    #ports:
+      #- "27017:27017"
     volumes:
       - mongo-dev-data:/data/db
+    networks:
+      - web-network
     environment:
       MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/db_user
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_pass
@@ -39,8 +58,15 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    networks:
+      - web-network
     environment:
       MONGO_USE_SRV: "false"
 
 volumes:
   mongo-dev-data:
+  nginx-dev-data:
+
+networks:
+  web-network:
+    driver: bridge
